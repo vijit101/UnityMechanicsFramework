@@ -1,8 +1,25 @@
-# Open-Source-Game-Mechanics---Unity
-This repository is created to house Different plug and play game mechanics like dash , mono singleton generic , Utils script and Drag drop etc. These are the mechanics that many games use &amp; does not make sense to always be created from scratch hence a central repo for all the mechanics . 
-*******************************************************************************************************************************************************************
-Mechanics List - 
+# UnityMechanicsFramework
 
-1. MonoSingleton Generic - This allows the developer to make any script into a singleton just by inheriting this Script. so all you need to do is class GameManager : MonoSingletonGeneric<GameManager> & voila GameManager is a singleton now
+A modular, open-source collection of plug-and-play gameplay mechanics built for Unity.
 
-2. Generic And Scalable Dialogue System - This dialogue system helps developers build flexible and scalable conversations in games using ScriptableObjects. It keeps everything organized, makes it easier to add branching choices, and separates data from logic so updates don’t break the flow. You can quickly add new dialogue without writing extra code and without messing with the core system. It’s clean, modular, and saves a lot of time during both development and future updates.  
+Instead of rewriting commonly used systems across projects, this repository centralizes reusable and scalable gameplay mechanics designed with clean architecture and extensibility in mind. The goal is to provide production-ready systems that developers can integrate directly into their 2D games.
+
+---
+
+## Mechanics Library
+
+> Contributors may add new mechanics to this list along with their name.
+
+---
+
+### 1. MonoSingleton Generic  
+**Author:** Shubham B  
+
+A reusable generic singleton base class for `MonoBehaviour`.
+
+Convert any script into a singleton by inheriting:
+
+```csharp
+public class GameManager : MonoSingletonGeneric<GameManager>
+{
+}
