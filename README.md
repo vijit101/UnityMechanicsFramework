@@ -4,6 +4,54 @@ A modular, open-source collection of plug-and-play gameplay mechanics built for 
 
 Instead of rewriting commonly used systems across projects, this repository centralizes reusable and scalable gameplay mechanics designed with clean architecture and extensibility in mind. The goal is to provide production-ready systems that developers can integrate directly into their 2D games.
 
+## 📂 Folder Structure
+
+UnityMechanicsFramework/
+│
+├── package.json # UPM Manifest
+├── README.md
+├── CHANGELOG.md
+├── LICENSE
+│
+├── Runtime/
+│ ├── Core/
+│ │ ├── MonoSingleton.cs
+│ │ ├── EventBus.cs
+│ │ └── StateMachine/
+│ │
+│ ├── Physics/
+│ │ ├── IPhysicsAdapter.cs
+│ │ ├── Physics2DAdapter.cs
+│ │ └── Physics3DAdapter.cs
+│ │
+│ ├── Movement/
+│ │ ├── ModularJumpSystem.cs
+│ │ ├── DashSystem.cs
+│ │ └── WallSlideSystem.cs
+│ │
+│ ├── Dialogue/
+│ │ ├── DialogueSystem.cs
+│ │ ├── DialogueNode.cs
+│ │ └── DialogueDatabase.cs
+│ │
+│ ├── Input/
+│ │ └── InputAdapter.cs
+│ │
+│ └── Utils/
+│ └── TimerUtility.cs
+│
+├── Editor/ # Editor-only tools
+│ ├── CustomInspectors/
+│ └── PropertyDrawers/
+│
+├── Samples~/ # Example scenes & usage demos
+│ ├── JumpExample/
+│ └── DialogueExample/
+│
+└── Tests/
+├── Runtime/
+└── Editor/
+
 ---
 
 ## Mechanics Library
