@@ -158,19 +158,23 @@ git checkout -b mechanic/your-mechanic-name
 Follow these steps **in order**. Skipping any step is grounds for a PR rejection.
 
 ```
-Step 1  ->  Open an Issue with your mechanic proposal
+Step 1  ->  Open an Issue  (label: mechanic-proposal)  Describe what you want to build
 Step 2  ->  Fork the repository and set up locally
-Step 3  ->  Create a branch: mechanic/your-mechanic-name
-Step 4  ->  Build your mechanic scripts inside Runtime/
-Step 5  ->  Create your demo scene inside Samples~/
-Step 6  ->  Write ScriptExplainer.txt (line-by-line explanation)
-Step 7  ->  Record your demo video (Demo.mp4)
-Step 8  ->  Write or update tests inside Tests/
-Step 9  ->  Update the Mechanics Library in README.md
+Step 3  ->  Create a branch:  mechanic/your-mechanic-name
+Step 4  ->  Build your mechanic scripts inside  Runtime/
+Step 5  ->  Create your self-contained demo scene inside  Samples~/
+Step 6  ->  Write  ScriptExplainer.txt  (line-by-line code explanation)
+Step 7  ->  Record  Demo.mp4  (mandatory video walkthrough — see Section 11)
+Step 8  ->  Write or update tests inside  Tests/
+Step 9  ->  Update README.md  in TWO places:
+              9a. Add a row to the Quick Navigation table
+              9b. Add your full mechanic documentation card  (see Section 14)
 Step 10 ->  Commit and push your branch
-Step 11 ->  Open a Pull Request against main using the correct title format
+Step 11 ->  Open a Pull Request:  [Mechanic] Add Your Mechanic Name
 Step 12 ->  Respond to reviewer feedback promptly
 ```
+
+> **Step 9 is not optional.** The README is the living index of this entire framework. Every user who visits the repo navigates it to find mechanics. If your entry is missing, incomplete, or has no video link, your PR will not be merged.
 
 ---
 
@@ -490,10 +494,15 @@ Your video must include all of the following sections (in any order):
 | Audio | A voiceover is strongly recommended |
 | Captions | Optional but appreciated for accessibility |
 
-### 11.3 Where to put the video
+### 11.3 Where to put the video and how to link it
 
-- **Under 100MB** — Place at `Samples~/YourMechanicName/Video/Demo.mp4`
-- **Over 100MB** — Upload to YouTube (unlisted is fine) or Google Drive and paste the link in your PR description and in your `ScriptExplainer.txt` header
+- **Under 100MB** — Place at `Samples~/YourMechanicName/Video/Demo.mp4` and link to it in your README entry using a relative GitHub path
+- **Over 100MB** — Upload to YouTube (unlisted is fine) or Google Drive and paste the full URL in:
+  - Your README mechanic entry (metadata table + Quick Navigation row)
+  - Your PR description
+  - The header of your `ScriptExplainer.txt`
+
+> **Your video link must be live and accessible at the time your PR is submitted.** A broken or missing link will block the PR from being merged, since the README is the public documentation and every user will click it.
 
 ### 11.4 Recording tools
 
@@ -598,39 +607,161 @@ public class ModularJumpSystemTests
 
 ## 14. Updating the Mechanics Library in README
 
-After your mechanic is merged, update the **Mechanics Library** section in `README.md`.
+The `README.md` is the **living index** of this entire framework — it is the first thing every user sees, and the primary way people discover, understand, and use every mechanic in this repo.
 
-### Format to follow
+When your PR is merged, you are required to update the README in **two places**. Both are mandatory. A PR missing either update will not be approved.
+
+---
+
+### 14.1 Part 1 — Add a row to the Quick Navigation table
+
+The Quick Navigation table lives at the top of the Mechanics Library section. It gives users an instant overview and lets them jump directly to any mechanic entry.
+
+Find this table in `README.md`:
+
+```markdown
+| # | Mechanic | Author | Category | Video |
+|---|---|---|---|---|
+| 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
+| 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](...) |
+```
+
+Add your row at the bottom:
+
+```markdown
+| N | [Your Mechanic Name](#n-your-mechanic-name) | [Your Name](https://github.com/your-handle) | Category | [▶ Watch](YOUR_VIDEO_LINK) |
+```
+
+**Rules for your nav row:**
+- `N` must be the next sequential number
+- The anchor link (e.g. `#3-your-mechanic-name`) must exactly match the heading you add in Part 2
+- The Category must match one of: `Core`, `Movement`, `Physics`, `Dialogue`, `Inventory`, `Combat`, `UI`, `AI`, `Systems`, `Utils`
+- The video link is **mandatory** — if your video is a file in the repo, link to it; if it is hosted externally, paste the full URL
+- If no video exists, the PR will not be merged — `—` is not an acceptable value
+
+---
+
+### 14.2 Part 2 — Add your full mechanic documentation card
+
+Below the Quick Navigation table, add your mechanic's full entry. This is the one-stop documentation for every developer who uses your mechanic. It must contain all five parts below.
+
+#### The full entry template
 
 ```markdown
 ### N. Your Mechanic Name
-**Author:** [Your Name](https://github.com/your-github-handle)
 
-One or two sentences describing what the mechanic does and why it is useful.
-What type of game would use this? What problem does it solve?
+| | |
+|---|---|
+| **Author** | [Your Name](https://github.com/your-handle) |
+| **Namespace** | `GameplayMechanicsUMFOSS.YourFeatureGroup` |
+| **Location** | `Runtime/YourFeatureGroup/YourMechanicScript.cs` |
+| **Category** | Movement / Combat / UI / Core / etc. |
+| **Demo Scene** | `Samples~/YourMechanicName/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](YOUR_VIDEO_LINK) |
 
-**Highlights:**
-- Key architectural feature (e.g. "Interface-driven - supports both 2D and 3D physics")
-- Key gameplay feature (e.g. "Coyote time and jump buffering built in")
-- Key learning value (e.g. "Demonstrates the Strategy pattern applied to game mechanics")
+**What it does**
+
+One to three sentences. Describe the problem this mechanic solves and what type of game
+would use it. Do not describe implementation details here — save that for the code example.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.YourFeatureGroup;
+
+// Step 1: Brief setup comment
+YourClass instance = GetComponent<YourClass>();
+
+// Step 2: Show the most common usage
+instance.DoTheThing();
+
+// Step 3: Show a typical result or callback if relevant
+instance.OnComplete += () => Debug.Log("Done.");
 ```
 
-### Example entry
+**Highlights**
+- One key architectural point (e.g. "Interface-driven — supports both 2D and 3D")
+- One key gameplay feature (e.g. "Supports coyote time and jump buffering")
+- One key learning value (e.g. "Demonstrates the Observer pattern via EventBus")
+```
+
+---
+
+### 14.3 What each part must contain
+
+| Part | What is required | Common mistake |
+|---|---|---|
+| **Metadata table** | All 6 rows filled — author linked to GitHub, video linked | Missing video link, or linking to a folder instead of the video file |
+| **What it does** | Problem + use case — no implementation details | Too vague ("it handles jumping") or too technical (explaining internals) |
+| **How to use it** | A minimal, working code example a developer can copy into their project | Showing internal implementation instead of external usage |
+| **Highlights** | Exactly 3 bullet points — architecture, gameplay, learning value | Repeating the description, or listing Unity features instead of what makes this mechanic special |
+| **Quick Nav row** | A correctly formatted row in the nav table with a working anchor and video link | Anchor doesn't match the heading, or video link is missing |
+
+---
+
+### 14.4 Filled example — what a complete entry looks like
 
 ```markdown
 ### 3. Modular Inventory System
-**Author:** [Vijit](https://github.com/vijit101)
 
-A ScriptableObject-driven inventory system supporting item stacking, equipment slots,
-and runtime save/load. Designed to be integrated into any 2D RPG or action game
-with minimal coupling to existing player code.
+| | |
+|---|---|
+| **Author** | [Vijit](https://github.com/vijit101) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Inventory` |
+| **Location** | `Runtime/Inventory/InventorySystem.cs` |
+| **Category** | Inventory |
+| **Demo Scene** | `Samples~/InventorySystem/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](https://youtube.com/your-link-here) |
 
-**Highlights:**
-- Fully data-driven via ScriptableObject item definitions
-- Supports item stacking, unique items, and equipment slots
-- Uses EventBus for UI sync - no direct references between inventory and HUD
-- Demonstrates Command pattern for undo-able inventory actions
+**What it does**
+
+A ScriptableObject-driven inventory system for 2D RPG and action games.
+Handles item stacking, equipment slots, and runtime save/load without coupling
+to any specific player implementation.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Inventory;
+
+// Step 1: Add InventorySystem component to your player
+InventorySystem inventory = GetComponent<InventorySystem>();
+
+// Step 2: Add an item at runtime
+inventory.AddItem(swordItemSO);
+
+// Step 3: React to changes via EventBus
+EventBus.Subscribe<ItemAddedEvent>(e => uiManager.RefreshInventoryUI());
 ```
+
+**Highlights**
+- Fully data-driven — all item definitions live in ScriptableObject assets, not code
+- Uses EventBus for UI sync, keeping inventory and HUD completely decoupled
+- Demonstrates the Command pattern for undo-able add/remove actions
+
+And the Quick Navigation row:
+
+| 3 | [Modular Inventory System](#3-modular-inventory-system) | [Vijit](https://github.com/vijit101) | Inventory | [▶ Watch](https://youtube.com/your-link-here) |
+```
+
+---
+
+### 14.5 Where the contributor entry template lives in README.md
+
+There is an HTML comment block inside the Mechanics Library section of `README.md` that contains the copy-paste template. It looks like this when you open the raw file:
+
+```
+<!--
+================================================================
+CONTRIBUTOR ENTRY TEMPLATE
+Copy the block below and fill it in when your PR is merged.
+Delete this comment block before committing.
+...
+================================================================
+-->
+```
+
+Copy the template, fill it in, delete the comment markers, and place your entry below the last existing mechanic. Never edit or delete entries above yours.
 
 ---
 
@@ -653,18 +784,25 @@ Code & Architecture
 Files & Structure
   [ ] Mechanic scripts are inside the correct Runtime/ subfolder
   [ ] Demo scene is inside Samples~/YourMechanicName/Assets/Scenes/
-  [ ] All required prefabs are included in Samples~/YourMechanicName/Assets/Prefabs/
-  [ ] ScriptExplainer.txt is present and complete
-  [ ] Demo.mp4 is present (or YouTube/Drive link is in PR description)
+  [ ] All required prefabs are inside Samples~/YourMechanicName/Assets/Prefabs/
+  [ ] ScriptExplainer.txt is present, complete, and explains the why not just the what
+  [ ] Demo.mp4 is present at Samples~/YourMechanicName/Video/ OR an external link is ready
 
-Documentation
-  [ ] README.md Mechanics Library section is updated with your entry
-  [ ] ScriptExplainer.txt covers every meaningful code block
-  [ ] DemoScene includes UI labels explaining the controls
+README — Living Index (both updates required)
+  [ ] Quick Navigation table has a new row with the correct anchor, category, and working video link
+  [ ] Full mechanic documentation card added below the last existing entry
+  [ ] Metadata table is complete (all 6 rows filled, author linked to GitHub, video linked)
+  [ ] "What it does" section written (problem + use case, no implementation details)
+  [ ] "How to use it" section has a working, minimal code example
+  [ ] "Highlights" has exactly 3 bullet points (architecture, gameplay feature, learning value)
+
+Demo Scene
+  [ ] DemoScene.unity runs immediately on Play with no missing references
+  [ ] DemoScene includes UI text labels showing the player controls
 
 Git hygiene
   [ ] Branch is named mechanic/your-mechanic-name
-  [ ] Commits are clean and descriptive (not "fix", "wip", "asdfgh")
+  [ ] Commits are clean and descriptive (not "fix", "wip", "stuff")
   [ ] No Unity auto-generated files outside of .gitignore scope
   [ ] No .DS_Store, Thumbs.db, or other OS artefacts committed
 ```
@@ -693,32 +831,36 @@ Use this template when opening your PR:
 <!-- What is the mechanic called? -->
 
 ## What does it do?
-<!-- One paragraph describing the mechanic and the problem it solves. -->
+<!-- One paragraph. What problem does this solve? What type of game would use it? -->
 
 ## How to test it
-<!-- Step by step - what to do after opening the DemoScene to see the mechanic work. -->
+<!-- Numbered steps: what to do after opening DemoScene to see the mechanic work -->
 
 ## Demo Video
-<!-- Link here if not included as Demo.mp4 -->
+<!-- Paste your video link here — YouTube, Google Drive, or relative path to Demo.mp4 -->
 
 ## Namespace used
 <!-- e.g. GameplayMechanicsUMFOSS.Movement -->
 
+## README entry
+<!-- Paste a preview of your Quick Navigation row and your full mechanic card here so reviewers can check it before looking at the file -->
+
 ## Checklist
-- [ ] Compiles with zero errors/warnings
-- [ ] Folder structure followed
-- [ ] ScriptExplainer.txt included
-- [ ] DemoScene runs immediately on Play
-- [ ] Demo video included or linked
-- [ ] README.md updated
+- [ ] Compiles with zero errors and zero warnings
+- [ ] Folder structure followed exactly
+- [ ] ScriptExplainer.txt included and complete
+- [ ] DemoScene runs immediately on Play — no missing references
+- [ ] Demo video included at Samples~/YourMechanicName/Video/ or linked above
+- [ ] README Quick Navigation row added with working anchor and video link
+- [ ] README full mechanic card added (metadata table, what it does, code example, highlights)
 ```
 
 ### 15.4 What happens after you submit
 
 - A maintainer will review your PR within 7 days
-- You may receive review comments requesting changes — respond and push updates
-- Once approved, your mechanic will be merged and added to the Mechanics Library
-- Your name will appear permanently in the README contributors list
+- You may receive review comments requesting changes — respond and push updates to the same branch
+- Once approved, your mechanic will be merged and your README entry goes live immediately
+- Your name, GitHub profile link, and video will be permanently visible in the Mechanics Library to every developer who visits the repo
 
 > PRs that have no activity from the contributor for 14 days after review comments will be closed. You can always reopen.
 
@@ -735,10 +877,11 @@ Understanding how code review works will help you get your PR merged faster.
 | **Architecture** | Is the mechanic modular? Does it avoid tight coupling? |
 | **Namespace** | Correct namespace placement and format |
 | **Scripts** | Readability, naming, class structure ordering |
-| **Scene** | Does it run immediately? Are all references wired? |
-| **ScriptExplainer** | Is it complete? Does it teach, not just describe? |
-| **Video** | Does it cover all required sections? Is it clear? |
-| **README** | Is the entry formatted correctly and informative? |
+| **Scene** | Does it run immediately? Are all references wired? Controls labelled? |
+| **ScriptExplainer** | Is it complete? Does it explain the *why*, not just the *what*? |
+| **Video** | Does it exist? Is the link live? Does it cover all 7 required sections? |
+| **README — Nav row** | Correct anchor, correct category, working video link |
+| **README — Card** | All 6 metadata rows filled, code example works, highlights are specific not generic |
 
 ### How to respond to review feedback
 
@@ -753,19 +896,41 @@ Understanding how code review works will help you get your PR merged faster.
 Learn from what gets PRs rejected:
 
 ```
-Missing references in DemoScene (NullReferenceException on Play)
-Mechanic depends on another mechanic not included in the PR
-ScriptExplainer.txt only describes what each line does, not why
-Video does not show the mechanic actually running
-Wrong or missing namespace
-Magic numbers scattered throughout the code
-.meta files committed without the corresponding asset
-.DS_Store or OS files committed
-Branch named "main", "fix", "update" or anything non-descriptive
-PR title not following [Mechanic] Add X format
-README not updated
-Prefab references point to assets outside the mechanic's folder
-Demo scene requires the contributor's machine-specific paths
+Scene & Files
+  Missing references in DemoScene (NullReferenceException on Play)
+  Mechanic depends on another mechanic not included in the PR
+  Prefab references point to assets outside the mechanic's folder
+  Demo scene requires machine-specific or absolute paths
+
+Code
+  Wrong or missing namespace
+  Magic numbers scattered throughout the code
+  Direct Rigidbody2D reference instead of IPhysicsAdapter
+
+ScriptExplainer
+  Only describes what each line does, not why
+  Missing sections — not every meaningful block is explained
+
+Video
+  No video at all — PR will be rejected outright
+  Video link in README is broken or points to a private file
+  Video does not show the mechanic actually running in Play Mode
+  Video is too short — doesn't cover the 7 required sections
+
+README — the most commonly missed
+  Quick Navigation row is missing entirely
+  Quick Navigation anchor doesn't match the heading (broken link)
+  Video link in the nav table is missing or shows "—"
+  Metadata table is incomplete (missing rows, author not linked to GitHub)
+  "How to use it" shows internal implementation instead of how to call the mechanic
+  "Highlights" bullet points are generic ("clean code", "easy to use") not specific
+  README entry placed in the wrong location (not below the last existing entry)
+
+Git
+  .meta files committed without the corresponding asset
+  .DS_Store or Thumbs.db committed
+  Branch named "main", "fix", "update" or anything non-descriptive
+  PR title not following [Mechanic] Add X format
 ```
 
 ---
