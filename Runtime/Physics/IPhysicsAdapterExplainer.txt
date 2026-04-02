@@ -1,0 +1,49 @@
+====================================================
+SCRIPT: IPhysicsAdapter.cs
+AUTHOR: Bug-Finderr
+NAMESPACE: GameplayMechanicsUMFOSS.Physics
+====================================================
+
+PURPOSE:
+An interface that abstracts Unity's physics systems so mechanics can
+work with both 2D and 3D physics without code changes. Swap the adapter
+component on the GameObject and the mechanic works in either dimension.
+
+----------------------------------------------------
+
+Code    : public interface IPhysicsAdapter
+Explain : An interface, not an abstract class, because MonoBehaviours can
+          only inherit from one class (MonoBehaviour itself) but can
+          implement multiple interfaces. This lets Rigidbody3DAdapter
+          inherit MonoBehaviour AND implement IPhysicsAdapter.
+
+Code    : Vector3 Velocity { get; set; }
+Explain : Read/write access to the physics body's velocity. The 2D adapter
+          would internally convert Vector3 to Vector2, hiding that detail
+          from the mechanic that uses it.
+
+Code    : bool IsKinematic { get; set; }
+Explain : Controls whether the physics engine drives this body. Kinematic
+          bodies aren't affected by forces but can still be moved via code.
+          The boomerang weapon toggles this: dynamic when thrown (physics
+          drives it), kinematic when embedded or recalling (code drives it).
+
+Code    : void AddForce(Vector3 force, bool isImpulse = false)
+Explain : Applies force with a flag for impulse vs continuous. Impulse is
+          a one-time push (like a throw), continuous force is applied every
+          frame (like gravity). The adapter translates this to the correct
+          Unity ForceMode internally.
+
+Code    : void SetPosition(Vector3 position)
+Explain : Directly teleports the physics body. Use sparingly -- it bypasses
+          physics interpolation and can cause visual jitter if used every frame.
+
+Code    : void MovePosition(Vector3 position)
+Explain : Moves the body while respecting physics interpolation. Preferred
+          for kinematic bodies that need smooth movement (like a weapon
+          during the recall animation).
+
+Code    : void ClearForces()
+Explain : Zeros out all accumulated forces and angular velocity. Called when
+          transitioning from dynamic to kinematic state to prevent residual
+          forces from causing unexpected behavior on the next state change.
