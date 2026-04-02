@@ -85,6 +85,8 @@ namespace GameplayMechanicsUMFOSS.Combat
             {
                 Debug.LogError($"[BoomerangWeapon] No IPhysicsAdapter found on {gameObject.name}. " +
                                "Add a Rigidbody3DAdapter component.");
+                enabled = false;
+                return;
             }
 
             equippedLocalPos = transform.localPosition;
@@ -135,6 +137,7 @@ namespace GameplayMechanicsUMFOSS.Combat
             rb.useGravity = false;
             rb.freezeRotation = true;
             weaponCollider.enabled = true;
+            physics.Velocity = throwDirection * throwForce;
 
             currentState = WeaponState.Thrown;
             EventBus.Publish(new WeaponThrownEvent { Direction = direction.normalized });
@@ -175,12 +178,7 @@ namespace GameplayMechanicsUMFOSS.Combat
             float distanceTravelled = Vector3.Distance(throwOrigin, transform.position);
 
             if (distanceTravelled >= maxRange)
-            {
-                physics.ClearForces();
-                physics.IsKinematic = true;
-                visualPivot.localRotation = Quaternion.identity;
-                currentState = WeaponState.Embedded;
-            }
+                Recall();
         }
 
         private void HandleRecallingUpdate()

@@ -17,7 +17,7 @@ namespace GameplayMechanicsUMFOSS.Physics
         /// <summary>Preferred over SetPosition for kinematic bodies (smooth interpolation).</summary>
         void MovePosition(Vector3 position);
 
-        /// <summary>Clears forces/torques but does NOT reset velocity.</summary>
+        /// <summary>Clears forces/torques and resets velocity to zero.</summary>
         void ClearForces();
     }
 }
