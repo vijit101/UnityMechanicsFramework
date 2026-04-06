@@ -1,0 +1,288 @@
+====================================================
+SCRIPT: InteractionController_UMFOSS.cs
+        IInteractable_UMFOSS.cs
+        InteractionPrompt_UMFOSS.cs
+        InteractionEvents.cs
+        EventBus.cs
+AUTHOR: Shivam Tiwari
+NAMESPACE: GameplayMechanicsUMFOSS.Interaction
+         GameplayMechanicsUMFOSS.Core (EventBus)
+====================================================
+
+PURPOSE:
+A modular, reusable interaction system that allows any entity (player or AI)
+to interact with any object in the environment through one clean interface.
+
+The player gets one controller. Every interactable object simply implements
+IInteractable_UMFOSS and decides what happens. The controller only knows the
+interface — never the concrete type. This is what makes the system infinitely
+extensible with zero changes to the core.
+
+====================================================
+KEY DESIGN DECISIONS — READ THESE FIRST
+====================================================
+
+Q: Why one controller, not one per interactable?
+A: The old approach (OnTriggerEnter + tag check + input check inside every
+   interactable script) duplicates detection logic, input logic, and prompt
+   logic across every single object. This system writes that logic ONCE in
+   InteractionController_UMFOSS. Every interactable only implements what
+   makes it unique — what happens when you interact.
+
+Q: Why is CanInteract() checked TWICE (before focus AND before interact)?
+A: State can change between the two moments. Consider:
+   - Player walks into range of a locked chest → CanInteract() = false → no prompt
+   - Player picks up a key while still in range → CanInteract() should now be true
+   - Player presses E → CanInteract() must be checked again at that exact moment
+   The first check gates the UI prompt. The second check gates the actual action.
+   Without both, you get either phantom prompts or ghost interactions.
+
+Q: Why interfaces instead of base classes?
+A: Because any MonoBehaviour might already inherit from something else.
+   Interfaces have no inheritance conflicts. A Door, an NPC, and a pickup
+   are completely different objects — they share no common base — but they
+   all implement the same 5-method contract.
+
+Q: How do I add a new interaction type?
+A: 1. Create a new MonoBehaviour
+   2. Add "implements IInteractable_UMFOSS"
+   3. Implement the 5 methods + Priority property
+   4. Put it on a GameObject on the Interactable layer
+   That's it. Zero changes to the controller. Zero changes to existing objects.
+
+====================================================
+FILE: EventBus.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Core
+====================================================
+
+Code    : public static class EventBus
+Explain : A static class so it can be accessed from anywhere without needing
+          a reference. Acts as a central message broker — publishers and
+          subscribers never know about each other.
+
+Code    : private static readonly Dictionary<Type, List<Delegate>> subscribers
+Explain : Stores one list of callback delegates per event type. When you call
+          Subscribe<PlayerJumpedEvent>(), it adds your callback to the list
+          keyed by typeof(PlayerJumpedEvent). This is type-safe — you can
+          never accidentally receive the wrong event type.
+
+Code    : public static void Subscribe<T>(Action<T> callback)
+Explain : Registers a callback. The generic type parameter T identifies which
+          event this callback responds to. Action<T> means it takes one
+          parameter (the event data) and returns nothing.
+
+Code    : public static void Unsubscribe<T>(Action<T> callback)
+Explain : Removes a callback. MUST be called in OnDisable/OnDestroy, otherwise
+          destroyed objects remain in the subscriber list -> null reference
+          exceptions and memory leaks.
+
+Code    : public static void Publish<T>(T eventData)
+Explain : Sends the event to all subscribers. Iterates over a COPY of the list
+          (not the original) because a subscriber might unsubscribe during
+          handling, which would modify the list and crash the foreach loop.
+
+Code    : public static void ClearAll()
+Explain : Removes every subscriber for every event type. Called during scene
+          transitions or test cleanup to prevent stale subscribers from
+          previous scenes receiving events in the new scene.
+
+====================================================
+FILE: IInteractable_UMFOSS.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Interaction
+====================================================
+
+Code    : public interface IInteractable_UMFOSS
+Explain : An interface — a contract that says "any class implementing me
+          MUST have these exact methods." The controller calls these methods
+          without knowing what the object actually is. A door, an NPC, and
+          a pickup all look the same to the controller.
+
+Code    : void Interact(GameObject interactor)
+Explain : The core action. Called only after CanInteract() returns true.
+          The interactor parameter is the entity doing the interacting
+          (usually the player). This lets the object query the interactor
+          for inventory, stats, etc.
+
+Code    : void OnFocused(GameObject interactor)
+Explain : Called when this object becomes the "best candidate" in the
+          controller's detection range. Use for visual feedback — outline,
+          glow, tooltip, floating animation. NOT the same as being in range;
+          only one object is focused at a time.
+
+Code    : void OnUnfocused(GameObject interactor)
+Explain : Called when focus leaves this object. Reverse whatever OnFocused did.
+          Also called when the player walks out of range entirely.
+
+Code    : string GetInteractionPrompt()
+Explain : Returns the text shown to the player. "Press E to open", "Hold E
+          to activate", etc. This is passed through the EventBus to the UI
+          prompt — the interactable has no reference to the UI at all.
+
+Code    : bool CanInteract(GameObject interactor)
+Explain : The gate. If this returns false, no prompt is shown, no interaction
+          fires. Checked TWICE — once during selection (to filter the prompt)
+          and once during interaction (to prevent state-change race conditions).
+
+Code    : int Priority { get; }
+Explain : Used by HighestPriority selection mode. When a quest NPC and a
+          barrel are both in range, the NPC (priority = 5) wins over the
+          barrel (priority = 0) regardless of which is closer.
+
+====================================================
+FILE: InteractionEvents.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Interaction
+====================================================
+
+Code    : public struct InteractableDetectedEvent
+Explain : Struct, not class. Structs are value types — allocated on the stack,
+          no heap allocation, no garbage collection pressure. Since events
+          fire frequently (every frame during hold), this matters for
+          performance. Contains the interactable reference and prompt text.
+
+Code    : public struct InteractableLostEvent
+Explain : Fired when focus is lost. The prompt UI subscribes to this to
+          hide itself. Contains only the interactable that was lost.
+
+Code    : public struct InteractionPerformedEvent
+Explain : Fired AFTER a successful Interact() call. Contains both the
+          interactable and the interactor. AudioManager, achievement systems,
+          analytics — anything can subscribe without coupling to the
+          interaction system.
+
+Code    : public struct InteractionFailedEvent
+Explain : Fired when the player presses interact but CanInteract() returns
+          false. Contains a reason string ("Requires Iron Key") so the UI
+          can display a meaningful message.
+
+Code    : public struct HoldInteractProgressEvent
+Explain : Fired every frame during a hold interaction. Contains a float
+          from 0.0 to 1.0. The UI progress bar maps this directly to its
+          fill amount.
+
+Code    : public struct HoldInteractCancelledEvent
+Explain : Fired when the player releases the key or leaves range mid-hold.
+          The UI resets the progress bar to zero.
+
+====================================================
+FILE: InteractionController_UMFOSS.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Interaction
+====================================================
+
+Code    : public enum DetectionMode { Trigger, OverlapCircle, Raycast }
+Explain : Three strategies for finding interactables.
+          - Trigger: Unity handles detection via collider events. Fastest.
+          - OverlapCircle: Manual physics query each frame. Most flexible.
+          - Raycast: Line-of-sight only. Best for first-person style games.
+
+Code    : public enum SelectionMode { Nearest, HighestPriority }
+Explain : When multiple interactables are in range, this decides the winner.
+          Nearest = closest by Vector2.Distance. HighestPriority = highest
+          IInteractable_UMFOSS.Priority value, regardless of distance.
+
+Code    : [DisallowMultipleComponent]
+Explain : Unity attribute that prevents adding two InteractionControllers
+          to the same GameObject. One controller per entity — enforced.
+
+Code    : [SerializeField] private DetectionMode detectionMode
+Explain : Exposed in Inspector via [SerializeField] while remaining private.
+          Defaults to OverlapCircle — the most forgiving and easiest to
+          set up for prototyping.
+
+Code    : [SerializeField] private LayerMask interactableLayer
+Explain : Only objects on this layer are considered for interaction.
+          No hardcoded tags. LayerMask is a bitmask — bitwise AND checks
+          if an object's layer matches: ((1 << obj.layer) & mask) != 0.
+
+Code    : [SerializeField] private bool requireHold = false
+Explain : When true, the player must hold the interact key for holdDuration
+          seconds. When false, interaction fires on the frame the key is
+          pressed. Configurable per controller instance.
+
+Code    : [SerializeField] private KeyCode interactKey = KeyCode.E
+Explain : The configurable interact key. NOT hardcoded — changeable in
+          Inspector. Defaults to E, which is the industry standard for
+          "interact" in PC games.
+
+Code    : #if ENABLE_INPUT_SYSTEM
+Explain : Preprocessor directive. This code only compiles if the Unity
+          Input System package is installed. Without it, these lines are
+          completely invisible to the compiler — no errors, no warnings,
+          no dependencies.
+
+Code    : private void DetectWithOverlapCircle()
+Explain : Clears the detected list every frame and queries Physics2D for
+          all colliders within interactionRadius on the interactableLayer.
+          Each hit is checked for IInteractable_UMFOSS via GetComponent.
+
+Code    : private void SelectBestInteractable()
+Explain : Runs every frame after detection. Finds the best candidate using
+          the configured SelectionMode. If the best candidate can't interact,
+          falls back to the first one that can. If the winner is different
+          from the current focus, fires focus-change events.
+
+Code    : private void HandleHoldInteraction(bool isHeld, bool isReleased)
+Explain : Accumulates holdTimer using Time.deltaTime. Publishes progress
+          events every frame. When progress reaches 1.0, calls TryInteract().
+          If the player releases early, calls CancelHold() which resets the
+          timer and publishes HoldInteractCancelledEvent.
+
+Code    : public void TryInteract()
+Explain : The main public API. Checks for null, validates the Unity object
+          is still alive, checks CanInteract(), and only then calls
+          Interact(). Publishes InteractionPerformedEvent on success,
+          InteractionFailedEvent on failure.
+
+Code    : private void RefreshCurrentInteractable()
+Explain : Called after Interact(). If the interactable deactivated itself
+          (like a pickup), this detects that and clears focus immediately
+          instead of waiting for the next frame's detection sweep.
+
+====================================================
+FILE: InteractionPrompt_UMFOSS.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Interaction
+====================================================
+
+Code    : public class InteractionPrompt_UMFOSS : MonoBehaviour
+Explain : A standalone UI component. It subscribes to EventBus events and
+          shows/hides the prompt. It NEVER references the controller or any
+          interactable. This means you can swap this component for a
+          completely different UI design and the controller will never know.
+
+Code    : [SerializeField] private GameObject promptPanel
+Explain : The parent container for the prompt UI. SetActive(true/false)
+          toggles the entire prompt. Using a GameObject reference instead
+          of CanvasGroup because it is simpler and more universally
+          applicable across Unity versions.
+
+Code    : [SerializeField] private Slider holdProgressBar
+Explain : Standard Unity UI Slider repurposed as a progress bar. Its value
+          is set directly from the HoldInteractProgressEvent.progress
+          field (0 to 1). Hidden when no hold interaction is active.
+
+Code    : private void OnEnable() / OnDisable()
+Explain : Subscribe in OnEnable, unsubscribe in OnDisable. This is the
+          correct Unity pattern — not Awake/OnDestroy. OnEnable/OnDisable
+          mirrors the component's active state, so disabling the prompt
+          component automatically stops it from receiving events.
+
+====================================================
+ADDING A NEW INTERACTION TYPE — STEP BY STEP
+====================================================
+
+1. Create a new C# script (e.g. TreasureChest.cs)
+2. Make it implement IInteractable_UMFOSS:
+
+   public class TreasureChest : MonoBehaviour, IInteractable_UMFOSS
+   {
+       public int Priority => 0;
+
+       public void Interact(GameObject interactor) { /* open chest */ }
+       public void OnFocused(GameObject interactor) { /* glow effect */ }
+       public void OnUnfocused(GameObject interactor) { /* remove glow */ }
+       public string GetInteractionPrompt() => "Press E to open chest";
+       public bool CanInteract(GameObject interactor) => !isOpen;
+   }
+
+3. Attach it to a GameObject
+4. Set that GameObject's layer to your Interactable layer
+5. Done. No changes to InteractionController. No changes to existing objects.

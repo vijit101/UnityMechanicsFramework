@@ -185,6 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Modular Interaction System](#3-modular-interaction-system) | [Shivam Tiwari](https://github.com/shivam1234100) | Interaction | [▶ Watch](https://github.com/shivam1234100/UnityMechanicsFramework/tree/mechanic/interaction-system/Samples~/InteractionSystem/Video) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -274,6 +275,53 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 
 ---
 
+### 3. Modular Interaction System
+
+| | |
+|---|---|
+| **Author** | [Shivam Tiwari](https://github.com/shivam1234100) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Interaction` |
+| **Location** | `Runtime/Interaction/InteractionController_UMFOSS.cs` |
+| **Category** | Interaction |
+| **Demo Scene** | `Samples~/InteractionSystem/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](https://github.com/shivam1234100/UnityMechanicsFramework/tree/mechanic/interaction-system/Samples~/InteractionSystem/Video) |
+
+**What it does**
+
+A reusable, modular interaction system that lets any entity — player or AI — interact with any object through one clean interface. Instead of copy-pasting `OnTriggerEnter + tag check + input check` into every interactable, the player gets one controller and every object simply implements `IInteractable_UMFOSS` to decide what happens. Supports instant press and hold-to-interact, three detection modes, and fully decoupled EventBus-driven UI.
+
+**How to use it**
+
+```csharp
+using UnityEngine;
+using GameplayMechanicsUMFOSS.Interaction;
+
+// Step 1: Implement IInteractable_UMFOSS on any object
+public class TreasureChest : MonoBehaviour, IInteractable_UMFOSS
+{
+    private bool isOpen = false;
+    public int Priority => 0;
+
+    public void Interact(GameObject interactor)       { isOpen = true; /* open animation */ }
+    public void OnFocused(GameObject interactor)      { /* highlight */ }
+    public void OnUnfocused(GameObject interactor)    { /* remove highlight */ }
+    public string GetInteractionPrompt()              => "Press E to open";
+    public bool CanInteract(GameObject interactor)    => !isOpen;
+}
+
+// Step 2: Add InteractionController_UMFOSS to your player
+// Step 3: Set the interactable's layer to your Interactable LayerMask
+// Done — zero changes to the controller for any new interaction type
+```
+
+**Highlights**
+
+- Interface-driven architecture — the controller never knows what it interacts with, making the system infinitely extensible with zero core changes
+- Three detection modes (Trigger, OverlapCircle, Raycast) and two selection modes (Nearest, HighestPriority) configurable from the Inspector
+- Demonstrates the Observer pattern via EventBus — all UI communication is fully decoupled from gameplay logic
+
+---
+
 <!--
 ================================================================
 CONTRIBUTOR ENTRY TEMPLATE
@@ -331,6 +379,7 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 | `GameplayMechanicsUMFOSS.Dialogue` | DialogueSystem, nodes, database | ✅ Active |
 | `GameplayMechanicsUMFOSS.Input` | InputAdapter | ✅ Active |
 | `GameplayMechanicsUMFOSS.Utils` | TimerUtility, helpers | ✅ Active |
+| `GameplayMechanicsUMFOSS.Interaction` | InteractionController, IInteractable, InteractionPrompt | ✅ Active |
 | `GameplayMechanicsUMFOSS.Inventory` | Item systems, loot, equipment | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.Combat` | Hitboxes, damage, status effects | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.UI` | HUD, menus, tooltips | 🔓 Open for contribution |
