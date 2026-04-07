@@ -1,0 +1,86 @@
+Base Inventory System - Script Explainer
+
+The Core Architecture
+This base inventory system is built on a four-part architecture designed around modularity, separation of concerns, and open/closed principles (open for extension but closed for modification). 
+
+The following is a script-by-script, line-by-line logical breakdown of the entire mechanic:
+
+--------------------------------------------------------------------------------------------------------------------
+
+1. ItemCategory.cs (Enum)
+
+public enum ItemCategory { Weapon, Armour, Consumable, Quest, Material, Currency, Tool, Accessory, Misc }
+- This is an Enum kept outside any namespace or class so it can be accessed globally without dependencies.
+- It defines logical groupings for items which allow later systems (like Shops or Equipment Managers) to easily filter slots without needing complex string checks.
+
+--------------------------------------------------------------------------------------------------------------------
+
+2. ItemData_UMFOSS.cs (ScriptableObject)
+
+[CreateAssetMenu(fileName = "NewItem", menuName = "UMFOSS/Inventory/ItemData")]
+public class ItemData_UMFOSS : ScriptableObject { ... }
+- Purpose: Defines the "blueprint" of an item. It is immutable at runtime.
+- The `[CreateAssetMenu]` attribute tells Unity to allow game designers to right-click in the Project window and create standard assets out of this script without writing any new code.
+- `itemName`, `description`, `icon`, `category`: Defines the fundamental identity UI elements will read.
+- `isStackable`, `maxStackSize`: Rules for the inventory algorithm to know how many identical items can sit in one slot.
+- `baseValue`, `weight`: Expansion values that external systems (like a vendor or weight limit tracker) use to perform math.
+
+--------------------------------------------------------------------------------------------------------------------
+
+3. ItemInstance_UMFOSS.cs (Class)
+
+[System.Serializable]
+public class ItemInstance_UMFOSS { ... }
+- Purpose: Represents the actual, physical item currently sitting inside an inventory slot at runtime.
+- `public ItemData_UMFOSS data;` A reference to the ScriptableObject blueprint, minimizing memory overhead since 10,000 swords will just point to 1 blueprint asset.
+- `public int quantity;` The mutable, changing amount of this specific stack.
+- `Mathf.Clamp(quantity, 1, data.isStackable ? data.maxStackSize : 1);` In the constructor, this mathematically forces non-stackable items to never exceed a quantity of 1.
+- `IsEmpty()` and `IsFull()`: Helper methods that check against the blueprint's `maxStackSize` to quickly tell the `InventorySystem` if more items can fit here.
+
+--------------------------------------------------------------------------------------------------------------------
+
+4. InventorySlot_UMFOSS.cs (Class)
+
+[System.Serializable]
+public class InventorySlot_UMFOSS { ... }
+- Purpose: The container box for a single ItemInstance. 
+- `public ItemInstance_UMFOSS item;` Holds the instance. Null means the slot is totally empty.
+- `IsEmpty()`: Safe null check allowing algorithms to quickly ask the slot if they can place a brand new item here.
+- `Clear()`: Drops the reference to the item, freeing the slot up.
+
+--------------------------------------------------------------------------------------------------------------------
+
+5. InventorySystem_UMFOSS.cs (MonoBehaviour)
+
+The Central Manager. This is the only script attached to a GameObject, executing Unity's logic loops.
+
+[Header("Inventory Settings")]
+- `int slotCount` / `float maxWeight` / `bool allowOverflow`: Designer-defined constraints. 
+- `List<InventorySlot_UMFOSS> slots`: Using a generic List initialized exactly to `slotCount`, acting as the permanent array of containers.
+
+EVENTS:
+- `public event Action<...> ...` This uses standard C# actions. We do not use UnityEvents because we want this system code-driven and decoupled. Systems that want to know when to play a sound or update a UI element will subscribe to these natively.
+
+LOGIC METHODS:
+- `InitializeSlots()`: Runs on `Awake`. A simple `for` loop creating literal empty `InventorySlot_UMFOSS` containers in memory, prepping the array for future inserts.
+
+- `AddItem(ItemData_UMFOSS itemData, int quantity = 1)`:
+   1. Null check / Negative quantity check to reject bad calls.
+   2. Calls `IsBelowWeightLimit` to immediately reject items if the player is burdened (only if allowOverflow is false).
+   3. Looks at `itemData.isStackable`. If true, it runs a loop to find `!slot.IsEmpty()` slots that match the incoming item type and possess space (`!slot.item.IsFull()`). It uses `Mathf.Min` to inject exactly what fits, and loop to the next slot if quantities remain.
+   4. If the item is NOT stackable or no stacks have space, it loops through again looking for `slot.IsEmpty()`. When it finds one, it instantiates a brand new `ItemInstance_UMFOSS` into that slot!
+   5. Fires `OnItemAdded`, `OnSlotChanged`, and `UpdateWeight` events before returning true.
+
+- `RemoveItem(ItemData_UMFOSS itemData, int quantity = 1)`:
+   1. Validates the request using `HasItem()`. It rejects the request fully (returning false) if you don't actually hold the quantity requested. This prevents bugs occurring halfway through a transaction.
+   2. Collects all slots holding the item and `candidateSlots.Sort(...)` by `item.quantity`. It destroys the smallest stacks first, which feels most natural to the player.
+   3. Decrements quantity and runs `slot.Clear()` if the stack hit 0. Fires `OnItemRemoved`.
+
+- `HasItem` & `GetItemCount`:
+   LINQ queries (`slots.Where().Sum()`) instantly sweep the inventory and total the quantity of matching Items for checkups.
+
+- `SwapSlots(int slotIndexA, int slotIndexB)`:
+   Basic array swap algorithm using a temporary reference variable `itemA`. Perfect integration point for Drag-And-Drop UI.
+
+- `UpdateWeight(float weightDelta)`:
+   Updates `currentWeight` linearly. Floating point math can drift into weird numbers like `0.0000001` over time, so it forcefully resets to `0` if it falls under `0.001f`. Fires `OnWeightChanged` so the UI can update the labels.
