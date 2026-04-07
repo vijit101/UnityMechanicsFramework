@@ -185,6 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Timer Utility](#3-timer-utility) | [Riya Bhurse](https://github.com/riyabhurse) | Utils | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/TimerUtility/Video) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -271,6 +272,48 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 - Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
 - Add new conversations without touching any existing scripts
 - Scales to large narrative systems without architectural changes
+
+---
+
+### 3. Timer Utility
+
+| | |
+|---|---|
+| **Author** | [Riya Bhurse](https://github.com/riyabhurse) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Utils` |
+| **Location** | `Runtime/Utils/TimerUtility_UMFOSS.cs` |
+| **Category** | Utils |
+| **Demo Scene** | `Samples~/TimerUtility/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/TimerUtility/Video) |
+
+**What it does**
+
+A fully modular, event-driven timer that any system can use without writing timing logic from scratch. Eliminates scattered `float timer -= Time.deltaTime` patterns across your entire project — attach it, configure it in the Inspector, subscribe to events, and it handles cooldowns, round countdowns, spawn intervals, buff durations, and more.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Utils;
+
+// Option 1: Inspector Component — attach TimerUtility_UMFOSS to a GameObject
+TimerUtility_UMFOSS cooldown = GetComponent<TimerUtility_UMFOSS>();
+cooldown.OnTimerComplete += () => Debug.Log("Dash ready!");
+cooldown.Start();
+
+// Option 2: One-shot from code — no GameObject management needed
+TimerUtility_UMFOSS.Create(duration: 3f, onComplete: () => SpawnEnemy());
+
+// Option 3: Looping timer — repeat every 5 seconds
+TimerUtility_UMFOSS.CreateLooping(interval: 5f, onTick: () => RegenerateHealth());
+
+// Use GetProgress() directly with any UI fill image
+fillImage.fillAmount = timer.GetProgress(); // 0.0 → 1.0, no extra math
+```
+
+**Highlights**
+- Static factory pattern creates and self-destructs hidden GameObjects — callers never manage a GameObject
+- `GetProgress()` returns a clean 0–1 float bindable to any progress bar, fill image, or rotation animation with zero extra code
+- `UseUnscaledTime` mode uses `Time.unscaledDeltaTime` so the timer correctly ignores `Time.timeScale`, essential for pause menus and slow-motion effects
 
 ---
 

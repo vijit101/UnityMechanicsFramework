@@ -1,0 +1,276 @@
+====================================================
+SCRIPT: TimerUtility_UMFOSS.cs
+AUTHOR: Riya Bhurse
+NAMESPACE: GameplayMechanicsUMFOSS.Utils
+VIDEO: [Link to be added after recording]
+====================================================
+
+PURPOSE:
+A fully modular, event-driven timer utility that eliminates scattered
+float timer -= Time.deltaTime logic from every script in a project.
+Any system that needs timed behaviour — cooldowns, round countdowns,
+buff durations, spawn delays — attaches this component, subscribes to
+its events, and lets the timer do all the work.
+
+====================================================
+LINE-BY-LINE EXPLANATION
+====================================================
+
+Code    : using System;
+Explain : Imports the System namespace. Required for the Action delegate
+          type used in the static factory methods (onComplete: Action).
+
+Code    : using UnityEngine;
+Explain : Imports the Unity engine namespace. Required for MonoBehaviour,
+          Time, Mathf, GameObject, and all core Unity types.
+
+Code    : using UnityEngine.Events;
+Explain : Imports UnityAction — Unity's lightweight delegate type.
+          We use UnityAction instead of plain C# events because it is
+          serialisable and cleaner to wire in code. UnityAction<T>
+          allows us to pass parameters like timeRemaining.
+
+Code    : namespace GameplayMechanicsUMFOSS.Utils
+Explain : Places this class inside the Utils feature group following the
+          framework's namespace rules. Prevents naming conflicts with
+          other assemblies and makes intent clear.
+
+Code    : public class TimerUtility_UMFOSS : MonoBehaviour
+Explain : Inherits from MonoBehaviour so the timer can be attached to
+          any GameObject as a component. This is intentional — the timer
+          needs Unity's Update() loop to count time.
+
+----------------------------------------------------
+CONSTANTS
+----------------------------------------------------
+
+Code    : private const float MIN_DURATION = 0.001f;
+Explain : Guards against a zero-duration timer which would cause instant
+          completion on every frame and a divide-by-zero in GetProgress().
+          Using a constant instead of a magic number keeps the code readable
+          and easy to change in one place.
+
+Code    : private const int INFINITE_LOOPS = -1;
+Explain : Convention borrowed from Unity's own APIs (e.g. AudioSource.loop).
+          -1 as a sentinel value meaning "no limit" is immediately readable
+          to any Unity developer.
+
+----------------------------------------------------
+SERIALIZED INSPECTOR FIELDS
+----------------------------------------------------
+
+Code    : [Header("Timer Settings")]
+          [SerializeField] private float duration = 5f;
+Explain : [Header] creates a visual separator in the Unity Inspector.
+          [SerializeField] exposes the private field to the Inspector
+          without making it public — enforcing encapsulation.
+          5f is a sensible default for most cooldowns.
+
+Code    : [SerializeField] private bool autoStart = false;
+Explain : When true, the timer calls Start() in Awake() automatically.
+          Useful when you want a timer running immediately on scene load
+          without any external script calling Start().
+
+Code    : [SerializeField] private bool loop = false;
+          [SerializeField] private int loopCount = -1;
+Explain : loop controls whether the timer restarts after completion.
+          loopCount limits how many restarts happen. -1 (INFINITE_LOOPS)
+          means it runs forever. This mirrors how Unity's animation and
+          particle systems expose loop settings.
+
+Code    : [SerializeField] private bool enableTicks = false;
+          [SerializeField] private float tickInterval = 1f;
+Explain : The tick system allows subscribing to regular interval events
+          without polling GetTimeRemaining() every frame. A countdown UI
+          that updates every second only needs to subscribe to OnTimerTick
+          — it never touches Update().
+
+Code    : [SerializeField] private bool useUnscaledTime = false;
+Explain : Time.deltaTime is scaled by Time.timeScale. When the game is
+          paused (timeScale = 0), Time.deltaTime = 0 and normal timers
+          stop. Time.unscaledDeltaTime ignores timeScale entirely.
+          This is essential for pause menus, slow-motion effects, and
+          cutscene timers that must keep running regardless.
+
+----------------------------------------------------
+PRIVATE STATE FIELDS
+----------------------------------------------------
+
+Code    : private float elapsed = 0f;
+Explain : Tracks how many seconds have accumulated since the last Start()
+          call. All other calculations (remaining, progress) derive from this
+          single source of truth.
+
+Code    : private float tickAccumulator = 0f;
+Explain : Accumulates delta time between ticks. When it reaches tickInterval,
+          a tick fires and the accumulator is reduced by tickInterval (not
+          reset to zero). This carry-over prevents tick drift at different
+          frame rates — the difference from the last frame rolls into the
+          next interval naturally.
+
+Code    : private int completedLoops = 0;
+Explain : Counts how many loop cycles have finished. Compared against
+          loopCount to decide when all loops are done.
+
+----------------------------------------------------
+EVENTS
+----------------------------------------------------
+
+Code    : public UnityAction OnTimerStart;
+Explain : Fires when Start() is called. Systems that need to react the
+          moment a cooldown begins (e.g. greying out a button) subscribe here.
+
+Code    : public UnityAction OnTimerComplete;
+Explain : The primary event. Fires the instant the timer reaches zero.
+          This is where cooldown-ready callbacks, round-end logic,
+          and spawn triggers live. Nothing in this script calls it
+          except at the true moment of completion.
+
+Code    : public UnityAction<float> OnTimerTick;
+Explain : Fires every tickInterval seconds. The float parameter carries
+          the current time remaining. UI text that shows a countdown
+          subscribes here — it never needs Update() or a polling loop.
+
+Code    : public UnityAction<int> OnLoopComplete;
+Explain : Fires at the end of each loop cycle. The int is the zero-based
+          loop index so subscribers can track which iteration just finished
+          without maintaining their own counter.
+
+Code    : public UnityAction OnAllLoopsComplete;
+Explain : Fires only once — after the final loop when loopCount is reached.
+          Distinct from OnTimerComplete so systems can tell the difference
+          between "one cycle done" and "everything done".
+
+----------------------------------------------------
+UNITY LIFECYCLE
+----------------------------------------------------
+
+Code    : private void Awake()
+          {
+              if (autoStart) Start();
+          }
+Explain : Awake() runs before Start() in Unity's lifecycle. Calling our
+          Start() here means the timer is already running before any other
+          script's Start() fires — safe for dependency reasons.
+
+Code    : float delta = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+          elapsed += delta;
+Explain : The ternary selects the correct time source at runtime based on
+          the inspector flag. This single line is the entire difference
+          between a timer that respects pause menus and one that ignores them.
+
+Code    : while (tickAccumulator >= tickInterval)
+          {
+              tickAccumulator -= tickInterval;
+              OnTimerTick?.Invoke(GetTimeRemaining());
+          }
+Explain : A while loop (not if) handles the edge case where a frame takes
+          longer than tickInterval (e.g. a frame spike). Multiple ticks can
+          fire in one Update() if needed, staying accurate.
+          The -= rather than = 0f preserves sub-interval carry-over so
+          ticks stay evenly spaced regardless of frame rate.
+
+Code    : if (elapsed >= duration) HandleCompletion();
+Explain : Completion is checked after tick processing. This guarantees
+          the final tick at the boundary fires before the completion event,
+          which is the correct order for UIs (show "0s" then fire "complete").
+
+----------------------------------------------------
+PUBLIC METHODS
+----------------------------------------------------
+
+Code    : public new void Start()
+Explain : The 'new' keyword hides MonoBehaviour's inherited Start() method.
+          This is intentional — our Start() acts as the public "start the
+          timer" command, not as Unity's lifecycle method. autoStart in
+          Awake() calls this method explicitly.
+
+Code    : public void Pause()
+          {
+              if (!running || paused) return;
+          ...
+Explain : Guard clauses at the top of Pause(), Resume(), Stop() make every
+          method safe to call in any state. Pause() when already paused?
+          Nothing happens. Stop() before Start()? Nothing happens.
+          This is the "safe to call in any order" requirement from the spec.
+
+Code    : public void Stop()
+          {
+              // Does NOT fire OnTimerComplete
+          ...
+Explain : Stop() is for cancellation — the timer never finished, it was
+          interrupted. Firing OnTimerComplete here would incorrectly trigger
+          cooldown-ready callbacks and round-end logic. This distinction
+          between Stop (cancelled) and Complete (finished) is a critical
+          design decision.
+
+Code    : elapsed = elapsed - duration;  // inside HandleCompletion loop restart
+Explain : When a loop restarts, we carry over the overshoot (how much past
+          the deadline the last frame went) into the next cycle. Without
+          this, every loop would drift by up to one frame. With it, loop
+          intervals stay accurate over hundreds of cycles.
+
+----------------------------------------------------
+READ-ONLY ACCESSORS
+----------------------------------------------------
+
+Code    : public float GetProgress()
+          => Mathf.Clamp(elapsed / Mathf.Max(duration, MIN_DURATION), 0f, 1f);
+Explain : Returns a clean 0.0 to 1.0 value usable directly by any visual
+          element. A progress bar Image with fillAmount = timer.GetProgress()
+          needs zero extra math. Mathf.Clamp prevents values outside [0,1]
+          even if elapsed slightly overshoots before HandleCompletion fires.
+
+----------------------------------------------------
+STATIC FACTORY METHODS
+----------------------------------------------------
+
+Code    : public static TimerUtility_UMFOSS Create(float duration, Action onComplete = null)
+          {
+              var go = new GameObject("[Timer] One-Shot");
+              var timer = go.AddComponent<TimerUtility_UMFOSS>();
+              ...
+              timer.OnTimerComplete += () => Destroy(go);
+          }
+Explain : The factory pattern solves a real Unity pain point: to use a
+          MonoBehaviour you normally need a GameObject in the scene.
+          Create() makes one invisibly, attaches the timer, and self-destructs
+          when done. The caller gets a timer reference and never touches a
+          GameObject. This is how Unity's own Tween libraries work internally.
+          The self-destroy line is critical — without it, every factory timer
+          would leak a hidden GameObject in the hierarchy forever.
+
+Code    : public static TimerUtility_UMFOSS CreateLooping(float interval, Action onTick = null)
+Explain : Same factory concept for the looping case. onTick maps to
+          OnLoopComplete (each cycle = one "tick") so the caller syntax
+          reads like a simple repeating callback. The returned reference
+          lets the caller call Stop() to halt the infinite loop.
+
+====================================================
+DESIGN DECISIONS
+====================================================
+
+1. WHY UNITYACTION INSTEAD OF C# EVENT?
+   UnityAction is Unity's standard delegate. It integrates cleanly with
+   the framework's EventBus pattern and does not require explicit null checks
+   (the ?. operator handles it). Plain C# events are equally valid but less
+   idiomatic in Unity projects.
+
+2. WHY NOT COROUTINES?
+   Coroutines are common for timers but have key problems: they are tied to
+   the GameObject's active state, cannot be paused independently, and cannot
+   easily expose progress or remaining time. A MonoBehaviour-based timer is
+   inspectable, pauseable, configurable at runtime, and reusable.
+
+3. WHY USE UnscaledDeltaTime INSTEAD OF IGNORING timeScale?
+   Manipulating Time.timeScale to allow a timer to run would affect every
+   other system in the game. useUnscaledTime is surgical — only THIS timer
+   opts out of time scaling, everything else is untouched.
+
+4. WHY DOES STOP() NOT FIRE ONCOMPLETE?
+   Stop() represents cancellation. OnTimerComplete is for natural completion.
+   If Stop() fired OnTimerComplete, every cooldown system would think the
+   ability was ready when in fact it was interrupted. These are semantically
+   different outcomes and must fire different events.
+
+====================================================
