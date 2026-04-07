@@ -9,5 +9,12 @@
   },
   "dependencies": {
     "com.unity.textmeshpro": "3.0.6"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "Spawner System",
+      "description": "Demo scene for wave, timed, and proximity spawners (Issue #25).",
+      "path": "Samples~/SpawnerSystem"
+    }
+  ]
 }

@@ -1,0 +1,89 @@
+====================================================
+SYSTEM: Spawner System (Issue #25 — World)
+AUTHOR: UnityMechanicsFramework contributors
+NAMESPACE: GameplayMechanicsUMFOSS.World
+SAMPLE: Samples~/SpawnerSystem/Assets/Scripts/SpawnerDemoController_UMFOSS.cs
+====================================================
+
+PURPOSE:
+Data-driven spawning for waves, timed patrol-style respawns, and proximity ambushes.
+All gameplay tuning lives in SpawnProfile_UMFOSS ScriptableObjects; runtime code only
+implements trigger logic, pooling, and EventBus notifications.
+
+----------------------------------------------------
+Weighted random selection (SpawnProfile_UMFOSS.SelectWeightedEntry)
+----------------------------------------------------
+Code    : Sum positive weights for entries that have a valid prefab.
+Explain : Zero or negative weights are ignored so designers can temporarily disable
+          an entry without deleting the row.
+
+Code    : roll = Random.Range(0, totalWeight); cumulative += weight per entry.
+Explain : This is the standard “loot table” algorithm: map a uniform random value
+          onto segments sized by weight. Entry 0 owns [0, w0), entry 1 [w0, w0+w1), …
+          It is NOT the same as picking a random array index — that would ignore weights.
+
+Code    : Fallback to last valid entry if floating-point noise skips the last segment.
+Explain : Defensive guard — in practice the loop should always hit, but this avoids
+          returning null when weights barely miss due to precision.
+
+----------------------------------------------------
+Active count with pooled objects (Wave / Timed / Proximity)
+----------------------------------------------------
+Code    : SpawnerTrackedEntity_UMFOSS.Configure(Action<GameObject> onEnded, int waveNumber)
+Explain : Pooled objects are disabled, not destroyed — checking `obj == null` stays true
+          forever. Each spawned instance gets a tracker; when gameplay calls
+          NotifyLifecycleEnded(), the spawner decrements counts and returns the instance
+          to ObjectPoolManager_UMFOSS — matching the issue’s “event-driven, not polling” rule.
+
+Code    : ObjectPoolManager_UMFOSS.Release(instance)
+Explain : Deactivates the instance and enqueues it for reuse — no Destroy() in steady state.
+
+----------------------------------------------------
+Proximity: Physics2D.OverlapCircleAll instead of OnTriggerEnter
+----------------------------------------------------
+Code    : OverlapCircleAll + filter for player tag/name
+Explain : OnTriggerEnter requires a Collider2D on the spawner. OverlapCircle keeps the
+          spawner as pure logic, runs only when Update executes, and avoids accidental
+          physics coupling. The issue explicitly requests OverlapCircle.
+
+Code    : Optional LineOfSight raycast on obstacleLayers
+Explain : Raycast uses only obstacle layers so the player collider does not block the ray.
+
+----------------------------------------------------
+Difficulty scaling (AnimationCurve on SpawnProfile_UMFOSS)
+----------------------------------------------------
+Code    : countScaleCurve / delayScaleCurve default to multiplier 1 when unset.
+Explain : Designers opt in by adding keys. Flat curve at 1 = identical behaviour to
+          having no curve — matches the acceptance criteria.
+
+Code    : Wave spawner evaluates curves with wave index as the curve “time” key.
+Explain : Timed spawners can rely on the same asset for different scale keys in future
+          extensions; the demo keeps curves flat at 1.
+
+----------------------------------------------------
+TimerUtility_UMFOSS vs Update-based cooldowns
+----------------------------------------------------
+Code    : TimedSpawner schedules repeating callbacks on TimerUtility_UMFOSS.
+Explain : One central Update respects GamePausedEvent (timers do not tick while paused).
+          Spawners avoid duplicating `timer -= deltaTime` logic.
+
+Code    : Additional one-shot timer after an entity dies when respawnOnDeath is true.
+Explain : Implements “lose one patrol slot → refill after spawnInterval” without a
+          second overlapping repeating loop.
+
+----------------------------------------------------
+CORE DEPENDENCIES ADDED WITH THIS MECHANIC
+----------------------------------------------------
+EventBus (GameplayMechanicsUMFOSS.Core) — struct pub/sub for pause and spawner events.
+GamePausedEvent — bool IsPaused toggles pause-aware timers and wave coroutine waits.
+ObjectPoolManager_UMFOSS — prefab-keyed pools; Instantiate only when expanding a pool.
+
+----------------------------------------------------
+DEMO SCENE
+----------------------------------------------------
+Open Samples~/SpawnerSystem/Assets/Scenes/DemoScene.unity — SpawnerDemoController_UMFOSS
+builds pools, profiles, spawn points, and all three spawner types at runtime so Play
+works on a clean clone. WASD moves, P toggles pause bus event, K kills all tracked spawns.
+
+VIDEO (CONTRIBUTING §11):
+Place SpawnerSystemTutorial.mp4 under Samples~/SpawnerSystem/Video/ and link it from README.

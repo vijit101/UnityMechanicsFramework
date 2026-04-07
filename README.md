@@ -185,6 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Spawner System](#3-spawner-system) | Community | World | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/SpawnerSystem/Video) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -274,6 +275,44 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 
 ---
 
+### 3. Spawner System
+
+| | |
+|---|---|
+| **Author** | [Naresh Kumar Thodupunoori](https://github.com/Naresh-Kumar-Thodupunoori) |
+| **Namespace** | `GameplayMechanicsUMFOSS.World` |
+| **Location** | `Runtime/World/` (`SpawnProfile_UMFOSS`, `SpawnPoint_UMFOSS`, `WaveSpawner_UMFOSS`, `TimedSpawner_UMFOSS`, `ProximitySpawner_UMFOSS`) |
+| **Category** | World / Spawning |
+| **Demo Scene** | `Samples~/SpawnerSystem/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch](Samples~/SpawnerSystem/Video/SpawnerSystemTutorial.mp4) |
+
+**What it does**
+
+ScriptableObject-driven spawning for three patterns: wave-based rounds, timed interval respawns (with optional refill on defeat), and proximity-triggered bursts using `Physics2D.OverlapCircle` (no trigger collider required on the spawner). All runtime spawning goes through `ObjectPoolManager_UMFOSS`; active counts use `SpawnerTrackedEntity_UMFOSS` and lifecycle events instead of polling for destroyed objects.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.World;
+
+// 1. Create SpawnProfile_UMFOSS assets (UMFOSS/World/SpawnProfile) with entries, weights, and caps.
+// 2. Place SpawnPoint_UMFOSS objects in the scene.
+// 3. Add WaveSpawner_UMFOSS, TimedSpawner_UMFOSS, or ProximitySpawner_UMFOSS and assign the profile + points.
+// 4. Ensure ObjectPoolManager_UMFOSS exists and pools are warmed for each prefab listed in the profile.
+
+// Wave example — start from the Inspector or code:
+GetComponent<WaveSpawner_UMFOSS>().StartWaves();
+```
+
+**Highlights**
+
+- Weighted random selection for mixed enemy types (timed/proximity single picks; waves iterate per entry row)
+- Pause-aware via `GamePausedEvent` and `TimerUtility_UMFOSS` for timed spawns
+- `AnimationCurve` count/delay scaling optional — flat curves at 1 preserve default behaviour
+- EventBus events: `OnWaveStartedEvent`, `OnWaveClearedEvent`, `OnTimedSpawnTriggeredEvent`, `OnProximitySpawnTriggeredEvent`, and shared `OnSpawnCountChangedEvent`
+
+---
+
 <!--
 ================================================================
 CONTRIBUTOR ENTRY TEMPLATE
@@ -331,6 +370,7 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 | `GameplayMechanicsUMFOSS.Dialogue` | DialogueSystem, nodes, database | ✅ Active |
 | `GameplayMechanicsUMFOSS.Input` | InputAdapter | ✅ Active |
 | `GameplayMechanicsUMFOSS.Utils` | TimerUtility, helpers | ✅ Active |
+| `GameplayMechanicsUMFOSS.World` | Spawner system, spawn points, world tools | ✅ Active |
 | `GameplayMechanicsUMFOSS.Inventory` | Item systems, loot, equipment | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.Combat` | Hitboxes, damage, status effects | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.UI` | HUD, menus, tooltips | 🔓 Open for contribution |
