@@ -185,7 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Timer Utility](#3-timer-utility) | [Riya Bhurse](https://github.com/riyabhurse) | Utils | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/TimerUtility/Video) |
+| 3 | [Timer Utility](#3-timer-utility) | [Riya Bhurse](https://github.com/riyabhurse) | Utils | [▶ Watch](https://youtu.be/atMMjfDn5IE) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -284,7 +284,7 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 | **Location** | `Runtime/Utils/TimerUtility_UMFOSS.cs` |
 | **Category** | Utils |
 | **Demo Scene** | `Samples~/TimerUtility/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Walkthrough](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/TimerUtility/Video) |
+| **Video** | [▶ Watch Walkthrough](https://youtu.be/atMMjfDn5IE) |
 
 **What it does**
 
