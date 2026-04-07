@@ -185,6 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Boomerang Weapon System](#3-boomerang-weapon-system) | [Bug-Finderr](https://github.com/Bug-Finderr) | Combat | [▶ Watch](https://drive.google.com/file/d/148OJsY_zKn03YgP4ONf9a8-Yf0x77uv3/view?usp=sharing) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -271,6 +272,46 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 - Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
 - Add new conversations without touching any existing scripts
 - Scales to large narrative systems without architectural changes
+
+---
+
+### 3. Boomerang Weapon System
+
+| | |
+|---|---|
+| **Author** | [Bug-Finderr](https://github.com/Bug-Finderr) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Combat` |
+| **Location** | `Runtime/Combat/3. BoomerangWeaponSystem/BoomerangWeapon_UMFOSS.cs` |
+| **Category** | Combat |
+| **Demo Scene** | `Samples~/BoomerangWeapon/Assets/Scenes/RecallDemo.unity` |
+| **Video** | [▶ Watch](https://drive.google.com/file/d/148OJsY_zKn03YgP4ONf9a8-Yf0x77uv3/view?usp=sharing) |
+
+**What it does**
+
+A throw-and-recall weapon system inspired by God of War's Leviathan Axe. Throw any 3D object, embed it in walls or moving platforms, and recall it along a curved Bezier path back to the player's hand.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Combat;
+
+[SerializeField] private BoomerangWeapon_UMFOSS weapon;
+
+// Throw toward camera forward
+weapon.Throw(Camera.main.transform.forward);
+
+// Recall back to hand
+weapon.Recall();
+
+// React to events from anywhere
+EventBus.Subscribe<WeaponCaughtEvent>(e => Debug.Log("Caught!"));
+```
+
+**Highlights**
+
+- 4-state machine (Equipped, Thrown, Embedded, Recalling) with clean physics handoffs
+- Bezier curve return path with accelerating speed for a satisfying catch
+- Parents to hit surfaces on impact, works with moving platforms out of the box
 
 ---
 

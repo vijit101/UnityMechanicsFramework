@@ -1,0 +1,39 @@
+====================================================
+SCRIPT: BezierUtility.cs
+AUTHOR: Bug-Finderr
+NAMESPACE: GameplayMechanicsUMFOSS.Utils
+====================================================
+
+PURPOSE:
+Static utility for evaluating Bezier curves. A Bezier curve creates a
+smooth path between points that bends toward a control point. Used for
+weapon recall arcs, camera paths, or any motion that needs to feel organic.
+
+----------------------------------------------------
+
+Code    : public static class BezierUtility
+Explain : Static because Bezier math is pure calculation -- no state, no
+          instance data. Calling BezierUtility.QuadraticBezier() is as
+          simple as calling Mathf.Lerp().
+
+Code    : public static Vector3 QuadraticBezier(Vector3 p0, Vector3 p1, Vector3 p2, float t)
+Explain : Evaluates a point on a Quadratic (3-point) Bezier curve.
+          p0 = start, p1 = control (curve bends toward this), p2 = end.
+          t ranges from 0 (at p0) to 1 (at p2).
+
+Code    : t = Mathf.Clamp01(t);
+Explain : Safety clamp. Without this, values outside 0-1 would extrapolate
+          beyond the curve endpoints, potentially launching the weapon
+          in the wrong direction.
+
+Code    : float oneMinusT = 1f - t;
+Explain : Pre-calculated for performance. Used multiple times in the
+          formula, so caching it avoids redundant subtraction.
+
+Code    : return (oneMinusT * oneMinusT * p0) + (2f * oneMinusT * t * p1) + (t * t * p2);
+Explain : The Quadratic Bezier formula: B(t) = (1-t)^2 * P0 + 2(1-t)t * P1 + t^2 * P2
+          At t=0: only the P0 term survives (start point).
+          At t=0.5: all three terms contribute (curve bends toward P1).
+          At t=1: only the P2 term survives (end point).
+          The curve never actually touches P1 -- it only bends toward it.
+          This is what creates the smooth arc for the weapon recall.

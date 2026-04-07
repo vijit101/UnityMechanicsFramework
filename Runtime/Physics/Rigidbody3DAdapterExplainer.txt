@@ -1,0 +1,37 @@
+====================================================
+SCRIPT: Rigidbody3DAdapter.cs
+AUTHOR: Bug-Finderr
+NAMESPACE: GameplayMechanicsUMFOSS.Physics
+====================================================
+
+PURPOSE:
+Concrete implementation of IPhysicsAdapter that wraps Unity's 3D Rigidbody.
+Attach this component alongside a Rigidbody on any GameObject that uses
+physics-based mechanics from the framework.
+
+----------------------------------------------------
+
+Code    : [RequireComponent(typeof(Rigidbody))]
+Explain : Unity attribute that automatically adds a Rigidbody when this
+          component is added to a GameObject. Also prevents the Rigidbody
+          from being removed while this adapter is attached.
+
+Code    : [SerializeField] private Rigidbody rb;
+Explain : Serialized so it can be pre-assigned in the Inspector for
+          clarity, but auto-cached in Awake if left empty. This pattern
+          gives designers visibility while not requiring manual wiring.
+
+Code    : get => rb.linearVelocity;
+Explain : Unity 6 renamed "velocity" to "linearVelocity" to distinguish
+          from angular velocity. This adapter handles that API difference
+          so mechanics don't need to worry about Unity version specifics.
+
+Code    : rb.AddForce(force, isImpulse ? ForceMode.Impulse : ForceMode.Force);
+Explain : Translates the adapter's boolean flag into Unity's ForceMode enum.
+          ForceMode.Impulse applies force instantly accounting for mass.
+          ForceMode.Force applies continuously and must be called each frame.
+
+Code    : public void ClearForces()
+Explain : Zeros both linear and angular velocity. This is more thorough
+          than just setting velocity to zero -- residual angular momentum
+          could cause a weapon to slowly rotate after being caught.

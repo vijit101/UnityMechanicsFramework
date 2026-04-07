@@ -1,0 +1,205 @@
+====================================================
+SCRIPT: BoomerangWeapon_UMFOSS.cs
+AUTHOR: Bug-Finderr
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+A state-driven throw-and-recall weapon system inspired by God of War's
+Leviathan Axe. Manages four weapon states (Equipped, Thrown, Embedded,
+Recalling) with proper physics handoffs, surface parenting, and Bezier
+curve return paths. Designed to work with any 3D mesh via the VisualPivot
+pattern and communicates state changes through the EventBus.
+
+----------------------------------------------------
+
+Code    : using GameplayMechanicsUMFOSS.Core;
+Explain : Imports the EventBus system so we can publish weapon events
+          (thrown, stuck, recalled, caught) without coupling to any
+          specific listener like a sound manager or camera shake system.
+
+Code    : using GameplayMechanicsUMFOSS.Physics;
+Explain : Imports the IPhysicsAdapter interface so all physics operations
+          go through an abstraction layer. This means the same weapon
+          script could work with a 2D or 3D physics adapter.
+
+Code    : using GameplayMechanicsUMFOSS.Utils;
+Explain : Imports BezierUtility for calculating the curved return path.
+          A Bezier curve gives the weapon an organic arc rather than a
+          robotic straight line back to the player.
+
+Code    : private enum WeaponState { Equipped, Thrown, Embedded, Recalling }
+Explain : Internal state machine. Only four states are needed:
+          - Equipped: weapon is in the player's hand, physics off
+          - Thrown: weapon is flying through the air, physics on
+          - Embedded: weapon is stuck in a surface, kinematic
+          - Recalling: weapon is returning to player, position-driven
+          Using an enum + switch is simpler and more educational than a
+          full FSM framework for exactly four states.
+
+Code    : [SerializeField] private float throwForce = 30f;
+Explain : The impulse magnitude applied when throwing. Exposed in the
+          Inspector so designers can tune the "weight feel" of different
+          weapons (a heavy hammer might use 20, a light knife 40).
+
+Code    : [SerializeField] private AnimationCurve throwCurve
+Explain : Optional Y-offset over normalized distance. A flat curve means
+          a straight throw. A curve peaking at 0.5 adds an arc. This is
+          a designer-friendly way to shape throw trajectories without code.
+
+Code    : [SerializeField] private float maxRange = 50f;
+Explain : Safety limit. If the weapon travels this far without hitting
+          anything, it auto-stops. Prevents weapons from flying forever
+          if thrown into open sky.
+
+Code    : [SerializeField] private float returnSpeed = 15f;
+Explain : Base speed when the weapon starts flying back. Combined with
+          returnAcceleration, creates the satisfying "slow start, fast
+          snap" feel of the recall.
+
+Code    : [SerializeField] private float returnAcceleration = 25f;
+Explain : How much the return speed increases per second. This is what
+          makes the catch feel punchy -- the weapon accelerates as it
+          gets closer, creating a magnetic "snap" into the hand.
+
+Code    : [SerializeField] private float catchDistance = 0.5f;
+Explain : Distance threshold to the HandSocket that triggers the catch.
+          Too small and the weapon overshoots. Too large and it catches
+          while still visibly far away. 0.5 is a good default.
+
+Code    : [SerializeField] private bool useCurvedReturn = true;
+Explain : Toggle between Bezier curve return and straight-line return.
+          Curved looks much better but straight is useful for debugging
+          or for weapons that should feel different (like a spear).
+
+Code    : [SerializeField] private LayerMask stuckLayer;
+Explain : Which physics layers the weapon will embed into. Set this to
+          environment layers (walls, floors, platforms). Using a LayerMask
+          instead of tags is faster and allows multi-layer selection.
+
+Code    : [SerializeField] private LayerMask hurtboxLayer;
+Explain : Layers that take damage when hit. Separate from stuckLayer so
+          the weapon can hurt enemies AND stick to walls independently.
+
+Code    : [SerializeField] private Vector3 rotationPerSecond
+Explain : Spin speed in degrees/second while airborne. Applied to the
+          VisualPivot child, NOT the parent. This is critical -- if we
+          spun the parent, its forward vector would rotate too, making
+          collision normals and return paths incorrect.
+
+Code    : [SerializeField] private Transform handSocket;
+Explain : The specific point where the weapon lives when equipped. This
+          is usually a child of the player's hand bone. The weapon
+          returns to this transform's position on recall.
+
+Code    : [SerializeField] private Transform visualPivot;
+Explain : Child transform containing the actual mesh/model. All spin
+          rotation goes here. This separation lets the parent's forward
+          vector always point toward the flight direction while the mesh
+          spins independently -- essential for correct physics behavior.
+
+Code    : private Vector3 equippedLocalPos / Quaternion equippedLocalRot;
+Explain : Stored at Awake() -- the weapon's exact local offset in the
+          hand. When caught, these are restored precisely. Without this,
+          small floating-point drift would cause the weapon to slowly
+          shift position in the hand after each throw-catch cycle.
+
+Code    : physics = GetComponent<IPhysicsAdapter>();
+Explain : Retrieves the physics adapter at startup. GetComponent works
+          with interfaces in Unity -- it finds any MonoBehaviour on this
+          GameObject that implements IPhysicsAdapter (e.g., Rigidbody3DAdapter).
+
+Code    : public void Throw(Vector3 direction)
+Explain : Public entry point for throwing. External input systems call
+          this. Guard clause ensures you can only throw from Equipped state.
+          Steps: unparent from hand -> store direction -> enable physics.
+
+Code    : transform.SetParent(null);
+Explain : Detaches the weapon from the hand hierarchy. This is essential
+          because parented objects inherit their parent's transform.
+
+Code    : physics.Velocity = throwDirection * throwForce;
+Explain : Sets velocity directly rather than using AddForce. This avoids
+          Rigidbody/transform conflicts at angled throws. The velocity is
+          also re-applied every frame in HandleThrownUpdate to prevent
+          any physics drift.
+
+Code    : EventBus.Publish(new WeaponThrownEvent { Direction = direction });
+Explain : Notifies any listening system that a throw happened. A sound
+          manager might play a whoosh, a camera system might shake.
+          The weapon doesn't know or care who listens -- that's decoupling.
+
+Code    : private void OnCollisionEnter(Collision collision)
+Explain : Unity calls this when the weapon's Rigidbody hits another
+          collider. Only fires during Thrown state (Rigidbody is dynamic).
+          During Recalling state, the Rigidbody is kinematic and position
+          is set manually, so collisions don't fire -- which is exactly
+          what we want (weapon phases through walls on return).
+
+Code    : if (IsInLayerMask(collision.gameObject.layer, stuckLayer))
+Explain : Checks if the hit object is on a "stickable" layer using
+          bitwise comparison. (mask & (1 << layer)) != 0 tests
+          whether that layer's bit is set in the mask.
+
+Code    : if (contact.normal.y > 0.7f) return;
+Explain : Skip floors. A collision normal pointing mostly upward (y > 0.7)
+          means the surface is a floor or shallow ramp. We only embed in
+          walls and vertical surfaces. 0.7 corresponds to roughly 45 degrees.
+
+Code    : transform.SetParent(collision.transform);
+Explain : *** THIS IS THE KEY DESIGN DECISION ***
+          We parent the weapon TO the surface it hits. Why?
+          Because if the surface moves (moving platform, rotating door,
+          enemy body), the weapon moves with it automatically. Unity's
+          transform hierarchy handles this for free. Without parenting,
+          we'd need complex tracking code to make the weapon follow
+          moving surfaces. This one line replaces dozens of lines of
+          manual position tracking.
+
+Code    : public void Recall()
+Explain : Public entry point for recalling. Guard prevents double-recall
+          or recalling while already equipped. Key step: disables the
+          collider so the weapon flies through walls on return (God of
+          War behavior -- the axe phases through everything when recalled).
+
+Code    : bezierStart = transform.position; bezierControl = ComputeBezierControl();
+Explain : Captures the starting point and calculates the arc control
+          point. The control point is offset above and to the right of
+          the midpoint between weapon and hand, creating the characteristic
+          curved return path.
+
+Code    : private void HandleRecallingUpdate()
+Explain : Called every frame during recall. Advances the Bezier parameter
+          t from 0 to 1, accelerating over time. The handSocket.position
+          is re-read every frame because the player keeps moving -- if we
+          only captured it once, the weapon would arc toward where the
+          player WAS, not where they ARE.
+
+Code    : currentReturnSpeed += returnAcceleration * Time.deltaTime;
+Explain : Frame-rate independent acceleration. Multiplying by deltaTime
+          ensures the same speed increase whether running at 30fps or
+          144fps. This creates the "snap" -- slow at first, fast at catch.
+
+Code    : private void CatchWeapon()
+Explain : Final state transition. Re-parents to HandSocket, restores
+          exact local position/rotation, ensures physics is fully off,
+          stops the spin, and publishes the caught event. The weapon is
+          immediately ready for another throw.
+
+Code    : visualPivot.localRotation = Quaternion.identity;
+Explain : Resets the visual mesh to its default orientation. Without
+          this, the axe/spear would be caught at whatever random spin
+          angle it happened to be at, looking wrong in the player's hand.
+
+Code    : private Vector3 ComputeBezierControl()
+Explain : Creates the control point for the return arc. Takes the midpoint
+          between weapon and hand, then offsets it up (3 units) and to
+          the right (2 units). This makes the weapon sweep up and curve
+          around rather than flying in a straight line. The offset values
+          are tuned to feel good at typical gameplay distances.
+
+Code    : OnDrawGizmosSelected()
+Explain : Editor-only visualization. When the weapon is selected in the
+          Scene view, draws a cyan sphere at the catch distance and a
+          yellow curve showing the Bezier return path. Invaluable for
+          debugging and tuning the arc shape without entering Play mode.

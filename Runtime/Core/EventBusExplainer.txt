@@ -1,0 +1,56 @@
+====================================================
+SCRIPT: EventBus.cs
+AUTHOR: Bug-Finderr
+NAMESPACE: GameplayMechanicsUMFOSS.Core
+====================================================
+
+PURPOSE:
+A lightweight, generic event bus that allows any system to communicate
+with any other system without holding direct references. This is the
+backbone of decoupled architecture -- a jump system publishes an event,
+a sound system reacts, neither knows the other exists.
+
+----------------------------------------------------
+
+Code    : public static class EventBus
+Explain : Static class means there's exactly one EventBus shared across
+          the entire application. No need to find or create an instance.
+          Any script can call EventBus.Publish() or Subscribe() directly.
+
+Code    : private static readonly Dictionary<Type, Delegate> listeners
+Explain : Maps each event TYPE to its list of callbacks. When you call
+          Subscribe<WeaponThrownEvent>(...), the key is typeof(WeaponThrownEvent).
+          Using Type as the key means different event structs are automatically
+          routed to the correct listeners without any string matching.
+
+Code    : public static void Subscribe<T>(Action<T> callback) where T : struct
+Explain : Registers a callback for a specific event type. The "where T : struct"
+          constraint forces events to be value types (structs). Structs are
+          stack-allocated and don't create garbage -- critical in games where
+          garbage collection causes frame rate hitches.
+
+Code    : Delegate.Combine(existing, callback)
+Explain : Adds the new callback to the existing multicast delegate chain.
+          This is how C# supports multiple subscribers -- each Subscribe call
+          appends to the chain, and Publish invokes them all in order.
+
+Code    : public static void Unsubscribe<T>(Action<T> callback) where T : struct
+Explain : Removes a specific callback. Always unsubscribe in OnDestroy or
+          OnDisable to prevent "ghost listeners" -- callbacks on destroyed
+          objects that cause NullReferenceExceptions when invoked.
+
+Code    : Delegate.Remove(existing, callback)
+Explain : Removes the callback from the delegate chain. If the chain becomes
+          empty (null), we remove the dictionary entry entirely to keep
+          the dictionary clean.
+
+Code    : public static void Publish<T>(T eventData) where T : struct
+Explain : Fires the event to all subscribers. The cast (Action<T>) converts
+          the stored Delegate back to its typed form. All callbacks execute
+          synchronously in the current frame -- this is intentional for
+          deterministic game logic.
+
+Code    : public static void Clear()
+Explain : Removes all subscribers for all event types. Essential for scene
+          transitions (prevents cross-scene listener leaks) and unit testing
+          (ensures a clean state between tests).
