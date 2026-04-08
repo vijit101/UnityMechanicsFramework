@@ -185,7 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Modular Interaction System](#3-modular-interaction-system) | [Shivam Tiwari](https://github.com/shivam1234100) | Interaction | [▶ Watch](https://github.com/shivam1234100/UnityMechanicsFramework/tree/mechanic/interaction-system/Samples~/InteractionSystem/Video) |
+| 3 | [Modular Interaction System](#3-modular-interaction-system) | [Shivam Tiwari](https://github.com/shivam1234100), [Pranav Aggarwal](https://github.com/pranav-1100) | Interaction | [▶ Watch](https://github.com/shivam1234100/UnityMechanicsFramework/tree/mechanic/interaction-system/Samples~/InteractionSystem/Video) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -279,7 +279,7 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 
 | | |
 |---|---|
-| **Author** | [Shivam Tiwari](https://github.com/shivam1234100) |
+| **Author** | [Shivam Tiwari](https://github.com/shivam1234100), [Pranav Aggarwal](https://github.com/pranav-1100)|
 | **Namespace** | `GameplayMechanicsUMFOSS.Interaction` |
 | **Location** | `Runtime/Interaction/InteractionController_UMFOSS.cs` |
 | **Category** | Interaction |
