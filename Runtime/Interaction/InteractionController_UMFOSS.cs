@@ -2,10 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using GameplayMechanicsUMFOSS.Core;
 
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
-
 namespace GameplayMechanicsUMFOSS.Interaction
 {
     /// <summary>
@@ -69,14 +65,11 @@ namespace GameplayMechanicsUMFOSS.Interaction
         [SerializeField] private float holdDuration = 1.5f;
 
         [Header("Input")]
-        [Tooltip("The key used to trigger interaction when using legacy input.")]
+        [Tooltip("The keyboard key used to trigger interaction.")]
         [SerializeField] private KeyCode interactKey = KeyCode.E;
 
-        [Tooltip("If true, reads from Unity's new Input System instead of legacy Input.GetKey.")]
-        [SerializeField] private bool useInputSystem = false;
-
-        [Tooltip("Input Action name when using the new Input System (e.g. 'Interact').")]
-        [SerializeField] private string inputActionName = "Interact";
+        [Tooltip("Gamepad button name from Unity's Input Manager (e.g. 'Submit' maps to the A/Cross button on most gamepads). Leave empty to disable gamepad support.")]
+        [SerializeField] private string gamepadButton = "Submit";
 
         [Header("Raycast Settings")]
         [Tooltip("The direction the raycast fires in (used only in Raycast detection mode). Defaults to right.")]
@@ -95,15 +88,14 @@ namespace GameplayMechanicsUMFOSS.Interaction
         private bool isHolding;
         private CircleCollider2D triggerCollider;
 
-        #if ENABLE_INPUT_SYSTEM
-        private InputAction interactAction;
-        #endif
+        // Pre-allocated arrays for NonAlloc physics queries — avoids heap allocation every frame.
+        private readonly Collider2D[] overlapResults = new Collider2D[MAX_OVERLAP_RESULTS];
+        private readonly RaycastHit2D[] raycastResults = new RaycastHit2D[MAX_OVERLAP_RESULTS];
 
         // ──────────────────────────────────────────────
         // Constants
         // ──────────────────────────────────────────────
 
-        private const float HOLD_PROGRESS_MIN = 0f;
         private const float HOLD_PROGRESS_MAX = 1f;
         private const int MAX_OVERLAP_RESULTS = 20;
 
@@ -278,54 +270,52 @@ namespace GameplayMechanicsUMFOSS.Interaction
 
         /// <summary>
         /// Sets up the CircleCollider2D for Trigger detection mode.
-        /// Creates one if it doesn't exist. Only enabled when detection mode is Trigger.
+        /// Always adds a fresh dedicated collider — never grabs an existing one,
+        /// which could accidentally convert the player's physics collider to a trigger.
+        /// Only enabled when detection mode is Trigger.
         /// </summary>
         private void SetupTriggerCollider()
         {
-            triggerCollider = GetComponent<CircleCollider2D>();
-
-            if (triggerCollider == null)
-            {
-                triggerCollider = gameObject.AddComponent<CircleCollider2D>();
-            }
-
+            // Always AddComponent — never GetComponent — to avoid hijacking
+            // an existing CircleCollider2D that the player uses for physics movement.
+            triggerCollider = gameObject.AddComponent<CircleCollider2D>();
             triggerCollider.isTrigger = true;
             triggerCollider.radius = interactionRadius;
             triggerCollider.enabled = (detectionMode == DetectionMode.Trigger);
         }
 
         /// <summary>
-        /// Sets up the Input System action reference if enabled.
-        /// Wrapped in preprocessor directives so the project compiles without the Input System package.
+        /// No additional input setup needed. This system uses Unity's legacy Input Manager
+        /// which supports both keyboard (KeyCode) and gamepad (Input.GetButton) out of the box.
+        /// Keyboard: configured via Interact Key (default E).
+        /// Gamepad:  configured via Gamepad Button (default "Submit" = A/Cross button).
+        /// No extra packages required.
         /// </summary>
         private void SetupInputSystem()
         {
-            #if ENABLE_INPUT_SYSTEM
-            if (useInputSystem && !string.IsNullOrEmpty(inputActionName))
-            {
-                interactAction = new InputAction(inputActionName, InputActionType.Button);
-                interactAction.Enable();
-            }
-            #endif
+            // Nothing to initialize — legacy Input works without setup.
         }
 
         /// <summary>
-        /// Detects interactables using Physics2D.OverlapCircleAll.
+        /// Detects interactables using Physics2D.OverlapCircleNonAlloc.
+        /// NonAlloc writes results into the pre-allocated overlapResults array
+        /// instead of allocating a new array each frame — zero GC pressure.
         /// Runs every frame in Update when OverlapCircle mode is active.
         /// </summary>
         private void DetectWithOverlapCircle()
         {
             detectedInteractables.Clear();
 
-            Collider2D[] hits = Physics2D.OverlapCircleAll(
+            int count = Physics2D.OverlapCircleNonAlloc(
                 transform.position,
                 interactionRadius,
+                overlapResults,
                 interactableLayer
             );
 
-            foreach (Collider2D hit in hits)
+            for (int i = 0; i < count; i++)
             {
-                IInteractable_UMFOSS interactable = hit.GetComponent<IInteractable_UMFOSS>();
+                IInteractable_UMFOSS interactable = overlapResults[i].GetComponent<IInteractable_UMFOSS>();
                 if (interactable != null)
                 {
                     detectedInteractables.Add(interactable);
@@ -334,25 +324,28 @@ namespace GameplayMechanicsUMFOSS.Interaction
         }
 
         /// <summary>
-        /// Detects interactables using a 2D raycast in the configured direction.
+        /// Detects interactables using Physics2D.RaycastNonAlloc.
+        /// NonAlloc writes results into the pre-allocated raycastResults array
+        /// instead of allocating a new array each frame — zero GC pressure.
         /// Runs every frame in Update when Raycast mode is active.
         /// </summary>
         private void DetectWithRaycast()
         {
             detectedInteractables.Clear();
 
-            RaycastHit2D[] hits = Physics2D.RaycastAll(
+            int count = Physics2D.RaycastNonAlloc(
                 transform.position,
                 raycastDirection.normalized,
+                raycastResults,
                 raycastDistance,
                 interactableLayer
             );
 
-            foreach (RaycastHit2D hit in hits)
+            for (int i = 0; i < count; i++)
             {
-                if (hit.collider == null) continue;
+                if (raycastResults[i].collider == null) continue;
 
-                IInteractable_UMFOSS interactable = hit.collider.GetComponent<IInteractable_UMFOSS>();
+                IInteractable_UMFOSS interactable = raycastResults[i].collider.GetComponent<IInteractable_UMFOSS>();
                 if (interactable != null)
                 {
                     detectedInteractables.Add(interactable);
@@ -367,6 +360,8 @@ namespace GameplayMechanicsUMFOSS.Interaction
         /// <summary>
         /// From the detected list, selects the best interactable based on
         /// the configured SelectionMode and updates focus events accordingly.
+        /// CanInteract() filtering happens inside FindNearest/FindHighestPriority
+        /// so the "best valid" candidate is always returned — never a random fallback.
         /// </summary>
         private void SelectBestInteractable()
         {
@@ -380,17 +375,6 @@ namespace GameplayMechanicsUMFOSS.Interaction
                 bestCandidate = (selectionMode == SelectionMode.Nearest)
                     ? FindNearest()
                     : FindHighestPriority();
-
-                // Only choose candidates that can actually be interacted with
-                if (bestCandidate != null && !bestCandidate.CanInteract(gameObject))
-                {
-                    // Still allow focus if it's in range, but only for display purposes;
-                    // the prompt text will handle showing the right message.
-                    // We check CanInteract() again in TryInteract() for the actual gate.
-                    // However, per the spec: "CanInteract() checked before showing prompt"
-                    // So we skip non-interactable candidates.
-                    bestCandidate = FindFirstInteractable();
-                }
             }
 
             if (bestCandidate != currentInteractable)
@@ -400,7 +384,9 @@ namespace GameplayMechanicsUMFOSS.Interaction
         }
 
         /// <summary>
-        /// Finds the nearest interactable by distance to this transform.
+        /// Finds the nearest interactable that can currently be interacted with.
+        /// CanInteract() is checked here so that a locked/used object never steals
+        /// focus from a valid one farther away — the fallback is distance-correct.
         /// </summary>
         private IInteractable_UMFOSS FindNearest()
         {
@@ -409,6 +395,10 @@ namespace GameplayMechanicsUMFOSS.Interaction
 
             foreach (IInteractable_UMFOSS interactable in detectedInteractables)
             {
+                // Only consider objects that can currently be interacted with.
+                // This is the first CanInteract() check — gates the focus prompt.
+                if (!interactable.CanInteract(gameObject)) continue;
+
                 MonoBehaviour mono = interactable as MonoBehaviour;
                 if (mono == null) continue;
 
@@ -424,7 +414,8 @@ namespace GameplayMechanicsUMFOSS.Interaction
         }
 
         /// <summary>
-        /// Finds the interactable with the highest Priority value.
+        /// Finds the interactable with the highest Priority value
+        /// among those that can currently be interacted with.
         /// </summary>
         private IInteractable_UMFOSS FindHighestPriority()
         {
@@ -433,6 +424,9 @@ namespace GameplayMechanicsUMFOSS.Interaction
 
             foreach (IInteractable_UMFOSS interactable in detectedInteractables)
             {
+                // Only consider objects that can currently be interacted with.
+                if (!interactable.CanInteract(gameObject)) continue;
+
                 if (interactable.Priority > highestPriority)
                 {
                     highestPriority = interactable.Priority;
@@ -441,23 +435,6 @@ namespace GameplayMechanicsUMFOSS.Interaction
             }
 
             return best;
-        }
-
-        /// <summary>
-        /// Finds the first interactable in the list that returns CanInteract() == true.
-        /// Used as a fallback when the best candidate (by distance/priority) cannot be interacted with.
-        /// </summary>
-        private IInteractable_UMFOSS FindFirstInteractable()
-        {
-            foreach (IInteractable_UMFOSS interactable in detectedInteractables)
-            {
-                if (interactable.CanInteract(gameObject))
-                {
-                    return interactable;
-                }
-            }
-
-            return null;
         }
 
         // ──────────────────────────────────────────────
@@ -583,7 +560,9 @@ namespace GameplayMechanicsUMFOSS.Interaction
                 if (progress >= HOLD_PROGRESS_MAX)
                 {
                     TryInteract();
-                    CancelHold();
+                    // Use ResetHold (not CancelHold) — the hold completed successfully,
+                    // so we must NOT fire HoldInteractCancelledEvent.
+                    ResetHold();
                 }
             }
             else if (isReleased && isHolding)
@@ -593,15 +572,24 @@ namespace GameplayMechanicsUMFOSS.Interaction
         }
 
         /// <summary>
-        /// Resets hold state and publishes cancellation event.
+        /// Resets hold state silently — used when a hold completes successfully.
+        /// Does NOT publish HoldInteractCancelledEvent.
+        /// </summary>
+        private void ResetHold()
+        {
+            isHolding = false;
+            holdTimer = 0f;
+        }
+
+        /// <summary>
+        /// Resets hold state and publishes HoldInteractCancelledEvent.
+        /// Called when the player releases the key early or leaves range mid-hold.
         /// </summary>
         private void CancelHold()
         {
             if (isHolding)
             {
-                isHolding = false;
-                holdTimer = 0f;
-
+                ResetHold();
                 EventBus.Publish(new HoldInteractCancelledEvent());
             }
         }
@@ -610,43 +598,63 @@ namespace GameplayMechanicsUMFOSS.Interaction
         // Private methods — Input reading
         // ──────────────────────────────────────────────
 
-        /// <summary>Returns true on the frame the interact key/button is first pressed.</summary>
+        /// <summary>
+        /// Returns true on the frame the interact key is first pressed (keyboard)
+        /// OR the gamepad button is first pressed.
+        /// Unity's Input Manager maps "Submit" to the A/Cross button by default.
+        /// </summary>
         private bool GetInteractPressed()
         {
-            #if ENABLE_INPUT_SYSTEM
-            if (useInputSystem && interactAction != null)
-            {
-                return interactAction.WasPressedThisFrame();
-            }
-            #endif
-
-            return Input.GetKeyDown(interactKey);
+            if (Input.GetKeyDown(interactKey)) return true;
+            return IsGamepadButtonDown();
         }
 
-        /// <summary>Returns true while the interact key/button is held down.</summary>
+        /// <summary>
+        /// Returns true while the interact key is held (keyboard)
+        /// OR the gamepad button is held.
+        /// </summary>
         private bool GetInteractHeld()
         {
-            #if ENABLE_INPUT_SYSTEM
-            if (useInputSystem && interactAction != null)
-            {
-                return interactAction.IsPressed();
-            }
-            #endif
-
-            return Input.GetKey(interactKey);
+            if (Input.GetKey(interactKey)) return true;
+            return IsGamepadButtonHeld();
         }
 
-        /// <summary>Returns true on the frame the interact key/button is released.</summary>
+        /// <summary>
+        /// Returns true on the frame the interact key is released (keyboard)
+        /// OR the gamepad button is released.
+        /// </summary>
         private bool GetInteractReleased()
         {
-            #if ENABLE_INPUT_SYSTEM
-            if (useInputSystem && interactAction != null)
-            {
-                return interactAction.WasReleasedThisFrame();
-            }
-            #endif
+            if (Input.GetKeyUp(interactKey)) return true;
+            return IsGamepadButtonReleased();
+        }
 
-            return Input.GetKeyUp(interactKey);
+        /// <summary>
+        /// Checks if the configured gamepad button was pressed this frame.
+        /// Uses try-catch because Input.GetButtonDown throws ArgumentException
+        /// if the button name is not defined in the Input Manager.
+        /// </summary>
+        private bool IsGamepadButtonDown()
+        {
+            if (string.IsNullOrEmpty(gamepadButton)) return false;
+            try { return Input.GetButtonDown(gamepadButton); }
+            catch { return false; }
+        }
+
+        /// <summary>Checks if the configured gamepad button is held this frame.</summary>
+        private bool IsGamepadButtonHeld()
+        {
+            if (string.IsNullOrEmpty(gamepadButton)) return false;
+            try { return Input.GetButton(gamepadButton); }
+            catch { return false; }
+        }
+
+        /// <summary>Checks if the configured gamepad button was released this frame.</summary>
+        private bool IsGamepadButtonReleased()
+        {
+            if (string.IsNullOrEmpty(gamepadButton)) return false;
+            try { return Input.GetButtonUp(gamepadButton); }
+            catch { return false; }
         }
 
         // ──────────────────────────────────────────────

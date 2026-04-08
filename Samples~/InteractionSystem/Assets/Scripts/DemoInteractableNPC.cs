@@ -26,9 +26,13 @@ namespace GameplayMechanicsUMFOSS.Samples.Interaction
         [Tooltip("Optional GameObject that acts as a name tag above the NPC. Shown on focus.")]
         [SerializeField] private GameObject nameTagObject;
 
+        [Header("Dialogue")]
+        [Tooltip("Seconds before the NPC becomes interactable again after a conversation ends.")]
+        [SerializeField] private float dialogueCooldown = 1.5f;
+
         [Header("Priority")]
         [Tooltip("Selection priority. Set higher than nearby objects to always win focus.")]
-        [SerializeField] private int priority = 5;
+        [SerializeField] private int priority = 0;
 
         // ──────────────────────────────────────────────
         // Private fields
@@ -70,7 +74,7 @@ namespace GameplayMechanicsUMFOSS.Samples.Interaction
 
             // Simulate dialogue ending after a short delay
             // In a real game, this would be handled by a DialogueSystem callback
-            Invoke(nameof(EndDialogue), 1.5f);
+            Invoke(nameof(EndDialogue), dialogueCooldown);
         }
 
         public void OnFocused(GameObject interactor)

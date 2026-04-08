@@ -40,7 +40,12 @@ namespace GameplayMechanicsUMFOSS.Core
                 subscribers[eventType] = new List<Delegate>();
             }
 
-            subscribers[eventType].Add(callback);
+            // Guard against duplicate subscriptions — prevents events firing twice
+            // if Subscribe is accidentally called more than once with the same callback.
+            if (!subscribers[eventType].Contains(callback))
+            {
+                subscribers[eventType].Add(callback);
+            }
         }
 
         /// <summary>
@@ -74,12 +79,13 @@ namespace GameplayMechanicsUMFOSS.Core
                 return;
             }
 
-            // Iterate over a copy to allow subscribers to unsubscribe during handling
-            List<Delegate> subscriberList = new List<Delegate>(subscribers[eventType]);
-
-            foreach (Delegate subscriber in subscriberList)
+            // Iterate backwards over the original list — no heap allocation.
+            // Iterating backwards means a subscriber can safely call Unsubscribe()
+            // during handling (removes from the end) without corrupting the loop index.
+            List<Delegate> subscriberList = subscribers[eventType];
+            for (int i = subscriberList.Count - 1; i >= 0; i--)
             {
-                if (subscriber is Action<T> typedCallback)
+                if (subscriberList[i] is Action<T> typedCallback)
                 {
                     typedCallback.Invoke(eventData);
                 }

@@ -40,7 +40,10 @@ namespace GameplayMechanicsUMFOSS.Interaction
             EventBus.Subscribe<InteractableLostEvent>(OnLost);
             EventBus.Subscribe<HoldInteractProgressEvent>(OnHoldProgress);
             EventBus.Subscribe<HoldInteractCancelledEvent>(OnHoldCancelled);
-            EventBus.Subscribe<InteractionPerformedEvent>(OnInteractionPerformed);
+            // Note: we do NOT subscribe to InteractionPerformedEvent here.
+            // Subscribing to it caused a 1-frame prompt flicker on repeatable objects (NPC):
+            // the prompt would hide on performed, then re-show next frame when NPC re-focused.
+            // InteractableLostEvent already handles hiding for single-use objects (pickups, doors).
         }
 
         private void OnDisable()
@@ -49,7 +52,6 @@ namespace GameplayMechanicsUMFOSS.Interaction
             EventBus.Unsubscribe<InteractableLostEvent>(OnLost);
             EventBus.Unsubscribe<HoldInteractProgressEvent>(OnHoldProgress);
             EventBus.Unsubscribe<HoldInteractCancelledEvent>(OnHoldCancelled);
-            EventBus.Unsubscribe<InteractionPerformedEvent>(OnInteractionPerformed);
         }
 
         private void Start()
@@ -109,15 +111,6 @@ namespace GameplayMechanicsUMFOSS.Interaction
         private void OnHoldCancelled(HoldInteractCancelledEvent eventData)
         {
             ResetProgressBar();
-        }
-
-        /// <summary>
-        /// Called after a successful interaction. Hides the prompt since
-        /// the interactable may no longer be valid.
-        /// </summary>
-        private void OnInteractionPerformed(InteractionPerformedEvent eventData)
-        {
-            HidePrompt();
         }
 
         // ──────────────────────────────────────────────

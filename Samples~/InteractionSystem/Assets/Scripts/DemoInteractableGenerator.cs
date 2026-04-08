@@ -100,7 +100,7 @@ namespace GameplayMechanicsUMFOSS.Samples.Interaction
 
         public string GetInteractionPrompt()
         {
-            return isActivated ? "" : "Hold E to activate";
+            return isActivated ? "Already activated" : "Hold E to activate";
         }
 
         public bool CanInteract(GameObject interactor)
