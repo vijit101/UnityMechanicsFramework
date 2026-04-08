@@ -247,7 +247,7 @@ GameManager.Instance.AddScore(10);
 A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data not code.
 
 **How to use it**
- Note to meintainer : need to fix the part for how to use dialogue system later / for the one using it find the video and watch it  
+ Note to maintainer: need to fix the part for how to use the dialogue system later / for those using it, find the video and watch it  
 ```csharp
 using GameplayMechanicsUMFOSS.Dialogue;
 
@@ -284,7 +284,7 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 | **Location** | `Runtime/World/` (`SpawnProfile_UMFOSS`, `SpawnPoint_UMFOSS`, `WaveSpawner_UMFOSS`, `TimedSpawner_UMFOSS`, `ProximitySpawner_UMFOSS`) |
 | **Category** | World / Spawning |
 | **Demo Scene** | `Samples~/SpawnerSystem/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch](Samples~/SpawnerSystem/Video/SpawnerSystemTutorial.mp4) |
+| **Video** | [▶ Watch](https://youtu.be/lQPdYlRtt2A) |
 
 **What it does**
 
@@ -389,7 +389,7 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 | Unity 6 | ✅ Supported |
 
 **Additional notes:**
-- All mechanics target **2D games** by default. But some Issues and PR's  are beyond 2d or 3d that can be used by all. The `IPhysicsAdapter` layer makes extending to 3D straightforward without modifying mechanic code
+- All mechanics target **2D games** by default. But some Issues and PR's  are beyond 2d or 3d that can be used by all. The `IPhysicsAdapter` layer makes extending to 3D straightforward without modifying the mechanics code
 - Compatible with both **Built-In Render Pipeline** and **URP**
 - Compatible with both **Legacy Input** and the **new Unity Input System** via `InputAdapter`
 - If your mechanic requires additional packages (Cinemachine, TextMeshPro, etc.), declare them in your PR and in your `ScriptExplainer.txt` header
