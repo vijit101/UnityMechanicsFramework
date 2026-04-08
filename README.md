@@ -185,7 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Modular Interaction System](#3-modular-interaction-system) | [Shivam Tiwari](https://github.com/shivam1234100), [Pranav Aggarwal](https://github.com/pranav-1100) | Interaction | [▶ Watch](https://github.com/shivam1234100/UnityMechanicsFramework/tree/mechanic/interaction-system/Samples~/InteractionSystem/Video) |
+| 3 | [Modular Interaction System](#3-modular-interaction-system) | [Shivam Tiwari](https://github.com/shivam1234100), [Pranav Aggarwal](https://github.com/pranav-1100) | Interaction | [▶ Watch](https://drive.google.com/file/d/14Vbwd34_-NEBNbNXI_ZbUPgDlrW5ub_7/view?usp=sharing) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -284,7 +284,7 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 | **Location** | `Runtime/Interaction/InteractionController_UMFOSS.cs` |
 | **Category** | Interaction |
 | **Demo Scene** | `Samples~/InteractionSystem/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Walkthrough](https://github.com/shivam1234100/UnityMechanicsFramework/tree/mechanic/interaction-system/Samples~/InteractionSystem/Video) |
+| **Video** | [▶ Watch Walkthrough](https://drive.google.com/file/d/14Vbwd34_-NEBNbNXI_ZbUPgDlrW5ub_7/view?usp=sharing) |
 
 **What it does**
 
