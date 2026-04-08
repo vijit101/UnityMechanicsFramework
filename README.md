@@ -185,7 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Pause System](#3-pause-system) | Loki | Systems | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/pull/49/changes) |
+| 3 | [Pause System](#3-pause-system) | Loki | Systems | [▶ Watch](PASTE_VIDEO_LINK_HERE) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -284,7 +284,7 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 | **Location** | `Runtime/Systems/PauseSystem/PauseSystem_UMFOSS.cs` |
 | **Category** | Systems / Game Flow |
 | **Demo Scene** | `Samples~/PauseSystem/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Walkthrough](https://github.com/vijit101/UnityMechanicsFramework/pull/49/changes) |
+| **Video** | [▶ Watch Walkthrough](PASTE_VIDEO_LINK_HERE) |
 
 **What it does**
 
