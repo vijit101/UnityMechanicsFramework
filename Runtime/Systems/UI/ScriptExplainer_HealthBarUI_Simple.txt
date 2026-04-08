@@ -1,0 +1,80 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                                                                    ║
+║              SCRIPT EXPLAINER - HealthBarUI.cs                     ║
+║              Visual Progress Bar for Health System                 ║
+║                                                                    ║
+╚════════════════════════════════════════════════════════════════════╝
+
+📚 WHAT IT DOES
+═══════════════════════════════════════════════════════════════════
+
+Creates a visual health bar that automatically updates when health changes.
+Uses Unity's UI Image component in "Filled" mode to show health as a 
+horizontal progress bar with smooth animations.
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 KEY CONCEPTS
+═══════════════════════════════════════════════════════════════════
+
+**Event-Driven Updates**
+- Subscribes to HealthSystem's OnHealthChanged event
+- Updates automatically when health changes (damage/heal)
+- No manual calls needed - just wire references
+
+**Smooth Animations**
+- Uses Mathf.Lerp for gradual fill changes
+- Configurable speed (default: 5)
+- Can be disabled for instant updates
+
+**Start() vs OnEnable()**
+- Uses Start() for initialization (not OnEnable)
+- Ensures HealthSystem values are ready first
+- Sets initial fill amount immediately (no animation on startup)
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 HOW TO USE
+═══════════════════════════════════════════════════════════════════
+
+1. Create UI Image (set to "Filled" mode, Horizontal)
+2. Add HealthBarUI component to the Image
+3. Drag HealthSystem reference
+4. Drag the Image itself to Fill Image slot
+5. Press Play - bar updates automatically
+
+═══════════════════════════════════════════════════════════════════
+
+💡 INSPECTOR SETTINGS
+═══════════════════════════════════════════════════════════════════
+
+**Health System** - Reference to the HealthSystem component to monitor
+**Fill Image** - The UI Image that will fill/empty
+**Use Smooth Transition** - Enable smooth lerp animation (default: ON)
+**Smooth Speed** - Animation speed (default: 5)
+
+═══════════════════════════════════════════════════════════════════
+
+🔑 IMPORTANT METHODS
+═══════════════════════════════════════════════════════════════════
+
+**Start()** - Subscribes to events, sets initial fill amount
+**OnEnable/OnDisable()** - Manages event subscriptions (prevents leaks)
+**Update()** - Lerps fill amount for smooth animation
+**UpdateBar()** - Called by HealthSystem event when health changes
+
+═══════════════════════════════════════════════════════════════════
+
+🐛 COMMON ISSUES
+═══════════════════════════════════════════════════════════════════
+
+**Bar doesn't update** → Check both references are set
+**Bar shows white** → Set Image color manually in Inspector
+**Bar starts at 0** → Using OnEnable instead of Start (timing issue)
+
+═══════════════════════════════════════════════════════════════════
+
+Part of GameplayMechanicsUMFOSS.Systems.UI
+Works with HealthSystem.cs
+
+═══════════════════════════════════════════════════════════════════

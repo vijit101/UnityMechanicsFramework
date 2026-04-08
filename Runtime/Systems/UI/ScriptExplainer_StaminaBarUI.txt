@@ -1,0 +1,337 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                                                                    ║
+║            SCRIPT EXPLAINER - StaminaBarUI.cs                      ║
+║            Visual Progress Bar for Stamina System                  ║
+║                                                                    ║
+╚════════════════════════════════════════════════════════════════════╝
+
+📚 WHAT THIS SCRIPT DOES (In Simple Words)
+═══════════════════════════════════════════════════════════════════
+
+This script creates a visual stamina bar (like in action games) that 
+automatically updates when you use stamina (running, dashing, jumping)
+and refills when stamina regenerates.
+
+Think of it like a phone battery indicator:
+- Full bar = 100% stamina (ready for action!)
+- Half bar = 50% stamina (running low)
+- Empty bar = 0% stamina (exhausted, need to wait)
+
+The bar fills from left to right, just like the health bar.
+When you use stamina, it smoothly drains. When you rest, it smoothly
+refills automatically!
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 HOW IT WORKS (Step by Step)
+═══════════════════════════════════════════════════════════════════
+
+STEP 1: SETUP
+When the game starts:
+- Finds the StaminaSystem component
+- Subscribes to stamina change events
+- Sets the bar to show current stamina
+
+STEP 2: LISTENING
+The script listens for two things:
+- Stamina consumption (when you use abilities)
+- Stamina regeneration (automatic refill over time)
+- Updates the bar whenever either happens
+
+STEP 3: SMOOTH ANIMATION
+Every frame:
+- The bar smoothly moves toward the target value
+- Uses lerp (smooth interpolation) for professional look
+- Makes stamina usage feel responsive and natural
+
+═══════════════════════════════════════════════════════════════════
+
+📝 LINE-BY-LINE EXPLANATION
+═══════════════════════════════════════════════════════════════════
+
+This script is 99% IDENTICAL to HealthBarUI.cs!
+The only differences are:
+- It monitors StaminaSystem instead of HealthSystem
+- It uses cyan/blue color instead of red/green
+- Everything else works the same way
+
+───────────────────────────────────────────────────────────────────
+
+LINES 1-2: Importing Unity Libraries
+───────────────────────────────────────────────────────────────────
+using UnityEngine;
+using UnityEngine.UI;
+
+→ Same as HealthBarUI
+→ Imports MonoBehaviour and Image components
+
+───────────────────────────────────────────────────────────────────
+
+LINE 4: Namespace
+───────────────────────────────────────────────────────────────────
+namespace GameplayMechanicsUMFOSS.Systems.UI
+
+→ Same namespace as HealthBarUI
+→ Keeps all UI components organized together
+
+───────────────────────────────────────────────────────────────────
+
+LINE 11: Class Declaration
+───────────────────────────────────────────────────────────────────
+public class StaminaBarUI : MonoBehaviour
+
+→ Creates "StaminaBarUI" component
+→ Can be attached to UI GameObjects
+→ Exactly like HealthBarUI but for stamina
+
+───────────────────────────────────────────────────────────────────
+
+LINES 13-15: References Section
+───────────────────────────────────────────────────────────────────
+[Header("References")]
+[SerializeField] private StaminaSystem staminaSystem;
+[SerializeField] private Image fillImage;
+
+→ staminaSystem = the StaminaSystem to monitor
+→ fillImage = the UI bar that fills/empties
+→ Drag and drop in Unity Inspector
+
+───────────────────────────────────────────────────────────────────
+
+LINES 17-19: Animation Settings
+───────────────────────────────────────────────────────────────────
+[Header("Optional: Smooth Animation")]
+[SerializeField] private bool useSmoothTransition = true;
+[SerializeField] private float smoothSpeed = 5f;
+
+→ Exact same settings as HealthBarUI
+→ Controls animation speed and smoothness
+→ Default speed of 5 feels natural
+
+───────────────────────────────────────────────────────────────────
+
+LINES 23-34: Start Method
+───────────────────────────────────────────────────────────────────
+void Start()
+{
+    if (staminaSystem != null && fillImage != null)
+    {
+        staminaSystem.OnStaminaChanged.AddListener(UpdateBar);
+        
+        float currentPercent = staminaSystem.CurrentStamina / staminaSystem.MaxStamina;
+        fillImage.fillAmount = currentPercent;
+        targetFillAmount = currentPercent;
+    }
+}
+
+→ Subscribes to OnStaminaChanged event (not OnHealthChanged)
+→ Reads CurrentStamina and MaxStamina
+→ Sets initial bar position immediately
+
+WHY THIS WORKS:
+- Start() runs after StaminaSystem.Awake()
+- So stamina values are already initialized
+- Bar shows 100% from the first frame
+
+───────────────────────────────────────────────────────────────────
+
+LINES 36-41: OnEnable Method
+───────────────────────────────────────────────────────────────────
+void OnEnable()
+{
+    if (staminaSystem != null)
+    {
+        staminaSystem.OnStaminaChanged.AddListener(UpdateBar);
+    }
+}
+
+→ Re-subscribes if GameObject was disabled then re-enabled
+→ Prevents missing listener issues
+
+───────────────────────────────────────────────────────────────────
+
+LINES 43-48: OnDisable Method
+───────────────────────────────────────────────────────────────────
+void OnDisable()
+{
+    if (staminaSystem != null)
+    {
+        staminaSystem.OnStaminaChanged.RemoveListener(UpdateBar);
+    }
+}
+
+→ Unsubscribes when disabled/destroyed
+→ Prevents memory leaks
+→ Always clean up event listeners!
+
+───────────────────────────────────────────────────────────────────
+
+LINES 50-59: Update Method
+───────────────────────────────────────────────────────────────────
+void Update()
+{
+    if (useSmoothTransition && fillImage != null)
+    {
+        fillImage.fillAmount = Mathf.Lerp(
+            fillImage.fillAmount, 
+            targetFillAmount, 
+            Time.deltaTime * smoothSpeed
+        );
+    }
+}
+
+→ Runs every frame
+→ Smoothly animates bar to target value
+→ Uses Mathf.Lerp for smooth motion
+
+SPECIAL FOR STAMINA:
+This is important for stamina because:
+- Stamina regenerates gradually (not instantly)
+- The smooth lerp matches the regeneration feel
+- Makes the bar look fluid and natural
+
+───────────────────────────────────────────────────────────────────
+
+LINES 61-71: UpdateBar Method
+───────────────────────────────────────────────────────────────────
+void UpdateBar(float currentStamina, float maxStamina)
+{
+    if (fillImage == null) return;
+    
+    targetFillAmount = currentStamina / maxStamina;
+    
+    if (!useSmoothTransition)
+    {
+        fillImage.fillAmount = targetFillAmount;
+    }
+}
+
+→ Called by StaminaSystem when stamina changes
+→ Calculates percentage: 75 / 100 = 0.75 (75%)
+→ Sets target for smooth animation
+
+EXAMPLE IN ACTION:
+You dash (costs 25 stamina):
+1. Stamina drops: 100 → 75
+2. StaminaSystem fires: OnStaminaChanged(75, 100)
+3. UpdateBar calculates: targetFillAmount = 0.75
+4. Update() smoothly animates bar from 1.0 → 0.75
+5. You wait 1 second (regen delay)
+6. StaminaSystem regenerates: 75 → 76 → 77 → ...
+7. Each tick fires OnStaminaChanged
+8. Bar smoothly refills!
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 HOW TO USE THIS SCRIPT (In Unity)
+═══════════════════════════════════════════════════════════════════
+
+1. CREATE A UI IMAGE
+   - Right-click Canvas → UI → Image
+   - Name it "StaminaBarFill"
+   - Set Source Image (UISprite or Knob)
+   - Set Image Type to "Filled"
+   - Set Fill Method to "Horizontal"
+   - Set Color to Cyan or Blue
+
+2. ADD THIS SCRIPT
+   - Select StaminaBarFill
+   - Add Component → Stamina Bar UI
+
+3. WIRE REFERENCES
+   - Drag Player's StaminaSystem into "Stamina System" slot
+   - Drag StaminaBarFill into "Fill Image" slot
+
+4. TEST
+   - Press Play
+   - Press SPACE to use stamina → Bar drains
+   - Wait 1 second → Bar refills automatically!
+
+═══════════════════════════════════════════════════════════════════
+
+💡 KEY DIFFERENCES FROM HEALTH BAR
+═══════════════════════════════════════════════════════════════════
+
+1. REGENERATES AUTOMATICALLY
+   - Health usually doesn't regenerate (or regenerates slowly)
+   - Stamina regenerates quickly after a delay
+   - This bar shows that regeneration in real-time
+
+2. CHANGES MORE FREQUENTLY
+   - Health changes on damage/heal events
+   - Stamina changes CONSTANTLY during regeneration
+   - Update() method is crucial for smooth regen display
+
+3. GAMEPLAY FEEL
+   - Health bar = tension (going down is scary!)
+   - Stamina bar = resource management (when can I dash again?)
+   - Color choice matters: blue/cyan feels like energy
+
+═══════════════════════════════════════════════════════════════════
+
+🐛 COMMON ISSUES & SOLUTIONS
+═══════════════════════════════════════════════════════════════════
+
+Q: Bar doesn't regenerate!
+A: 
+   ✓ Check StaminaSystem has regen rate set (default 20)
+   ✓ Check regen delay is set (default 1 second)
+   ✓ Wait the full delay after using stamina
+
+Q: Bar updates jerkily during regeneration!
+A:
+   ✓ Make sure "Use Smooth Transition" is ON
+   ✓ This smooths out the regeneration ticks
+   ✓ Try increasing smooth speed to 7-10
+
+Q: Bar doesn't show up at all!
+A:
+   ✓ Check Image has a Source Image (sprite) assigned
+   ✓ Check Color is not transparent (alpha = 255)
+   ✓ Check Rect Transform is inside Canvas bounds
+
+Q: Bar shows white instead of cyan!
+A:
+   ✓ Select the Image component
+   ✓ Click the Color box
+   ✓ Choose cyan/blue color manually
+
+═══════════════════════════════════════════════════════════════════
+
+🎓 WHY STAMINA BARS ARE IMPORTANT IN GAME DESIGN
+═══════════════════════════════════════════════════════════════════
+
+Stamina bars teach players:
+- Resource management ("Should I dash now or save stamina?")
+- Risk vs reward ("I'm low on stamina, retreat or push forward?")
+- Timing ("Wait for stamina to refill before next fight")
+
+Visual feedback is crucial:
+- Player instantly knows their state without thinking
+- Smooth regeneration feels satisfying
+- Empty bar signals vulnerability
+
+This is why AAA games use stamina systems extensively!
+
+═══════════════════════════════════════════════════════════════════
+
+🔄 REUSABILITY
+═══════════════════════════════════════════════════════════════════
+
+You can use this script for ANY stamina-like mechanic:
+- Dash stamina (action games)
+- Mana bar (RPGs)
+- Energy meter (platformers)
+- Sprint gauge (survival games)
+- Oxygen bar (underwater sections)
+- Heat meter (mech games)
+
+Just change the color and it works for everything!
+
+═══════════════════════════════════════════════════════════════════
+
+Made with ❤️ for UnityMechanicsFramework
+Part of the Health & Stamina System
+Namespace: GameplayMechanicsUMFOSS.Systems.UI
+
+═══════════════════════════════════════════════════════════════════

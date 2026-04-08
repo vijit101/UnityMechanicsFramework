@@ -1,0 +1,82 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                                                                    ║
+║           SCRIPT EXPLAINER - StaminaBarUI.cs                       ║
+║           Visual Progress Bar for Stamina System                   ║
+║                                                                    ║
+╚════════════════════════════════════════════════════════════════════╝
+
+📚 WHAT IT DOES
+═══════════════════════════════════════════════════════════════════
+
+Creates a visual stamina bar that automatically updates when stamina is
+consumed or regenerates. Identical to HealthBarUI but monitors StaminaSystem
+instead.
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 KEY CONCEPTS
+═══════════════════════════════════════════════════════════════════
+
+**Event-Driven Updates**
+- Subscribes to StaminaSystem's OnStaminaChanged event
+- Updates during consumption AND regeneration
+- Smooth animation matches regeneration feel
+
+**Regeneration Display**
+- Stamina regenerates gradually over time
+- Bar smoothly refills to match
+- Lerp animation crucial for natural feel
+
+**Same Architecture as HealthBarUI**
+- Uses same event-driven pattern
+- Same smooth animation system
+- Just monitors different component
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 HOW TO USE
+═══════════════════════════════════════════════════════════════════
+
+1. Create UI Image (set to "Filled" mode, Horizontal)
+2. Set color to Cyan or Blue
+3. Add StaminaBarUI component
+4. Drag StaminaSystem reference
+5. Drag the Image to Fill Image slot
+6. Press Play - bar updates automatically
+
+═══════════════════════════════════════════════════════════════════
+
+💡 INSPECTOR SETTINGS
+═══════════════════════════════════════════════════════════════════
+
+**Stamina System** - Reference to StaminaSystem to monitor
+**Fill Image** - The UI Image that fills/empties
+**Use Smooth Transition** - Enable smooth animation (default: ON)
+**Smooth Speed** - Animation speed (default: 5, try 7-10 for stamina)
+
+═══════════════════════════════════════════════════════════════════
+
+⚡ STAMINA-SPECIFIC NOTES
+═══════════════════════════════════════════════════════════════════
+
+- Updates more frequently than health (constant regeneration)
+- Smooth transition highly recommended for stamina
+- Higher smooth speed (7-10) can feel more responsive
+- Color choice matters: cyan/blue suggests energy
+
+═══════════════════════════════════════════════════════════════════
+
+🐛 COMMON ISSUES
+═══════════════════════════════════════════════════════════════════
+
+**Bar doesn't regenerate** → Check StaminaSystem regen rate/delay are set
+**Jerky updates** → Enable smooth transition, increase smooth speed
+**Bar starts at 0** → References set correctly, recompile scripts
+
+═══════════════════════════════════════════════════════════════════
+
+Part of GameplayMechanicsUMFOSS.Systems.UI
+Works with StaminaSystem.cs
+Can be reused for mana, energy, oxygen, etc.
+
+═══════════════════════════════════════════════════════════════════

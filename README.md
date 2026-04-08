@@ -185,6 +185,10 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Health & Stamina System](#3-health--stamina-system) | [Manjari Rathore](https://github.com/ManjariRathore) | Systems | [▶ Watch](https://drive.google.com/file/d/19F7Ud_fGdOp3P6JsQq0R_UBZEUhcwLhf/view?usp=drive_link) |
+
+| **Sample Project** | [Download ZIP](https://drive.google.com/file/d/1uUEr1EsdUJ8nQi5Gv1IHUrX20VLdCuuc/view?usp=sharingv) |
+
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -272,9 +276,73 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 - Add new conversations without touching any existing scripts
 - Scales to large narrative systems without architectural changes
 
+CONTRIBUTOR ENTRY TEMPLATE
+---
+
+### 3. Health & Stamina System
+
+| | |
+|---|---|
+| **Author** | [Manjari Rathore](https://github.com/ManjariRathore) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
+| **Location** | `Runtime/Systems/HealthSystem.cs`, `Runtime/Systems/StaminaSystem.cs` |
+| **Category** | Systems / Core |
+| **Demo Scene** | `Samples~/HealthStaminaSample/` |
+| **Video** | [▶ Watch Walkthrough](#) *(To be added)* |
+
+**What it does**
+
+A complete, reusable health and stamina management system with UI bar support. Works on player characters, enemies, and any entity needing health or stamina tracking. Features include damage/healing, stamina consumption with automatic regeneration, smooth animated progress bars, and event-driven architecture for clean UI integration.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Systems;
+using GameplayMechanicsUMFOSS.Systems.UI;
+
+// Step 1: Add components to any GameObject
+public class Player : MonoBehaviour
+{
+    private HealthSystem health;
+    private StaminaSystem stamina;
+    
+    void Start()
+    {
+        health = GetComponent<HealthSystem>();
+        stamina = GetComponent<StaminaSystem>();
+        
+        // Subscribe to events
+        health.OnHealthChanged.AddListener((current, max) => 
+            Debug.Log($"Health: {current}/{max}"));
+        health.OnDeath.AddListener(() => 
+            Debug.Log("Player died!"));
+    }
+}
+
+// Step 2: Use the API
+health.TakeDamage(20f);
+health.Heal(15f);
+stamina.ConsumeStamina(25f);  // Regenerates automatically after delay
+
+// Step 3: Add UI bars (optional)
+// Attach HealthBarUI and StaminaBarUI to UI Image components
+// Wire references in Inspector - bars update automatically via events
+```
+
+**Highlights**
+
+- **Event-driven architecture** — UI and logic completely decoupled via UnityEvents
+- **Works on any entity** — Reusable for player, enemies, bosses, destructibles
+- **UI bar components** — Optional HealthBarUI and StaminaBarUI with smooth animations
+- **Auto-regenerating stamina** — Configurable regeneration rate and delay
+- **Comprehensive documentation** — Includes 4 detailed ScriptExplainer files covering every line
+- **Beginner-friendly guides** — Complete setup instructions for Unity newcomers
+- **New Input System support** — Demo controller compatible with Unity's modern input
+
 ---
 
 <!--
+CONTRIBUTOR ENTRY TEMPLATE
 ================================================================
 CONTRIBUTOR ENTRY TEMPLATE
 ================================================================
@@ -335,7 +403,8 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 | `GameplayMechanicsUMFOSS.Combat` | Hitboxes, damage, status effects | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.UI` | HUD, menus, tooltips | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.AI` | Patrol, pathfinding, decisions | 🔓 Open for contribution |
-| `GameplayMechanicsUMFOSS.Systems` | Save/load, audio, scene management | 🔓 Open for contribution |
+| `GameplayMechanicsUMFOSS.Systems` | Health, Stamina, Save/load, audio | ✅ Active |
+| `GameplayMechanicsUMFOSS.Systems.UI` | HealthBarUI, StaminaBarUI, progress bars | ✅ Active |
 
 ---
 

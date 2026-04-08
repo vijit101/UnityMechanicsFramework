@@ -1,0 +1,350 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                                                                    ║
+║              SCRIPT EXPLAINER - HealthBarUI.cs                     ║
+║              Visual Progress Bar for Health System                 ║
+║                                                                    ║
+╚════════════════════════════════════════════════════════════════════╝
+
+📚 WHAT THIS SCRIPT DOES (In Simple Words)
+═══════════════════════════════════════════════════════════════════
+
+This script makes a visual health bar (like in video games) that 
+automatically updates when the player takes damage or heals.
+
+Think of it like a fuel gauge in a car - as you use fuel (take damage),
+the bar goes down. When you refuel (heal), it goes back up.
+
+The bar fills from left to right:
+- FULL bar = 100% health (bar reaches the right side)
+- HALF bar = 50% health (bar is in the middle)
+- EMPTY bar = 0% health (bar is completely empty)
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 HOW IT WORKS (Step by Step)
+═══════════════════════════════════════════════════════════════════
+
+STEP 1: SETUP
+When the game starts (Start method):
+- The script finds the HealthSystem component
+- It "subscribes" to health change events (like signing up for notifications)
+- It sets the bar to show current health immediately
+
+STEP 2: LISTENING FOR CHANGES
+The script is always listening:
+- When health changes (damage/heal), HealthSystem sends a message
+- HealthBarUI receives that message
+- It calculates the new bar percentage
+
+STEP 3: UPDATING THE BAR
+Every frame (Update method):
+- The bar smoothly animates to the new value
+- It uses "lerp" (linear interpolation) for smooth movement
+- This makes it look professional instead of jumping instantly
+
+═══════════════════════════════════════════════════════════════════
+
+📝 LINE-BY-LINE EXPLANATION
+═══════════════════════════════════════════════════════════════════
+
+LINES 1-2: Importing Unity Libraries
+───────────────────────────────────────────────────────────────────
+using UnityEngine;
+using UnityEngine.UI;
+
+→ These lines import code from Unity so we can use:
+  - MonoBehaviour (to attach script to GameObjects)
+  - Image (to control the UI bar's fill amount)
+
+───────────────────────────────────────────────────────────────────
+
+LINE 4: Namespace
+───────────────────────────────────────────────────────────────────
+namespace GameplayMechanicsUMFOSS.Systems.UI
+
+→ This organizes our code into a "folder" structure
+→ Prevents naming conflicts with other scripts
+→ Keeps the framework organized
+
+───────────────────────────────────────────────────────────────────
+
+LINES 6-10: Documentation Comment
+───────────────────────────────────────────────────────────────────
+/// <summary>
+/// Optional UI component that displays health as a visual progress bar.
+/// Listens to HealthSystem events and updates the bar fill automatically.
+/// Works with Unity's Image component in "Filled" mode.
+/// </summary>
+
+→ This is a comment explaining what the script does
+→ Shows up in Unity's code hints
+→ Helps other developers understand the purpose
+
+───────────────────────────────────────────────────────────────────
+
+LINE 11: Class Declaration
+───────────────────────────────────────────────────────────────────
+public class HealthBarUI : MonoBehaviour
+
+→ Creates a new component called "HealthBarUI"
+→ ": MonoBehaviour" means it can be attached to GameObjects in Unity
+→ "public" means other scripts can see and use it
+
+───────────────────────────────────────────────────────────────────
+
+LINES 13-15: References Section
+───────────────────────────────────────────────────────────────────
+[Header("References")]
+[SerializeField] private HealthSystem healthSystem;
+[SerializeField] private Image fillImage;
+
+→ [Header("References")] creates a label in the Inspector
+→ [SerializeField] makes private variables visible in Inspector
+→ healthSystem = the HealthSystem component to monitor
+→ fillImage = the UI Image that will fill/empty
+
+WHY PRIVATE?
+- Variables are private for safety (other scripts can't mess with them)
+- SerializeField lets Unity Editor see them for drag-and-drop
+- Best of both worlds: safe code + easy setup
+
+───────────────────────────────────────────────────────────────────
+
+LINES 17-19: Animation Settings
+───────────────────────────────────────────────────────────────────
+[Header("Optional: Smooth Animation")]
+[SerializeField] private bool useSmoothTransition = true;
+[SerializeField] private float smoothSpeed = 5f;
+
+→ useSmoothTransition: turns smooth animation on/off
+→ smoothSpeed: how fast the bar animates (higher = faster)
+→ Default is 5, which feels natural and professional
+
+───────────────────────────────────────────────────────────────────
+
+LINE 21: Target Variable
+───────────────────────────────────────────────────────────────────
+private float targetFillAmount;
+
+→ Stores where the bar SHOULD BE after health changes
+→ The bar smoothly moves from current position to target
+→ Not visible in Inspector (pure internal calculation)
+
+───────────────────────────────────────────────────────────────────
+
+LINES 23-34: Start Method (Initialization)
+───────────────────────────────────────────────────────────────────
+void Start()
+{
+    if (healthSystem != null && fillImage != null)
+    {
+        healthSystem.OnHealthChanged.AddListener(UpdateBar);
+        
+        float currentPercent = healthSystem.CurrentHealth / healthSystem.MaxHealth;
+        fillImage.fillAmount = currentPercent;
+        targetFillAmount = currentPercent;
+    }
+}
+
+→ Runs once when the game starts (after all Awake methods)
+→ Checks if references exist (null safety)
+→ "AddListener" = subscribe to health change notifications
+→ Calculates starting health percentage (e.g., 100/100 = 1.0 = 100%)
+→ Sets bar immediately (no animation on first frame)
+
+WHY Start() NOT OnEnable()?
+- Start runs AFTER HealthSystem.Awake() sets initial values
+- OnEnable runs BEFORE, so health would be 0
+- This ensures the bar shows correct value immediately
+
+───────────────────────────────────────────────────────────────────
+
+LINES 36-41: OnEnable Method (Re-subscribe)
+───────────────────────────────────────────────────────────────────
+void OnEnable()
+{
+    if (healthSystem != null)
+    {
+        healthSystem.OnHealthChanged.AddListener(UpdateBar);
+    }
+}
+
+→ Runs when the GameObject becomes active
+→ Re-subscribes to events (in case it was disabled)
+→ Prevents "missing listener" bugs
+
+───────────────────────────────────────────────────────────────────
+
+LINES 43-48: OnDisable Method (Unsubscribe)
+───────────────────────────────────────────────────────────────────
+void OnDisable()
+{
+    if (healthSystem != null)
+    {
+        healthSystem.OnHealthChanged.RemoveListener(UpdateBar);
+    }
+}
+
+→ Runs when GameObject becomes inactive or is destroyed
+→ Unsubscribes from events to prevent memory leaks
+→ Good practice: always clean up event listeners
+
+WHY IS THIS IMPORTANT?
+If you don't unsubscribe:
+- Events keep trying to call methods on destroyed objects
+- Causes errors and memory leaks
+- Slows down your game
+
+───────────────────────────────────────────────────────────────────
+
+LINES 50-59: Update Method (Smooth Animation)
+───────────────────────────────────────────────────────────────────
+void Update()
+{
+    if (useSmoothTransition && fillImage != null)
+    {
+        fillImage.fillAmount = Mathf.Lerp(
+            fillImage.fillAmount, 
+            targetFillAmount, 
+            Time.deltaTime * smoothSpeed
+        );
+    }
+}
+
+→ Runs every frame (60+ times per second)
+→ Only runs if smooth transition is enabled
+→ Mathf.Lerp smoothly moves from current to target value
+
+HOW LERP WORKS:
+Lerp(from, to, speed) gradually moves a value:
+- If bar is at 1.0 (full) and target is 0.5 (half):
+- Frame 1: 0.95
+- Frame 2: 0.90
+- Frame 3: 0.85
+- ... smoothly reaches 0.5
+
+Time.deltaTime = time since last frame
+- Ensures consistent speed regardless of frame rate
+- 60 FPS and 30 FPS look the same
+
+───────────────────────────────────────────────────────────────────
+
+LINES 61-71: UpdateBar Method (Event Handler)
+───────────────────────────────────────────────────────────────────
+void UpdateBar(float currentHealth, float maxHealth)
+{
+    if (fillImage == null) return;
+    
+    targetFillAmount = currentHealth / maxHealth;
+    
+    if (!useSmoothTransition)
+    {
+        fillImage.fillAmount = targetFillAmount;
+    }
+}
+
+→ Called automatically when health changes (via event)
+→ Receives current health and max health as parameters
+→ Calculates percentage: 80 / 100 = 0.8 (80%)
+→ Sets target for smooth animation
+→ If smooth is disabled, changes bar instantly
+
+EXAMPLE:
+Health changes from 100 to 80:
+- HealthSystem sends: UpdateBar(80, 100)
+- targetFillAmount = 80 / 100 = 0.8
+- Update() smoothly animates bar from 1.0 to 0.8
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 HOW TO USE THIS SCRIPT (In Unity)
+═══════════════════════════════════════════════════════════════════
+
+1. CREATE A UI IMAGE
+   - Right-click Canvas → UI → Image
+   - Name it "HealthBarFill"
+   - Set Image Type to "Filled" (requires a sprite first)
+   - Set Fill Method to "Horizontal"
+
+2. ADD THIS SCRIPT
+   - Select HealthBarFill
+   - Add Component → Health Bar UI
+
+3. WIRE REFERENCES
+   - Drag Player's HealthSystem into "Health System" slot
+   - Drag HealthBarFill into "Fill Image" slot
+
+4. TEST
+   - Press Play
+   - Bar should show current health
+   - Take damage → Bar shrinks smoothly
+
+═══════════════════════════════════════════════════════════════════
+
+💡 KEY CONCEPTS USED
+═══════════════════════════════════════════════════════════════════
+
+1. EVENT-DRIVEN ARCHITECTURE
+   - HealthBarUI doesn't constantly check health
+   - It waits for notifications from HealthSystem
+   - More efficient and cleaner code
+
+2. LINEAR INTERPOLATION (LERP)
+   - Mathematical technique for smooth transitions
+   - Used everywhere in game dev (animations, camera movement, etc.)
+   - Makes games feel polished
+
+3. SEPARATION OF CONCERNS
+   - HealthSystem handles logic
+   - HealthBarUI handles visuals
+   - They talk via events, not direct references
+
+4. NULL SAFETY
+   - Always check "if (thing != null)" before using it
+   - Prevents crashes from missing references
+   - Professional coding practice
+
+═══════════════════════════════════════════════════════════════════
+
+🐛 COMMON ISSUES & SOLUTIONS
+═══════════════════════════════════════════════════════════════════
+
+Q: Bar doesn't move at all!
+A: Check:
+   ✓ Health System reference is set
+   ✓ Fill Image reference is set
+   ✓ Image Type is "Filled" not "Simple"
+
+Q: Bar jumps instantly instead of smooth animation!
+A: 
+   ✓ Make sure "Use Smooth Transition" is checked
+   ✓ Increase "Smooth Speed" if too slow
+
+Q: Bar shows wrong value on start!
+A: 
+   ✓ This script uses Start() not OnEnable()
+   ✓ Ensure HealthSystem.Awake() sets initial values
+
+Q: "NullReferenceException" error!
+A:
+   ✓ One of your references is not set in Inspector
+   ✓ Drag the components into their slots
+
+═══════════════════════════════════════════════════════════════════
+
+🎓 LEARNING RESOURCES
+═══════════════════════════════════════════════════════════════════
+
+To understand this script better, learn about:
+- Unity UI System (Canvas, Image, RectTransform)
+- Unity Events (AddListener, RemoveListener)
+- Mathf.Lerp (interpolation)
+- MonoBehaviour lifecycle (Awake, Start, OnEnable, Update)
+
+═══════════════════════════════════════════════════════════════════
+
+Made with ❤️ for UnityMechanicsFramework
+Part of the Health & Stamina System
+Namespace: GameplayMechanicsUMFOSS.Systems.UI
+
+═══════════════════════════════════════════════════════════════════
