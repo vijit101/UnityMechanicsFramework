@@ -73,3 +73,10 @@ crashlytics-build.properties
 
 # Additional junk files
 *.ini
+
+# Samples~/QuestSystem local Editor output (folder name is literally Samples~)
+Samples~/QuestSystem/Library/
+Samples~/QuestSystem/UserSettings/
+Samples~/QuestSystem/Temp/
+Samples~/QuestSystem/Logs/
+Samples~/QuestSystem/obj/

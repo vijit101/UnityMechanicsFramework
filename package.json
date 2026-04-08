@@ -8,6 +8,14 @@
     "name": "Shubham B"
   },
   "dependencies": {
-    "com.unity.textmeshpro": "3.0.6"
-  }
+    "com.unity.textmeshpro": "3.0.6",
+    "com.unity.ugui": "1.0.0"
+  },
+  "samples": [
+    {
+      "displayName": "Quest System",
+      "description": "Data-driven quests with GameEventPayload matching, demo scene under Samples~/QuestSystem.",
+      "path": "Samples~/QuestSystem"
+    }
+  ]
 }

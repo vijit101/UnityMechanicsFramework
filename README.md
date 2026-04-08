@@ -51,13 +51,13 @@ The goal is simple: build the mechanic once, document it properly, and let every
 
 ## 2. Who Is This For?
 
-| Developer Type | How This Helps You |
-|---|---|
-| **Learner / Student** | Study real Unity patterns with video walkthroughs and line-by-line code explanations. Raise and contribute issues |
-| **Indie Developer** | Grab production-ready mechanics and integrate them in minutes, not hours |
-| **Game Jam Participant** | Ship faster by pulling from a library of ready-to-use, pre-tested systems |
-| **Educator / Mentor** | Point students at specific mechanics — every one has a video on how to use it , and a full code explainer  |
-| **Open Source Contributor** | Add your mechanic, get it reviewed, and leave a permanent credited entry in this library |
+| Developer Type              | How This Helps You                                                                                                |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Learner / Student**       | Study real Unity patterns with video walkthroughs and line-by-line code explanations. Raise and contribute issues |
+| **Indie Developer**         | Grab production-ready mechanics and integrate them in minutes, not hours                                          |
+| **Game Jam Participant**    | Ship faster by pulling from a library of ready-to-use, pre-tested systems                                         |
+| **Educator / Mentor**       | Point students at specific mechanics — every one has a video on how to use it , and a full code explainer         |
+| **Open Source Contributor** | Add your mechanic, get it reviewed, and leave a permanent credited entry in this library                          |
 
 ---
 
@@ -194,14 +194,14 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 
 ### 1. MonoSingleton Generic
 
-| | |
-|---|---|
-| **Author** | Shubham B |
-| **Namespace** | `GameplayMechanicsUMFOSS.Core`  need to add a namespace / raise an issue |
-| **Location** | `Runtime/Core/MonoSingleton.cs` |
-| **Category** | Core / Architecture |
-| **Demo Scene** | `Samples~/CoreExamples/Assets/Scenes/DemoScene.unity` |
-| **Video** | — |
+|                |                                                                         |
+| -------------- | ----------------------------------------------------------------------- |
+| **Author**     | Shubham B                                                               |
+| **Namespace**  | `GameplayMechanicsUMFOSS.Core` need to add a namespace / raise an issue |
+| **Location**   | `Runtime/Core/MonoSingleton.cs`                                         |
+| **Category**   | Core / Architecture                                                     |
+| **Demo Scene** | `Samples~/CoreExamples/Assets/Scenes/DemoScene.unity`                   |
+| **Video**      | —                                                                       |
 
 **What it does**
 
@@ -233,6 +233,50 @@ GameManager.Instance.AddScore(10);
 ---
 
 ### 2. Generic & Scalable Dialogue System
+
+|                |                                                                                                                                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Author**     | [Mayur](https://github.com/M-dev-acc)                                                                                                                                                             |
+| **Namespace**  | `GameplayMechanicsUMFOSS.Dialogue` need to add a namespace / raise an issue                                                                                                                       |
+| **Location**   | [`RuntimeMechanics/Dialogue/2. GenericAndScalableDialogueSystem/`](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem) |
+| **Category**   | Dialogue / Narrative                                                                                                                                                                              |
+| **Demo Scene** | `Samples~/DialogueExample/Assets/Scenes/DemoScene.unity`                                                                                                                                          |
+| **Video**      | [▶ Watch Tutorial](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/dailogueSample/Video)                                                                                   |
+
+**What it does**
+
+A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data not code.
+
+**How to use it**
+ Note to meintainer : need to fix the part for how to use dialogue system later / for the one using it find the video and watch it  
+```csharp
+using GameplayMechanicsUMFOSS.Dialogue;
+
+// Step 1: Create DialogueNode ScriptableObjects in the Inspector
+// Step 2: Link them into a DialogueDatabase asset
+// Step 3: Reference the database from your DialogueSystem component
+
+[SerializeField] private DialogueSystem dialogueSystem;
+[SerializeField] private DialogueDatabase npcDatabase;
+
+// Step 4: Start a conversation
+dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
+{
+    Debug.Log("Conversation finished.");
+});
+```
+
+**Highlights**
+
+- Fully data-driven — all dialogue lives in ScriptableObject assets, not in code
+- Supports branching and multi-path dialogue trees
+- Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
+- Add new conversations without touching any existing scripts
+- Scales to large narrative systems without architectural changes
+
+---
+
+### 64 . Utils
 
 | | |
 |---|---|
@@ -320,24 +364,65 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 
 ---
 
-<!--
-================================================================
-CONTRIBUTOR ENTRY TEMPLATE
-================================================================
+### 3. Quest / Objective System
+
+|                |                                                                   |
+| -------------- | ----------------------------------------------------------------- |
+| **Author**     | Prem Shah                                                         |
+| **Namespace**  | `GameplayMechanicsUMFOSS.Systems`                                 |
+| **Location**   | `Runtime/Systems/QuestManager_UMFOSS.cs`, `QuestSystem_UMFOSS.cs` |
+| **Category**   | Systems / RPG                                                     |
+| **Demo Scene** | `Samples~/QuestSystem/Assets/Scenes/DemoScene.unity`              |
+| **Video**      | — (record demo to `Samples~/QuestSystem/Video/` and link here)    |
+
+**What it does**
+
+Data-driven quests and objectives as ScriptableObjects. Gameplay fires normal EventBus events plus a parallel `GameEventPayload` string dictionary so the quest manager never imports combat, inventory, or world event types. Optional objectives, hidden objectives, auto-start chains, prerequisites, and save snapshots are supported.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Core;
+using GameplayMechanicsUMFOSS.Systems;
+using System.Collections.Generic;
+
+// 1. Add QuestSystem_UMFOSS + QuestManager_UMFOSS to a bootstrap GameObject.
+// 2. Author QuestData_UMFOSS / ObjectiveData_UMFOSS assets (or register at runtime).
+// 3. From gameplay — publish payloads alongside your typed events:
+EventBus.Publish(new GameEventPayload("EnemyDiedEvent", new Dictionary<string, string> {
+    { "enemyType", "Goblin" }
+}));
+
+// 4. Start quests from code or data triggers
+QuestManager_UMFOSS.Instance.StartQuest(myQuestData);
+```
+
+**Highlights**
+
+- Objectives keyed by `eventTypeKey` for O(1) routing to relevant active quests
+- `GameEventPayload` decouples the quest assembly from every other mechanic’s event types
+- `ISaveable_UMFOSS` snapshot for integrating with your save pipeline
+- Demo sample: explorable 3D scene, HUD + reward feed, gameplay emits only payloads (see [`Samples~/QuestSystem/README.md`](Samples~/QuestSystem/README.md) and `ScriptExplainer.txt`)
+
+---
+
+# <!--
+
+# CONTRIBUTOR ENTRY TEMPLATE
 
 Copy the block below and fill it in when your PR is merged.
 Delete this comment block before committing.
 
 ### N. Your Mechanic Name
 
-| | |
-|---|---|
-| **Author** | [Your Name](https://github.com/your-handle) |
-| **Namespace** | `GameplayMechanicsUMFOSS.YourFeatureGroup` |
-| **Location** | `Runtime/YourFeatureGroup/YourMechanicScript.cs` |
-| **Category** | Movement / Combat / UI / Core / etc. |
+|                |                                                           |
+| -------------- | --------------------------------------------------------- |
+| **Author**     | [Your Name](https://github.com/your-handle)               |
+| **Namespace**  | `GameplayMechanicsUMFOSS.YourFeatureGroup`                |
+| **Location**   | `Runtime/YourFeatureGroup/YourMechanicScript.cs`          |
+| **Category**   | Movement / Combat / UI / Core / etc.                      |
 | **Demo Scene** | `Samples~/YourMechanicName/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Walkthrough](YOUR_VIDEO_LINK_HERE) |
+| **Video**      | [▶ Watch Walkthrough](YOUR_VIDEO_LINK_HERE)               |
 
 **What it does**
 
@@ -369,30 +454,30 @@ Also add a row to the Quick Navigation table above:
 
 All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by feature group.
 
-| Namespace | Purpose | Status |
-|---|---|---|
-| `GameplayMechanicsUMFOSS.Core` | MonoSingleton, EventBus, StateMachine | ✅ Active |
-| `GameplayMechanicsUMFOSS.Physics` | IPhysicsAdapter, 2D/3D adapters | ✅ Active |
-| `GameplayMechanicsUMFOSS.Movement` | Jump, Dash, WallSlide | ✅ Active |
-| `GameplayMechanicsUMFOSS.Dialogue` | DialogueSystem, nodes, database | ✅ Active |
-| `GameplayMechanicsUMFOSS.Input` | InputAdapter | ✅ Active |
-| `GameplayMechanicsUMFOSS.Utils` | TimerUtility, helpers | ✅ Active |
-| `GameplayMechanicsUMFOSS.Inventory` | Item systems, loot, equipment | 🔓 Open for contribution |
-| `GameplayMechanicsUMFOSS.Combat` | Hitboxes, damage, status effects | 🔓 Open for contribution |
-| `GameplayMechanicsUMFOSS.UI` | HUD, menus, tooltips | 🔓 Open for contribution |
-| `GameplayMechanicsUMFOSS.AI` | Patrol, pathfinding, decisions | 🔓 Open for contribution |
-| `GameplayMechanicsUMFOSS.Systems` | Save/load, audio, scene management | 🔓 Open for contribution |
+| Namespace                           | Purpose                                        | Status                   |
+| ----------------------------------- | ---------------------------------------------- | ------------------------ |
+| `GameplayMechanicsUMFOSS.Core`      | MonoSingleton, EventBus, StateMachine          | ✅ Active                |
+| `GameplayMechanicsUMFOSS.Physics`   | IPhysicsAdapter, 2D/3D adapters                | ✅ Active                |
+| `GameplayMechanicsUMFOSS.Movement`  | Jump, Dash, WallSlide                          | ✅ Active                |
+| `GameplayMechanicsUMFOSS.Dialogue`  | DialogueSystem, nodes, database                | ✅ Active                |
+| `GameplayMechanicsUMFOSS.Input`     | InputAdapter                                   | ✅ Active                |
+| `GameplayMechanicsUMFOSS.Utils`     | TimerUtility, helpers                          | ✅ Active                |
+| `GameplayMechanicsUMFOSS.Inventory` | Item systems, loot, equipment                  | 🔓 Open for contribution |
+| `GameplayMechanicsUMFOSS.Combat`    | Hitboxes, damage, status effects               | 🔓 Open for contribution |
+| `GameplayMechanicsUMFOSS.UI`        | HUD, menus, tooltips                           | 🔓 Open for contribution |
+| `GameplayMechanicsUMFOSS.AI`        | Patrol, pathfinding, decisions                 | 🔓 Open for contribution |
+| `GameplayMechanicsUMFOSS.Systems`   | Quest/objectives, save hooks, scene management | ✅ Active (Quest system) |
 
 ---
 
 ## 8. Unity Version & Compatibility
 
-| Unity Version | Status |
-|---|---|
-| Unity 2020.x and below | ❌ Not supported |
-| Unity 2021.3 LTS | ✅ Minimum supported |
-| Unity 2022.3 LTS | ✅ Recommended |
-| Unity 6 | ✅ Supported |
+| Unity Version          | Status               |
+| ---------------------- | -------------------- |
+| Unity 2020.x and below | ❌ Not supported     |
+| Unity 2021.3 LTS       | ✅ Minimum supported |
+| Unity 2022.3 LTS       | ✅ Recommended       |
+| Unity 6                | ✅ Supported         |
 
 **Additional notes:**
 - All mechanics target **2D games** by default. But some Issues and PR's  are beyond 2d or 3d that can be used by all. The `IPhysicsAdapter` layer makes extending to 3D straightforward without modifying mechanic code
@@ -420,6 +505,7 @@ This library grows with every Pull Request. Every mechanic you contribute is per
 ```
 
 **Your README entry must include:**
+
 - Your name linked to your GitHub profile
 - A link to your video walkthrough
 - A minimal code example showing how to use the mechanic
@@ -443,7 +529,7 @@ Contributors retain permanent credit in the Mechanics Library for every mechanic
 
 <div align="center">
 
-*Built by the Unity community, for the Unity community.*  
-*Find a mechanic that saves you time. Contribute one that saves someone else's.* ⭐
+_Built by the Unity community, for the Unity community._  
+_Find a mechanic that saves you time. Contribute one that saves someone else's._ ⭐
 
 </div>

@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "com.unity.ai.navigation": "2.0.10",
+    "com.unity.multiplayer.center": "1.0.1",
+    "com.unity.test-framework": "1.6.0",
+    "com.unity.ugui": "2.0.0",
+    "com.vijit101.unitymechanicsframework": "file:../../..",
+    "com.unity.modules.accessibility": "1.0.0",
+    "com.unity.modules.adaptiveperformance": "1.0.0",
+    "com.unity.modules.audio": "1.0.0",
+    "com.unity.modules.vectorgraphics": "1.0.0"
+  }
+}

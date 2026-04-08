@@ -1,0 +1,112 @@
+====================================================
+MECHANIC: Quest / Objective System (UMFOSS)
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+SAMPLE: GameplayMechanicsUMFOSS.Samples.QuestSystem
+CORE: GameplayMechanicsUMFOSS.Core (EventBus, GameEventPayload, ISaveable_UMFOSS)
+====================================================
+
+PURPOSE
+-------
+Designers define quests and objectives as ScriptableObjects. Gameplay code never references
+the quest system: it only publishes typed gameplay events and a parallel GameEventPayload
+bridge. QuestManager_UMFOSS listens ONLY to GameEventPayload, matches string eventType and
+optional property filters, and advances counters. This keeps the quest assembly free of
+imports like EnemyDiedEvent from combat.
+
+----------------------------------------------------
+KEY FILES (Runtime/)
+----------------------------------------------------
+QuestSystem_UMFOSS.cs       Entry component (RequireComponent QuestManager_UMFOSS).
+QuestManager_UMFOSS.cs      Singleton brain: lifecycle, listener map, save, payloads only.
+QuestData_UMFOSS.cs         ScriptableObject quest definition + rewards + settings.
+ObjectiveData_UMFOSS.cs     ScriptableObject single objective + eventTypeKey + filters.
+QuestInstance_UMFOSS.cs     Runtime state wrapper; GetProgress ignores optional objectives.
+ObjectiveInstance_UMFOSS.cs Runtime counter + revealed flag for hidden objectives.
+QuestEvents_UMFOSS.cs       EventBus DTOs for UI and other systems.
+QuestSaveData_UMFOSS.cs     Serializable save snapshot (arrays for JsonUtility).
+
+Core/EventBus.cs            Static publish/subscribe for decoupled events.
+Core/GameEventPayload.cs    eventType string + Dictionary<string,string> properties.
+Core/ISaveable_UMFOSS.cs    CaptureState / RestoreState contract.
+Core/MonoSingletonGeneric.cs Singleton base for QuestManager_UMFOSS.
+
+----------------------------------------------------
+SAMPLE GAME (Samples~/QuestSystem/Assets/Scripts/)
+----------------------------------------------------
+QuestSampleSceneBootstrap.cs   Single scene object: EventSystem, Canvas (tracker, event log,
+                               rewards, controls, retry hint, death overlay UI), quest runtime,
+                               and an explorable bounded 3D world (ground + wall perimeter,
+                               Quest Board, player + CharacterController, merchant NPC, goblins,
+                               pickups, exploration zones). Keeps DemoScene.unity minimal.
+
+QuestSampleRuntimeSetup.cs     At runtime, creates QuestData_UMFOSS / ObjectiveData_UMFOSS,
+                               registers all three quests, exposes static quest references.
+                               No quest auto-starts; Clear The Camp / Merchant begin from world
+                               interactions. Merchant talk/return objectives filter merchantPhase.
+
+QuestSampleQuestStartPoint.cs  Trigger + E: resets goblin camp encounter, then StartQuest when
+                               CanStartQuest (Quest Board flow).
+
+QuestSampleClearCampEncounter.cs
+QuestSampleClearCampEncounterHooks.cs
+                               On Clear The Camp failure, restores camp goblins and pickups for
+                               retries; Quest Board start also calls Reset before StartQuest.
+
+QuestSampleGameEventHelper.cs Static publishers for GameEventPayload (no quest references).
+
+QuestSampleEnemy.cs           Goblin stand-in: on "attack", publishes EnemyDiedEvent payload
+                               and marks itself consumed in the world registry (save/load).
+
+QuestSampleItemPickup.cs      Walk-through pickup: publishes ItemAddedEvent, consumes self.
+
+QuestSampleMerchant.cs        Staged E: StartQuest if needed, then InteractEvent with
+                               merchantPhase Talk or Return (after ore objective), plus objectID.
+
+QuestSampleExplorationZone.cs First visit publishes ZoneEnteredEvent with zoneID.
+
+QuestSampleWorldRegistry.cs   Maps save IDs to GameObjects; tracks consumed entities for
+                               save/load alongside quest progress. Unconsume restores actors for
+                               sample encounter retries.
+
+QuestSampleSaveCoordinator.cs JsonUtility save of QuestSaveData_UMFOSS + player position +
+                               consumed entity IDs (PlayerPrefs key UMFOSS_QuestSampleFullSave).
+
+QuestSampleHud.cs             Available-quest hints, active tracker, payload log, reward feed,
+                               control hints, retry banner when Clear The Camp fails, death
+                               overlay + respawn countdown + button.
+
+QuestSamplePlayerLifecycle.cs Publishes PlayerDeathEvent payload, shows death UI via HUD,
+                               blocks gameplay via IsActionAllowed, respawns at spawn after
+                               button click or 5 seconds.
+
+QuestSampleInput.cs           P = death (if alive); S = save (alive only); L = load anytime.
+
+WHY GameEventPayload
+----------------------------------------------------
+If QuestManager subscribed to EnemyDiedEvent directly, the quest system would depend on
+combat assemblies and would need recompilation when adding FishCaughtEvent. Instead,
+gameplay publishes:
+  EventBus.Publish(new GameEventPayload(...));    // for quests
+The quest manager code never imports EnemyDiedEvent.
+
+----------------------------------------------------
+WHY objectiveListeners DICTIONARY
+----------------------------------------------------
+Key = objective.data.eventTypeKey (e.g. "EnemyDiedEvent"). Value = set of active quest
+instances that have at least one objective listening to that key. When a payload arrives,
+only those quests are considered — not every objective in the game.
+
+----------------------------------------------------
+WHY ScriptableObjects
+----------------------------------------------------
+New quests are authoring-only: duplicate assets, edit fields, assign objectives. No C#
+changes, no rebuild for content-only iteration. The sample also builds SOs in code to keep
+the demo self-contained without authored assets.
+
+----------------------------------------------------
+ISaveable_UMFOSS
+----------------------------------------------------
+CaptureState returns QuestSaveData_UMFOSS with active objective counters and completed IDs.
+RestoreState rebuilds instances from questID strings using RegisterQuestData / Resources
+and re-registers payload listeners. The sample layers world state (consumed pickups/enemies,
+player position) on top via QuestSampleFullSave.
