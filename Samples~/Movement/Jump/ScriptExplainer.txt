@@ -1,0 +1,72 @@
+====================================================
+SCRIPT: ModularJumpSystem.cs
+AUTHOR: Aditya Prasad Dash
+NAMESPACE: GameplayMechanicsUMFOSS.Movement
+VIDEO: ./AddJumpModule.mp4
+====================================================
+
+PURPOSE:
+A configurable jump controller implementing coyote time (grace period after
+walking off a ledge) and jump buffering (queuing a jump input slightly before landing).
+Works with both 2D and 3D physics via IPhysicsAdapter.
+
+----------------------------------------------------
+
+Code    : using UnityEngine;
+Explain : Imports the Unity engine namespace. Required for MonoBehaviour, Vector2/Vector3,
+          Rigidbody, and other core Unity types.
+
+Code    : namespace GameplayMechanicsUMFOSS.Movement
+Explain : Organizes the class under the Movement feature group of UMFOSS.
+          Prevents naming conflicts with other mechanics.
+
+Code    : public class ModularJumpSystem : MonoBehaviour
+Explain : Declares the class, inheriting from MonoBehaviour so it can be attached to
+          a Unity GameObject as a component.
+
+Code    : [Header("Jump Settings")]
+Explain : Groups the following serialized fields under "Jump Settings" in the Inspector.
+
+Code    : [SerializeField] private float jumpForce = 12f;
+Explain : Base jump force applied when jumping. Exposed to the Inspector for easy tuning.
+
+Code    : [SerializeField] private float coyoteTimeDuration = 0.15f;
+Explain : Grace period after leaving a platform during which the player can still jump.
+
+Code    : [SerializeField] private float jumpBufferDuration = 0.1f;
+Explain : Time window to queue a jump input slightly before landing.
+
+Code    : private IPhysicsAdapter physics;
+Explain : Adapter interface to apply forces and check grounded status, works for 2D or 3D.
+
+Code    : private int jumpsRemaining;
+Explain : Tracks remaining jumps for multi-jump mechanics like double jump.
+
+Code    : private float coyoteTimeCounter;
+Explain : Counts down coyote time in Update(), allowing jumps after leaving the ground.
+
+Code    : private float jumpBufferCounter;
+Explain : Tracks queued jump input, triggers jump once grounded if within buffer.
+
+Code    : private void Awake()
+Explain : Called when the object is initialized. Sets up references and default values.
+
+Code    : private void Update()
+Explain : Handles input, updates timers (coyote and jump buffer), and triggers jump
+          when conditions are met.
+
+Code    : public void TriggerJump(float forceMultiplier = 1f)
+Explain : Public method to perform a jump. Uses optional multiplier to adjust
+          jump height externally (power-ups, buffs, etc.).
+
+Code    : private bool CanJump()
+Explain : Checks if the player can jump based on grounded status, coyote time,
+          and jumpsRemaining counter.
+
+Code    : private void ApplyJump(float force)
+Explain : Applies jump force via the IPhysicsAdapter to keep the system agnostic
+          to 2D or 3D physics.
+
+Code    : EventBus.Publish(new PlayerJumpedEvent { height = force });
+Explain : Publishes a jump event so other systems (VFX, audio, achievements) can react
+          without direct references.
