@@ -69,7 +69,7 @@ The goal is simple: build the mechanic once, document it properly, and let every
 git clone https://github.com/vijit101/UnityMechanicsFramework.git
 ```
 
-Import this Unity as a github pacakge using Unity Package manager . All packages import automatically via `package.json`.
+Open the cloned folder as a Unity project. All packages import automatically via `package.json`.
 
 ### Option B — Grab a single mechanic
 
@@ -155,7 +155,7 @@ physics.SetVelocity(Vector2.zero);
 
 ### EventBus — Decoupled Communication
 
-Mechanics never hold direct references to each other. They communicate via events. A jump system never needs to know a sound manager exists. Not all mechanics migght follow this depending on the issues raised .
+Mechanics never hold direct references to each other. They communicate via events. A jump system never needs to know a sound manager exists.
 
 ```csharp
 // Any mechanic can publish:
@@ -185,6 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Modular 2D Movement System](#3-modular-2d-movement-system) | Kumar Kartikay & Amrutha CA | Movement | [▶ Watch](https://github.com/KKartikay-27/UnityMechanicsFramework/blob/feature/movement2d-system/Samples~/Movement2D/Video/2DMovementSystem.mp4) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -243,10 +244,10 @@ GameManager.Instance.AddScore(10);
 
 **What it does**
 
-A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data not code.
+A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data — not code.
 
 **How to use it**
- Note to meintainer : need to fix the part for how to use dialogue system later / for the one using it find the video and watch it  
+ need to add a fix this doc a bit  / raise an issue
 ```csharp
 using GameplayMechanicsUMFOSS.Dialogue;
 
@@ -271,6 +272,46 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 - Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
 - Add new conversations without touching any existing scripts
 - Scales to large narrative systems without architectural changes
+
+---
+
+### 3. Modular 2D Movement System
+
+| | |
+|---|---|
+| **Author** | [Kumar Kartikay](https://github.com/KKartikay-27/) and [Amrutha CA](https://github.com/Amruthacagithub)|
+| **Namespace** | `GameplayMechanicsUMFOSS.Movement` |
+| **Location** | `Runtime/Movement/Movement2D_UMFOSS.cs` |
+| **Category** | Movement / Controller |
+| **Demo Scene** | `Samples~/Movement2D/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](https://github.com/KKartikay-27/UnityMechanicsFramework/blob/feature/movement2d-system/Samples~/Movement2D/Video/2DMovementSystem.mp4) |
+
+**What it does**
+
+One 2D movement script that changes its entire movement behavior by switching a dropdown in the Inspector. Nine movement modes covering every approach Unity offers for moving a 2D object — from pixel-perfect transform positioning to physics-based force accumulation.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Movement;
+
+// Step 1: Add Movement2D_UMFOSS component to your GameObject
+// Step 2: Select movement mode in Inspector dropdown
+// Step 3: Adjust parameters for desired feel
+
+// Step 4: Switch modes at runtime if needed
+Movement2D_UMFOSS movement = GetComponent<Movement2D_UMFOSS>();
+movement.SetMode(MovementMode.ForceAdditive); // Ice physics
+movement.SetMode(MovementMode.LerpSmooth);    // Ghost float
+```
+
+**Highlights**
+
+- **9 distinct movement modes** in one component — Transform group (5 modes) + Physics group (4 modes)
+- **Runtime mode switching** with proper state cleanup — no velocity bleeding between modes
+- **Adapter pattern** for physics and input — testable and future-proof
+- **Event-driven architecture** — decoupled from UI, audio, and camera systems
+- **Comprehensive documentation** — ScriptExplainer.txt explains every mode and parameter
 
 ---
 
@@ -349,7 +390,7 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 | Unity 6 | ✅ Supported |
 
 **Additional notes:**
-- All mechanics target **2D games** by default. But some Issues and PR's  are beyond 2d or 3d that can be used by all. The `IPhysicsAdapter` layer makes extending to 3D straightforward without modifying mechanic code
+- All mechanics target **2D games** by default. The `IPhysicsAdapter` layer makes extending to 3D straightforward without modifying mechanic code
 - Compatible with both **Built-In Render Pipeline** and **URP**
 - Compatible with both **Legacy Input** and the **new Unity Input System** via `InputAdapter`
 - If your mechanic requires additional packages (Cinemachine, TextMeshPro, etc.), declare them in your PR and in your `ScriptExplainer.txt` header
@@ -360,7 +401,7 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 
 This library grows with every Pull Request. Every mechanic you contribute is permanently credited to you in the Mechanics Library above, complete with your name, your GitHub profile, and a link to your walkthrough video.
 
-**The contribution flow at a Glance (See details in Contributing.MD):**
+**The contribution flow:**
 
 ```
 1.  Open an Issue  →  label: mechanic-proposal  →  describe what you want to build

@@ -9,5 +9,12 @@
   },
   "dependencies": {
     "com.unity.textmeshpro": "3.0.6"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "2D Movement System Demo",
+      "description": "Interactive demo showcasing all 9 movement modes with runtime switching",
+      "path": "Samples~/Movement2D"
+    }
+  ]
 }
