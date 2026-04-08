@@ -1,0 +1,46 @@
+====================================================
+SCRIPT: GroundPound_UMFOSS.cs
+AUTHOR: Arjun Ojha
+NAMESPACE: GameplayMechanicsUMFOSS.Movement
+====================================================
+
+PURPOSE:
+A 2D platformer slam mechanic that cancels momentum, freezes the player
+briefly in mid-air (Hang Time), and slams them downward. It includes 
+area-of-effect impact detection and a skill-based jump cancel.
+
+----------------------------------------------------
+
+Code    : [SerializeField] private bool isGrounded;
+Explain : A boolean updated by Unity's collision callbacks. It prevents the 
+          mechanic from being triggered while the player is standing on the floor.
+
+Code    : if (state == GroundPoundState.Descending && Input.GetKeyDown(KeyCode.Space))
+Explain : Captures the cancel input inside Update(). Because GetKeyDown only 
+          stays true for one frame, we save it in a boolean to ensure the 
+          physics-synced Coroutine never misses the input.
+
+MOMENT 1 — TRIGGER (Hang Time)
+Code    : rb.velocity = Vector2.zero; rb.gravityScale = 0f;
+Explain : Stops all movement and turns off gravity. This "freezes" the player 
+          to create anticipation before the descent.
+
+MOMENT 2 — DESCENT (Slam)
+Code    : rb.gravityScale = config.poundGravityScale;
+Explain : Applies a high gravity multiplier from the ScriptableObject config. 
+          This ensures the descent is significantly faster than a normal fall.
+
+MOMENT 3 — IMPACT
+Code    : rb.velocity = Vector2.zero; rb.gravityScale = 1f;
+Explain : Stops the player immediately upon hitting the ground and resets 
+          gravity to normal to prevent the player from sliding or bouncing.
+
+MOMENT 4 — FEEDBACK
+Code    : StartCoroutine(SquashSequence());
+Explain : Triggers a visual "squash and stretch" effect by modifying the 
+          transform scale, giving the impact a juicy, heavy feel.
+
+MOMENT 5 — RECOVERY
+Code    : yield return new WaitForSeconds(config.recoveryDuration);
+Explain : Briefly locks the player in the impact state before allowing 
+          movement again, adding a tactical risk to using the move.
