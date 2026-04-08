@@ -185,6 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Pause System](#3-pause-system) | [Souvik Kumar](https://github.com/Souvik-Cyclic) | Systems | [▶ Watch](https://youtu.be/7PnhKj3YqPg) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -274,6 +275,55 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 
 ---
 
+### 3. Pause System
+
+| | |
+|---|---|
+| **Author** | [Souvik Kumar](https://github.com/Souvik-Cyclic) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
+| **Location** | `Runtime/Systems/PauseSystem/` |
+| **Category** | Systems |
+| **Demo Scene** | `Samples~/PauseSystemSample/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](https://youtu.be/7PnhKj3YqPg) |
+
+**What it does**
+
+A singleton pause manager that freezes simulation time, mutes all audio globally, and broadcasts `GamePausedEvent` / `GameResumedEvent` via the EventBus — so every other system can react to pause without any direct coupling. Supports bullet-time preservation (stores and restores `Time.timeScale` exactly, never hardcodes `1.0`), an optional auto-pause on application focus loss, and a configurable pause key — all from the Inspector.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Systems;
+
+// Call from anywhere — input handler, UI button, cutscene trigger:
+PauseSystem_UMFOSS.Instance.TogglePause();
+PauseSystem_UMFOSS.Instance.Pause();
+PauseSystem_UMFOSS.Instance.Resume();
+
+// React to pause from any other system without coupling:
+EventBus.Subscribe<GamePausedEvent>(e =>
+{
+    // e.previousTimeScale tells you if bullet time was active
+    myAnimator.SetBool("Paused", true);
+});
+
+EventBus.Subscribe<GameResumedEvent>(e => myAnimator.SetBool("Paused", false));
+
+// Animate UI during pause — use unscaledDeltaTime, not deltaTime:
+transform.position += velocity * Time.unscaledDeltaTime;
+```
+
+**Highlights**
+
+- Store-and-restore `Time.timeScale` pattern — pause and resume are transparent to bullet-time and slow-motion systems
+- One-line global audio pause via `AudioListener.pause` — no per-source tracking needed
+- EventBus-driven: `GamePausedEvent`, `GameResumedEvent`, `ApplicationFocusLostEvent`, `ApplicationFocusGainedEvent` — zero coupling
+- Auto-pauses on alt-tab / focus loss (toggle per platform); deliberately never auto-resumes
+- Guard clauses prevent duplicate events from rapid key presses
+- All configuration (pause key, audio toggle, focus-loss behaviour, debug logging) exposed in the Inspector
+
+---
+
 <!--
 ================================================================
 CONTRIBUTOR ENTRY TEMPLATE
@@ -335,7 +385,7 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 | `GameplayMechanicsUMFOSS.Combat` | Hitboxes, damage, status effects | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.UI` | HUD, menus, tooltips | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.AI` | Patrol, pathfinding, decisions | 🔓 Open for contribution |
-| `GameplayMechanicsUMFOSS.Systems` | Save/load, audio, scene management | 🔓 Open for contribution |
+| `GameplayMechanicsUMFOSS.Systems` | Pause, save/load, audio, scene management | ✅ Active |
 
 ---
 

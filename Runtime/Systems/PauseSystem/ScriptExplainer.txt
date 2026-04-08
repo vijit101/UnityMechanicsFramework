@@ -1,0 +1,236 @@
+================================================================================
+SCRIPT EXPLAINER — PauseSystem_UMFOSS.cs
+================================================================================
+Mechanic   : Pause System
+Author     : Souvik Kumar (https://github.com/Souvik-Cyclic)
+Namespace  : GameplayMechanicsUMFOSS.Systems
+Dependencies: EventBus (GameplayMechanicsUMFOSS.Core), MonoSingletongeneric (Core)
+================================================================================
+
+This explainer walks through every decision in PauseSystem_UMFOSS.cs line by line,
+including EventBus.cs and the four event structs.
+
+────────────────────────────────────────────────────────────────────────────────
+PART 1 — EventBus.cs
+────────────────────────────────────────────────────────────────────────────────
+
+    private static readonly Dictionary<Type, Delegate> subscribers
+
+Why a Dictionary<Type, Delegate>?
+Each event TYPE is its own key. When you publish a PlayerJumpedEvent, the bus
+looks up typeof(PlayerJumpedEvent) and invokes only the delegates stored under
+that key. Zero iteration over unrelated listeners.
+
+    public static void Subscribe<T>(Action<T> listener)
+        subscribers[type] = Delegate.Combine(subscribers[type], listener);
+
+Delegate.Combine creates a multicast delegate — a single object that calls
+multiple methods in order. Each Subscribe call chains one more method onto it.
+
+    public static void Unsubscribe<T>(Action<T> listener)
+        subscribers[type] = Delegate.Remove(subscribers[type], listener);
+        if (subscribers[type] == null) subscribers.Remove(type);
+
+Delegate.Remove returns null when the last subscriber is removed. We clean up
+the dictionary entry so the key does not accumulate. Always call Unsubscribe in
+OnDisable/OnDestroy — stale delegates on destroyed MonoBehaviours will throw
+MissingReferenceException.
+
+    public static void Publish<T>(T eventData)
+        (del as Action<T>)?.Invoke(eventData);
+
+The cast is safe because Subscribe<T> always stored an Action<T> under typeof(T).
+The ?. null-conditional handles the case where the key has no subscribers.
+
+────────────────────────────────────────────────────────────────────────────────
+PART 2 — Event Structs (GamePausedEvent, GameResumedEvent, etc.)
+────────────────────────────────────────────────────────────────────────────────
+
+Why structs and not classes?
+Events are short-lived data packets passed through the bus and then discarded.
+Structs allocate on the stack (no garbage collection pressure), which matters
+when events fire frequently (every frame, every hit, etc.).
+
+    public struct GamePausedEvent { public float previousTimeScale; }
+
+previousTimeScale carries whatever timeScale was active when Pause() was called.
+This could be 0.2 (bullet time) rather than 1.0. Subscribers that need to know
+the pre-pause state (e.g. a slow-motion system restoring itself on resume) read
+this field rather than assuming the game was running at normal speed.
+
+────────────────────────────────────────────────────────────────────────────────
+PART 3 — PauseSystem_UMFOSS.cs
+────────────────────────────────────────────────────────────────────────────────
+
+    public class PauseSystem_UMFOSS : MonoSingletongeneric<PauseSystem_UMFOSS>
+
+Inheriting MonoSingletongeneric ensures only one PauseSystem ever exists.
+If a second is instantiated (e.g. during scene load), Awake in the base class
+calls Destroy(this) on the duplicate. Pause state is therefore always consistent
+across all scenes.
+
+──────────────────────────────────────────────────
+3a. Inspector Fields
+──────────────────────────────────────────────────
+
+    [SerializeField] private KeyCode pauseKey = KeyCode.Escape;
+
+Making the key configurable in the Inspector means any game can change it without
+touching the script. This is the framework design principle: logic in code,
+configuration in data.
+
+    [SerializeField] private bool toggleOnFocusLoss = true;
+
+Desktop games should auto-pause when the player alt-tabs or switches windows.
+Mobile games should not — the OS handles that. Making it a toggle instead of
+hardcoding lets the same script serve both platforms.
+
+    [SerializeField] private bool pauseAudio = true;
+
+Some games want music to keep playing during pause (menu music). Setting this
+false lets audio continue while the simulation is frozen.
+
+──────────────────────────────────────────────────
+3b. The Stored TimeScale Pattern
+──────────────────────────────────────────────────
+
+    private float storedTimeScale = 1f;
+
+    public void Pause()
+        storedTimeScale = Time.timeScale;   // <-- the critical line
+        Time.timeScale  = 0f;
+
+This is the single most important pattern in this script. The naive version is:
+
+    Time.timeScale = 0f;  // pause
+    Time.timeScale = 1f;  // resume  ← WRONG
+
+That breaks bullet time. If another system had set timeScale to 0.2 before
+pause was called, restoring to 1.0 cancels the slow motion permanently.
+
+By storing whatever timeScale was active and restoring that exact value, the
+pause system becomes completely transparent to any other time-manipulation system.
+Neither system needs to know the other exists.
+
+    public void Resume()
+        Time.timeScale = storedTimeScale;   // restore — not 1.0
+
+This is why the pattern is called "store-and-restore". It makes Pause/Resume
+compositional: they can wrap any other timeScale manipulation safely.
+
+──────────────────────────────────────────────────
+3c. Why AudioListener.pause and Not Other Methods
+──────────────────────────────────────────────────
+
+Three wrong alternatives:
+
+    AudioListener.volume = 0f;
+    — Audio continues playing silently. CPU cost is not reduced.
+    — Playback position advances. On resume, audio is desynchronised.
+
+    audioSource.Pause() on each source:
+    — Dynamically spawned AudioSources (pooled SFX) are hard to track.
+    — You need a list of every active source. Miss one and it keeps playing.
+
+    Time.timeScale = 0 affecting audio:
+    — It does not. Unity's audio engine runs on its own clock.
+
+The correct approach:
+
+    AudioListener.pause = true;
+    — One global switch on Unity's audio engine.
+    — Pauses every AudioSource simultaneously.
+    — Preserves exact playback position for all of them.
+    — Resumes from exactly where it stopped.
+    — One line.
+
+──────────────────────────────────────────────────
+3d. Guard Clauses on IsPaused
+──────────────────────────────────────────────────
+
+    public void Pause()   { if (isPaused)  return; ... }
+    public void Resume()  { if (!isPaused) return; ... }
+
+Without these guards, two rapid Escape presses would fire two GamePausedEvents
+and leave the system in an inconsistent state. The guard makes both methods
+idempotent: calling Pause() when already paused is a safe no-op.
+
+TogglePause() is the only method that should be called from input. Calling
+Pause() directly from a button click is fine, but calling TogglePause() from
+a button click on the pause menu could resume the game while the menu is still
+animating. Design your UI to call Resume() directly.
+
+──────────────────────────────────────────────────
+3e. OnApplicationFocus — Focus Loss Handling
+──────────────────────────────────────────────────
+
+    private void OnApplicationFocus(bool hasFocus)
+        if (!hasFocus && !isPaused) Pause();
+        // deliberately NOT resuming on hasFocus = true
+
+Unity calls OnApplicationFocus(false) when the application window loses focus
+(alt-tab, Cmd+Tab, phone call on mobile, etc.). Auto-pausing here protects the
+player from missing something or dying while they were away.
+
+We never auto-resume. If the player alt-tabs to check a guide and comes back,
+the game waiting for them to deliberately press Escape to continue is the correct
+user experience. Auto-resume would catch them before they are ready.
+
+The focus-lost event fires before Pause() is called, so subscribers that track
+analytics can distinguish "game paused by player" from "game paused by focus loss".
+
+──────────────────────────────────────────────────
+3f. The unscaledDeltaTime Contract (for UI authors)
+──────────────────────────────────────────────────
+
+PauseSystem_UMFOSS cannot enforce this in other scripts — it is an architectural
+agreement that any script animating UI during pause must follow.
+
+    transform.position += velocity * Time.deltaTime;         // freezes during pause
+    transform.position += velocity * Time.unscaledDeltaTime; // works during pause
+
+Time.deltaTime is derived from Time.timeScale. When timeScale is 0, deltaTime
+is 0, and any movement or animation using deltaTime stops.
+
+Time.unscaledDeltaTime is the real elapsed wall-clock time since the last frame,
+independent of timeScale. Use it for:
+    - Pause menu slide-in / slide-out animations (see PauseMenuUI.cs)
+    - Loading screen progress bars
+    - Settings menu transitions
+    - Any UI that should move while the simulation is frozen
+
+────────────────────────────────────────────────────────────────────────────────
+PART 4 — Demo Scripts
+────────────────────────────────────────────────────────────────────────────────
+
+DemoRotator.cs
+    Rotates a transform with Time.deltaTime. No pause subscription needed —
+    when timeScale = 0, deltaTime = 0, rotation naturally stops. This shows
+    that simple transform operations need no pause handling.
+
+DemoEnemy.cs
+    Moves back and forth and subscribes to GamePausedEvent / GameResumedEvent
+    to set an inputEnabled flag. Shows how an AI or player controller reacts
+    to pause events without the pause system ever knowing it exists.
+
+PauseMenuUI.cs
+    Slides a UI panel in/out using Time.unscaledDeltaTime.
+    This is the proof-of-concept for the unscaled time contract: the panel
+    animates smoothly even while timeScale is 0.
+
+PauseDemoHUD.cs
+    Displays live pause system state on screen. Update() reads values every
+    frame — works during pause because UI rendering is not affected by timeScale.
+
+────────────────────────────────────────────────────────────────────────────────
+KEY TAKEAWAYS
+────────────────────────────────────────────────────────────────────────────────
+
+1. Always store and restore Time.timeScale — never hardcode 1.0 on resume.
+2. Use AudioListener.pause for audio — not per-source pausing or volume.
+3. Use Time.unscaledDeltaTime in any UI that must animate during pause.
+4. Use OnApplicationFocus for auto-pause — never auto-resume on focus return.
+5. Guard Pause() and Resume() with IsPaused checks to prevent duplicate events.
+6. The pause system fires events and stops — other systems react independently.
+
+================================================================================
