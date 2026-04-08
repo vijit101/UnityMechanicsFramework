@@ -1,0 +1,129 @@
+====================================================
+SCRIPTS: Physics Adapter Layer
+AUTHOR: UnityMechanicsFramework Contributors
+NAMESPACE: GameplayMechanicsUMFOSS.Physics
+====================================================
+
+PURPOSE:
+Abstracts 2D and 3D physics behind a common interface (IPhysicsAdapter).
+This allows the jump system (and future movement mechanics) to work in both
+2D and 3D without any duplicated logic or if-checks for dimension mode.
+
+----------------------------------------------------
+FILE: DimensionMode_UMFOSS.cs
+----------------------------------------------------
+
+Code    : public enum DimensionMode
+Explain : A simple enum with two values: Mode2D and Mode3D. This appears as a
+          dropdown in the Unity Inspector on any component that needs to know
+          which physics mode the game uses. The jump system uses it to decide
+          which adapter component to look for on the GameObject.
+
+Code    : Mode2D,
+Explain : Selects 2D physics. The jump system will look for a Physics2DAdapter
+          component, which wraps Rigidbody2D.
+
+Code    : Mode3D
+Explain : Selects 3D physics. The jump system will look for a Physics3DAdapter
+          component, which wraps Rigidbody.
+
+----------------------------------------------------
+FILE: IPhysicsAdapter_UMFOSS.cs
+----------------------------------------------------
+
+Code    : public interface IPhysicsAdapter
+Explain : The core abstraction. Any class implementing this interface promises
+          to provide velocity control, ground detection, gravity scaling, and
+          terminal velocity clamping. The jump system only ever talks to this
+          interface, never to Rigidbody or Rigidbody2D directly.
+
+Code    : Vector3 Velocity { get; set; }
+Explain : Exposes velocity as Vector3 regardless of dimension. The 2D adapter
+          internally converts to/from Vector2 (ignoring z). This means the
+          jump system can read/write velocity without caring about 2D vs 3D.
+
+Code    : void SetVerticalVelocity(float velocity)
+Explain : Sets only the Y component of velocity, preserving horizontal movement.
+          This is used for jump impulses because it gives consistent jump height
+          — unlike AddForce, which would vary based on current velocity.
+
+Code    : bool IsGrounded { get; }
+Explain : Returns true if the character is touching the ground. Each adapter
+          implements ground detection differently (CircleCast for 2D,
+          SphereCast for 3D), but the jump system just reads this bool.
+
+Code    : void UpdateGroundCheck()
+Explain : Refreshes the IsGrounded value. Called once per Update frame by the
+          jump system. Separated from IsGrounded so the expensive physics
+          query only runs once per frame, not every time IsGrounded is read.
+
+Code    : float GravityScale { get; set; }
+Explain : Controls how strong gravity is. In 2D, this maps directly to
+          Rigidbody2D.gravityScale. In 3D, the adapter applies gravity
+          manually each FixedUpdate, multiplied by this value. The jump
+          system modifies this to create "floaty rise, snappy fall" feel.
+
+Code    : void ClampVerticalVelocity(float terminalVelocity)
+Explain : Prevents the character from falling faster than the given speed.
+          Clamps velocity.y to be no less than -terminalVelocity.
+
+Code    : float Mass { get; }
+Explain : Exposes the rigidbody's mass. Needed by the 3D adapter for correct
+          gravity force calculation (F = m * g * gravityScale).
+
+----------------------------------------------------
+FILE: Physics2DAdapter_UMFOSS.cs
+----------------------------------------------------
+
+Code    : [RequireComponent(typeof(Rigidbody2D))]
+Explain : Tells Unity to automatically add a Rigidbody2D if one isn't present
+          when this component is attached. Prevents null reference errors.
+
+Code    : [SerializeField] private LayerMask groundLayer
+Explain : Configurable in the Inspector. Only colliders on these layers count
+          as "ground". This prevents the character from thinking it's grounded
+          when touching walls or enemies.
+
+Code    : [SerializeField] private float groundCheckRadius = 0.3f
+Explain : The radius of the CircleCast used for ground detection. Should match
+          roughly half the character's width. Too large = false positives on
+          walls, too small = missed ground contact on edges.
+
+Code    : rb.linearVelocity = new Vector2(rb.linearVelocity.x, velocity)
+Explain : Sets only the Y velocity while keeping X unchanged. This is the core
+          of SetVerticalVelocity — it allows a jump to set exact upward speed
+          without affecting horizontal movement.
+
+Code    : Physics2D.CircleCast(origin, groundCheckRadius, Vector2.down, groundCheckDistance, groundLayer)
+Explain : Casts a circle downward from the character's feet. More forgiving than
+          a single raycast — it detects ground even at platform edges. The
+          groundCheckOffset lets you adjust the cast origin if the pivot isn't
+          at the character's feet.
+
+----------------------------------------------------
+FILE: Physics3DAdapter_UMFOSS.cs
+----------------------------------------------------
+
+Code    : [DefaultExecutionOrder(-10)]
+Explain : Makes this component's FixedUpdate run before most others. This is
+          important because the adapter applies gravity in FixedUpdate, and
+          the jump system needs the gravity scale to be set correctly before
+          that happens.
+
+Code    : rb.useGravity = false
+Explain : Disables Unity's built-in gravity for the Rigidbody. We do this
+          because 3D Rigidbody has no gravityScale property (unlike 2D).
+          Instead, we apply gravity manually so we can scale it, giving us
+          the same control that Rigidbody2D.gravityScale provides natively.
+
+Code    : rb.AddForce(Physics.gravity * (gravityScale * rb.mass))
+Explain : Applies gravity manually each physics step. We multiply by mass
+          because AddForce in ForceMode.Force (default) divides by mass
+          internally. Multiplying by mass cancels this out, making gravity
+          behave identically regardless of the object's mass — just like
+          real gravity and just like Rigidbody2D.gravityScale.
+
+Code    : Physics.SphereCast(origin, groundCheckRadius, Vector3.down, out _, groundCheckDistance, groundLayer)
+Explain : The 3D equivalent of CircleCast. Casts a sphere downward to detect
+          ground. The "out _" discards the hit info since we only need to know
+          whether ground was hit, not where.

@@ -73,3 +73,7 @@ crashlytics-build.properties
 
 # Additional junk files
 *.ini
+
+# macOS
+.DS_Store
+**/.DS_Store
