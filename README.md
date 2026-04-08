@@ -185,6 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Modular Jump System](#3-modular-jump-system) | AttAditya (Aditya Prasad Dash) | Movement | [▶ Watch](Samples~/Movement/Jump/AddJumpModule.mp4) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -271,6 +272,38 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 - Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
 - Add new conversations without touching any existing scripts
 - Scales to large narrative systems without architectural changes
+
+---
+Here’s the filled-in contributor entry for your Modular Jump System:
+
+### 3. Modular Jump System
+
+| | |
+|---|---|
+| **Author** | [AttAditya (Aditya Prasad Dash)](https://github.com/AttAditya) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Movement.Jump` |
+| **Location** | `Runtime/Movement/Jump/JumpModule.cs` |
+| **Category** | Movement |
+| **Demo Scene** | `Samples~/Movement/Jump/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](Samples~/Movement/Jump/AddJumpModule.mp4) |
+
+**What it does**
+
+A modular jump system with coyote time, jump buffering, and multiple jumps.
+Suitable for 2D and 3D platformers or any game requiring precise player jumping.
+
+**How to use it**
+
+- Add `Jump Module` component to GameObject
+- Attach `RigidbodyOption` (`RigidbodyOption2D` or `RigidbodyOption3D`) to the same GameObject
+- Attach `PhysicsOptions` (`Physics2DOptions` or `Physics3DOptions`) to the same GameObject
+- Do additional customization in the inspector (jump force, gravity acceleration, etc.)
+
+**Highlights**
+
+- Uses IPhysicsAdapter for 2D/3D physics flexibility
+- Implements coyote time and jump buffering for responsive gameplay
+- Teaches modular design, input handling, and Unity best practices
 
 ---
 
