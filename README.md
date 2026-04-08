@@ -184,9 +184,9 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 | # | Mechanic | Author | Category | Video |
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
-| 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch]
+| 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Game Feel / Juice System](#3-game-feel--juice-system) | [Indrajeet Yadav](https://github.com/indrajeetyadav) | Systems | [▶ Watch](Samples~/GameFeel/Video/GameFeelTutorial.zip) |
 | 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
-(https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -276,47 +276,48 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 
 ---
 
-### 64 . Utils
+### 3. Game Feel / Juice System
 
 | | |
 |---|---|
-| **Author** | [Shubham](https://github.com/vijit101) |
-| **Namespace** | `GameplayMechanicsUMFOSS.Core` 
-| **Location** | [`RuntimeMechanics/Dialogue/2. GenericAndScalableDialogueSystem/`](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem) |
-| **Category** | Dialogue / Narrative |
-| **Demo Scene** | `Samples~/DialogueExample/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Tutorial](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/dailogueSample/Video) |
+| **Author** | [Indrajeet Yadav](https://github.com/indrajeetyadav) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
+| **Location** | `Runtime/Systems/GameFeel/GameFeel_UMFOSS.cs` |
+| **Category** | Systems / Game Feel |
+| **Demo Scene** | `Samples~/GameFeel/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](Samples~/GameFeel/Video/GameFeelTutorial.zip) |
 
 **What it does**
 
-A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data, not code.
+A single-component system that layers five visual feedback effects — hitpause, squash & stretch, afterimage, screen flash, and ghost trail — onto any GameObject through EventBus triggers. Drop it onto your player and every mechanic in the framework can trigger polished micro-feedback without direct references. The perceptual difference between ALL OFF and ALL ON is the difference between a prototype and a shipped game.
 
 **How to use it**
- Note to maintainer: need to fix the part for how to use the dialogue system later / for the one using it find the video and watch it  
+
 ```csharp
-using GameplayMechanicsUMFOSS.Dialogue;
+using GameplayMechanicsUMFOSS.Core;
+using GameplayMechanicsUMFOSS.Systems;
 
-// Step 1: Create DialogueNode ScriptableObjects in the Inspector
-// Step 2: Link them into a DialogueDatabase asset
-// Step 3: Reference the database from your DialogueSystem component
+// Step 1: Attach GameFeel_UMFOSS to your player GameObject
+// Step 2: Configure effect parameters in the Inspector
+// Step 3: Publish events from any mechanic — GameFeel reacts automatically
 
-[SerializeField] private DialogueSystem dialogueSystem;
-[SerializeField] private DialogueDatabase npcDatabase;
+// From your combat system:
+EventBus.Publish(new OnHitRegistered { hitPoint = transform.position, intensity = 1f });
 
-// Step 4: Start a conversation
-dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
-{
-    Debug.Log("Conversation finished.");
-});
+// From your movement system:
+EventBus.Publish(new OnJumpStart { jumpForce = 12f });
+EventBus.Publish(new OnDashStart { dashDirection = Vector2.right });
+
+// Toggle effects at runtime:
+gameFeel.SetAllEffectsEnabled(false);  // ALL OFF — feels flat
+gameFeel.SetAllEffectsEnabled(true);   // ALL ON — feels alive
 ```
 
 **Highlights**
 
-- Fully data-driven — all dialogue lives in ScriptableObject assets, not in code
-- Supports branching and multi-path dialogue trees
-- Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
-- Add new conversations without touching any existing scripts
-- Scales to large narrative systems without architectural changes
+- Five independent effects in a single component — hitpause, squash & stretch, afterimage, screen flash, ghost trail — all EventBus-driven with zero coupling
+- Uses `WaitForSecondsRealtime` for hitpause and `LerpUnclamped` for springy overshoot — production patterns that solve the two most common game feel bugs
+- Zero runtime cost when disabled — each effect gates on a single boolean check, and afterimages use object pooling for zero garbage collection
 
 ---
 
