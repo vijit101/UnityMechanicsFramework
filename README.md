@@ -185,6 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Pause System](#3-pause-system) | Loki | Systems | [▶ Watch](PASTE_VIDEO_LINK_HERE) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -271,6 +272,49 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 - Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
 - Add new conversations without touching any existing scripts
 - Scales to large narrative systems without architectural changes
+
+---
+
+### 3. Pause System
+
+| | |
+|---|---|
+| **Author** | [Loki](https://github.com/loki) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
+| **Location** | `Runtime/Systems/PauseSystem/PauseSystem_UMFOSS.cs` |
+| **Category** | Systems / Game Flow |
+| **Demo Scene** | `Samples~/PauseSystem/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](PASTE_VIDEO_LINK_HERE) |
+
+**What it does**
+
+A centralized pause system that freezes scaled gameplay time, optionally pauses all audio globally, and publishes pause/resume/focus events so input, AI, UI, and timers can react without direct coupling. It preserves any active slow-motion value by restoring the exact stored `Time.timeScale` on resume.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Systems;
+using UnityEngine;
+
+public class PauseExample : MonoBehaviour
+{
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            PauseSystem_UMFOSS.Instance.TogglePause();
+        }
+    }
+}
+```
+
+**Highlights**
+
+- Restores the exact pre-pause `Time.timeScale` (bullet-time safe)
+- Uses `AudioListener.pause` for global audio pause/resume
+- Auto-pause on focus loss is configurable and never auto-resumes on focus return
+- EventBus-driven (`GamePausedEvent`, `GameResumedEvent`, focus events) with no hard references to gameplay systems
+- UI during pause is supported through the unscaled-time contract (`Time.unscaledDeltaTime`)
 
 ---
 
