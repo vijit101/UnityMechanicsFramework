@@ -184,9 +184,8 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 | # | Mechanic | Author | Category | Video |
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
-| 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch]
-| 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
-(https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Base Inventory System](#3-base-inventory-system) | [Syeda Noorain](https://github.com/SyedaNoorain) | Inventory | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/InventorySystem/Video/Demo.mp4) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -317,6 +316,54 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 - Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
 - Add new conversations without touching any existing scripts
 - Scales to large narrative systems without architectural changes
+
+---
+
+### 3. Base Inventory System
+
+| | |
+|---|---|
+| **Author** | [Syeda Noorain](https://github.com/SyedaNoorain) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Inventory` | 
+| **Location** | [`Runtime/Inventory/`](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Runtime/Inventory) |
+| **Category** | Inventory |
+| **Demo Scene** | `Samples~/InventorySystem/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Tutorial](https://drive.google.com/file/d/1IZ9bSqIQozgqhEHWHphhEMAkeiYdhWut/view?usp=sharing) |
+
+**What it does**
+
+A highly decoupled, production-ready Base Inventory System. It strictly separates what an item IS (immutable ScriptableObjects) from an item physically sitting in an inventory (mutable instances). It acts purely as a structural backend, communicating via events so any UI, Equipment, or Vendor system can build on top of it without modifying core code.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Inventory;
+
+// Setup in Inspector
+[SerializeField] private InventorySystem_UMFOSS inventorySystem;
+[SerializeField] private ItemData_UMFOSS healingPotion;
+
+public void GivePlayerPotion()
+{
+    bool wasAdded = inventorySystem.AddItem(healingPotion, 1);
+    
+    if(!wasAdded) Debug.Log("Inventory is full!");
+}
+
+private void Start()
+{
+    inventorySystem.OnSlotChanged += (slotIndex) => {
+        Debug.Log($"Slot {slotIndex} was updated in the backend!");
+    };
+}
+```
+
+**Highlights**
+
+- Complete separation of Data Objects vs Mutable Instances mimicking AAA architecture
+- Uses data-driven ItemCategory Enums for endless extension without touching core code
+- Weight tracking with hard caps natively baked in (fully opt-in)
+- Completely independent of UI logic — runs invisibly and broadcasts Native C# Events
 
 ---
 
