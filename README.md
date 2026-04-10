@@ -69,7 +69,7 @@ The goal is simple: build the mechanic once, document it properly, and let every
 git clone https://github.com/vijit101/UnityMechanicsFramework.git
 ```
 
-Open the cloned folder as a Unity project. All packages import automatically via `package.json`.
+Import this Unity as a github pacakge using Unity Package manager . All packages import automatically via `package.json`.
 
 ### Option B — Grab a single mechanic
 
@@ -155,7 +155,7 @@ physics.SetVelocity(Vector2.zero);
 
 ### EventBus — Decoupled Communication
 
-Mechanics never hold direct references to each other. They communicate via events. A jump system never needs to know a sound manager exists.
+Mechanics never hold direct references to each other. They communicate via events. A jump system never needs to know a sound manager exists. Not all mechanics migght follow this depending on the issues raised .
 
 ```csharp
 // Any mechanic can publish:
@@ -244,10 +244,54 @@ GameManager.Instance.AddScore(10);
 
 **What it does**
 
-A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data — not code.
+A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data not code.
 
 **How to use it**
- need to add a fix this doc a bit  / raise an issue
+ Note to meintainer : need to fix the part for how to use dialogue system later / for the one using it find the video and watch it  
+```csharp
+using GameplayMechanicsUMFOSS.Dialogue;
+
+// Step 1: Create DialogueNode ScriptableObjects in the Inspector
+// Step 2: Link them into a DialogueDatabase asset
+// Step 3: Reference the database from your DialogueSystem component
+
+[SerializeField] private DialogueSystem dialogueSystem;
+[SerializeField] private DialogueDatabase npcDatabase;
+
+// Step 4: Start a conversation
+dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
+{
+    Debug.Log("Conversation finished.");
+});
+```
+
+**Highlights**
+
+- Fully data-driven — all dialogue lives in ScriptableObject assets, not in code
+- Supports branching and multi-path dialogue trees
+- Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
+- Add new conversations without touching any existing scripts
+- Scales to large narrative systems without architectural changes
+
+---
+
+### 64 . Utils
+
+| | |
+|---|---|
+| **Author** | [Shubham](https://github.com/vijit101) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Core` 
+| **Location** | [`RuntimeMechanics/Dialogue/2. GenericAndScalableDialogueSystem/`](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem) |
+| **Category** | Dialogue / Narrative |
+| **Demo Scene** | `Samples~/DialogueExample/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Tutorial](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/dailogueSample/Video) |
+
+**What it does**
+
+A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data, not code.
+
+**How to use it**
+ Note to maintainer: need to fix the part for how to use the dialogue system later / for the one using it find the video and watch it  
 ```csharp
 using GameplayMechanicsUMFOSS.Dialogue;
 
@@ -398,7 +442,7 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 | Unity 6 | ✅ Supported |
 
 **Additional notes:**
-- All mechanics target **2D games** by default. The `IPhysicsAdapter` layer makes extending to 3D straightforward without modifying mechanic code
+- All mechanics target **2D games** by default. But some Issues and PR's  are beyond 2d or 3d that can be used by all. The `IPhysicsAdapter` layer makes extending to 3D straightforward without modifying mechanic code
 - Compatible with both **Built-In Render Pipeline** and **URP**
 - Compatible with both **Legacy Input** and the **new Unity Input System** via `InputAdapter`
 - If your mechanic requires additional packages (Cinemachine, TextMeshPro, etc.), declare them in your PR and in your `ScriptExplainer.txt` header
@@ -409,7 +453,7 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 
 This library grows with every Pull Request. Every mechanic you contribute is permanently credited to you in the Mechanics Library above, complete with your name, your GitHub profile, and a link to your walkthrough video.
 
-**The contribution flow:**
+**The contribution flow at a Glance (See details in Contributing.MD):**
 
 ```
 1.  Open an Issue  →  label: mechanic-proposal  →  describe what you want to build
