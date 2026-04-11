@@ -185,7 +185,8 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Spawner System](#3-spawner-system) | Community | World | [▶ Watch](./Samples~/SpawnerSystem/Video/SpawnerSystemTutorial.mp4) |
+| 25 | [Spawner System](#3-spawner-system) | Community | World | [▶ Watch](./Samples~/SpawnerSystem/Video/SpawnerSystemTutorial.mp4) |
+| 4 | [Utils](#4-utils) | [Shubham](https://github.com/vijit101) | Core | — |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -310,6 +311,39 @@ GetComponent<WaveSpawner_UMFOSS>().StartWaves();
 - Pause-aware via `GamePausedEvent` and `TimerUtility_UMFOSS` for timed spawns
 - `AnimationCurve` count/delay scaling optional — flat curves at 1 preserve default behaviour
 - EventBus events: `OnWaveStartedEvent`, `OnWaveClearedEvent`, `OnTimedSpawnTriggeredEvent`, `OnProximitySpawnTriggeredEvent`, and shared `OnSpawnCountChangedEvent`
+
+---
+
+### 4. Utils
+
+| | |
+|---|---|
+| **Author** | [Shubham](https://github.com/vijit101) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Utils`, `GameplayMechanicsUMFOSS.Core` |
+| **Location** | `Runtime/Utils/` (`TimerUtility_UMFOSS`, `ObjectPoolManager_UMFOSS`, …), `Runtime/Utils/Utils.cs` |
+| **Category** | Core / Helpers |
+| **Demo Scene** | — |
+| **Video** | — |
+
+**What it does**
+
+Shared helpers used across mechanics: pause-aware timers (`TimerUtility_UMFOSS`), object pooling (`ObjectPoolManager_UMFOSS`), and small static utilities such as scene reload helpers (`Utils`).
+
+**How to use it**
+
+```csharp
+// Example: schedule a one-shot callback
+TimerUtility_UMFOSS.Instance.ScheduleOnce(2f, () => Debug.Log("Fired"));
+
+// Example: reload active scene
+GameplayMechanicsUMFOSS.Core.Utils.ReloadLvl();
+```
+
+**Highlights**
+
+- Centralized timers that respect `GamePausedEvent`
+- Pooling integration for spawn-heavy mechanics
+- Lightweight static helpers for common scene flow
 
 ---
 
