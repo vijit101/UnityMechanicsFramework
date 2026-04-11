@@ -2,7 +2,7 @@
 SCRIPT: TimerUtility_UMFOSS.cs
 AUTHOR: Riya Bhurse
 NAMESPACE: GameplayMechanicsUMFOSS.Utils
-VIDEO: [Link to be added after recording]
+VIDEO: Samples~/TimerUtility/Video/TimerUtilityTutorial.mp4
 ====================================================
 
 PURPOSE:

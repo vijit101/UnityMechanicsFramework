@@ -143,7 +143,7 @@ namespace GameplayMechanicsUMFOSS.Utils
         /// Starts or restarts the timer from the full Duration.
         /// Safe to call at any time — resets internal state cleanly.
         /// </summary>
-        public void Start()
+        public new void Start()
         {
             elapsed          = 0f;
             tickAccumulator  = 0f;

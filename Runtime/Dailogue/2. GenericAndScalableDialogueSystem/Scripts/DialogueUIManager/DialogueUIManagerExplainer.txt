@@ -1,0 +1,161 @@
+using System.Collections.Generic;
+// Allows use of generic collections like List
+
+using UnityEngine;
+// Provides access to Unity's core engine features
+
+using TMPro;
+// Enables use of TextMeshPro for advanced text rendering
+
+using UnityEngine.UI;
+// Grants access to UI components like Button
+
+using System.Collections;
+// Needed for using IEnumerator and coroutines
+
+public class DialogueUIManager : MonoBehaviour
+// Manages the dialogue user interface, inherits from MonoBehaviour to attach to GameObject
+{
+    [Header("UI References")]
+    public GameObject dialoguePanel;
+    // Reference to the main dialogue UI panel
+
+    public TextMeshProUGUI speakerText;
+    // UI text component for showing speaker name
+
+    public TextMeshProUGUI dialogueText;
+    // UI text component for showing the dialogue line
+
+    public Transform choicePanel;
+    // Parent transform that holds all choice buttons
+
+    public GameObject choiceButtonPrefab;
+    // Prefab for creating choice buttons dynamically
+
+    private List<GameObject> currentChoiceButtons = new List<GameObject>();
+    // Keeps track of all currently displayed choice buttons for cleanup
+
+    private IEnumerator AutoSelectOnlyChoice(string choiceText, System.Action<int> onChoiceSelected)
+    // Coroutine to auto-select a choice after a delay
+    {
+        yield return new WaitForSeconds(3.0f);
+        // Waits for 3 seconds before making the automatic choice
+
+        onChoiceSelected?.Invoke(0);
+        // Automatically selects the first (and only) choice
+    }
+
+    void Start()
+    // Unity's built-in method called once when the script instance is enabled
+    {
+        dialoguePanel.SetActive(false);
+        // Initially hide the dialogue panel
+    }
+
+    public void ShowDialogue(string speaker, string text, List<string> choices, System.Action<int> onChoiceSelected, bool showEndButton)
+    // Displays a line of dialogue with speaker name and choices
+    {
+        dialoguePanel.SetActive(true);
+        // Make the dialogue panel visible
+
+        speakerText.text = speaker;
+        // Set the speaker name text
+
+        dialogueText.text = text;
+        // Set the dialogue line text
+
+        ClearChoices();
+        // Remove any old choice buttons
+
+        if (choices.Count == 1)
+        // If there's only one choice, auto-select it
+        {
+            StartCoroutine(AutoSelectOnlyChoice(choices[0], onChoiceSelected));
+            return;
+        }
+
+        for (int i = 0; i < choices.Count; i++)
+        // Loop through each choice
+        {
+            int choiceIndex = i;
+            // Capture the current index to use inside the lambda
+
+            GameObject choiceButtonObj = Instantiate(choiceButtonPrefab, choicePanel);
+            // Create a new button from the prefab under the choice panel
+
+            TextMeshProUGUI choiceText = choiceButtonObj.GetComponentInChildren<TextMeshProUGUI>();
+            // Get the Text component inside the button to set the label
+
+            choiceText.text = choices[i];
+            // Set the button text to the current choice
+
+            Button button = choiceButtonObj.GetComponent<Button>();
+            // Get the Button component from the instantiated object
+
+            button.onClick.AddListener(() =>
+            // Add a listener that triggers when the button is clicked
+            {
+                onChoiceSelected?.Invoke(choiceIndex);
+                // Call the callback with the selected choice index
+            });
+
+            currentChoiceButtons.Add(choiceButtonObj);
+            // Track this button for later removal
+        }
+
+        if (showEndButton)
+        // If it's the end of the dialogue, show a "Leave" button
+        {
+            displayEndButton();
+        }
+    }
+
+    public void HideDialogue()
+    // Hides the dialogue UI and cleans up choices
+    {
+        dialoguePanel.SetActive(false);
+        // Hide the dialogue panel
+
+        ClearChoices();
+        // Remove all choice buttons
+    }
+
+    private void ClearChoices()
+    // Destroys all currently visible choice buttons
+    {
+        foreach (GameObject btn in currentChoiceButtons)
+        // Go through each tracked button
+        {
+            Destroy(btn);
+            // Remove it from the scene
+        }
+
+        currentChoiceButtons.Clear();
+        // Clear the list so it can be reused
+    }
+
+    private void displayEndButton()
+    // Shows a "Leave" button at the end of dialogue
+    {
+        GameObject endButtonObj = Instantiate(choiceButtonPrefab, choicePanel);
+        // Create a new button for leaving the dialogue
+
+        TextMeshProUGUI endText = endButtonObj.GetComponentInChildren<TextMeshProUGUI>();
+        // Get the text component of the button
+
+        endText.text = "Leave";
+        // Set button label to "Leave"
+
+        Button button = endButtonObj.GetComponent<Button>();
+        // Get the Button component
+
+        button.onClick.AddListener(() =>
+        // When clicked, hide the dialogue
+        {
+            HideDialogue();
+        });
+
+        currentChoiceButtons.Add(endButtonObj);
+        // Track the end button for cleanup
+    }
+}

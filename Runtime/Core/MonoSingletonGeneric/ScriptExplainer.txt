@@ -1,0 +1,33 @@
+using UnityEngine; 
+// Imports the Unity engine's core namespace, giving access to Unity-related classes and functions.
+
+public class MonoSingletongeneric<T> : MonoBehaviour where T : MonoSingletongeneric<T> 
+// Defines a generic class that inherits from MonoBehaviour. The `where T : MonoSingletongeneric<T>`
+// constraint ensures that T must be a subclass of MonoSingletongeneric<T>.
+
+{
+    private static T instance; 
+    // Declares a private static variable to hold the single instance of the class.
+
+    public static T Instance { get { return instance; } } 
+    // Provides a public static property to access the single instance. This is the key feature of the Singleton pattern.
+
+    protected virtual void Awake() 
+    // Defines the Awake method, which Unity calls when the script is first initialized. 
+    // Declared as `virtual` so that it can be overridden in derived classes.
+
+    {
+        if (instance == null) 
+        // Checks if the `instance` is null, meaning no instance of the class exists yet.
+
+        {
+            instance = (T)this; 
+            // Assigns the current object to the static `instance` variable, making it the singleton instance.
+        }
+        else 
+        {
+            Destroy(this); 
+            // Destroys the current object if an instance already exists, enforcing the Singleton pattern.
+        }
+    }
+}
