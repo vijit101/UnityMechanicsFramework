@@ -185,7 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Spawner System](#3-spawner-system) | Community | World | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/SpawnerSystem/Video) |
+| 3 | [Spawner System](#3-spawner-system) | Community | World | [▶ Watch](./Samples~/SpawnerSystem/Video/SpawnerSystemTutorial.mp4) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -284,7 +284,7 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 | **Location** | `Runtime/World/` (`SpawnProfile_UMFOSS`, `SpawnPoint_UMFOSS`, `WaveSpawner_UMFOSS`, `TimedSpawner_UMFOSS`, `ProximitySpawner_UMFOSS`) |
 | **Category** | World / Spawning |
 | **Demo Scene** | `Samples~/SpawnerSystem/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch](https://youtu.be/lQPdYlRtt2A) |
+| **Video** | [▶ Watch](./Samples~/SpawnerSystem/Video/SpawnerSystemTutorial.mp4) |
 
 **What it does**
 
