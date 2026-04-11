@@ -184,8 +184,9 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 | # | Mechanic | Author | Category | Video |
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
-| 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Pause System](#3-pause-system) | [Souvik Kumar](https://github.com/Souvik-Cyclic) | Systems | [▶ Watch](https://youtu.be/7PnhKj3YqPg) |
+| 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch]
+| 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
+(https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -275,52 +276,47 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 
 ---
 
-### 3. Pause System
+### 64 . Utils
 
 | | |
 |---|---|
-| **Author** | [Souvik Kumar](https://github.com/Souvik-Cyclic) |
-| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
-| **Location** | `Runtime/Systems/PauseSystem/` |
-| **Category** | Systems |
-| **Demo Scene** | `Samples~/PauseSystemSample/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Walkthrough](https://youtu.be/7PnhKj3YqPg) |
+| **Author** | [Shubham](https://github.com/vijit101) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Core` 
+| **Location** | [`RuntimeMechanics/Dialogue/2. GenericAndScalableDialogueSystem/`](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem) |
+| **Category** | Dialogue / Narrative |
+| **Demo Scene** | `Samples~/DialogueExample/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Tutorial](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/dailogueSample/Video) |
 
 **What it does**
 
-A singleton pause manager that freezes simulation time, mutes all audio globally, and broadcasts `GamePausedEvent` / `GameResumedEvent` via the EventBus — so every other system can react to pause without any direct coupling. Supports bullet-time preservation (stores and restores `Time.timeScale` exactly, never hardcodes `1.0`), an optional auto-pause on application focus loss, and a configurable pause key — all from the Inspector.
+A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data, not code.
 
 **How to use it**
-
+ Note to maintainer: need to fix the part for how to use the dialogue system later / for the one using it find the video and watch it  
 ```csharp
-using GameplayMechanicsUMFOSS.Systems;
+using GameplayMechanicsUMFOSS.Dialogue;
 
-// Call from anywhere — input handler, UI button, cutscene trigger:
-PauseSystem_UMFOSS.Instance.TogglePause();
-PauseSystem_UMFOSS.Instance.Pause();
-PauseSystem_UMFOSS.Instance.Resume();
+// Step 1: Create DialogueNode ScriptableObjects in the Inspector
+// Step 2: Link them into a DialogueDatabase asset
+// Step 3: Reference the database from your DialogueSystem component
 
-// React to pause from any other system without coupling:
-EventBus.Subscribe<GamePausedEvent>(e =>
+[SerializeField] private DialogueSystem dialogueSystem;
+[SerializeField] private DialogueDatabase npcDatabase;
+
+// Step 4: Start a conversation
+dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 {
-    // e.previousTimeScale tells you if bullet time was active
-    myAnimator.SetBool("Paused", true);
+    Debug.Log("Conversation finished.");
 });
-
-EventBus.Subscribe<GameResumedEvent>(e => myAnimator.SetBool("Paused", false));
-
-// Animate UI during pause — use unscaledDeltaTime, not deltaTime:
-transform.position += velocity * Time.unscaledDeltaTime;
 ```
 
 **Highlights**
 
-- Store-and-restore `Time.timeScale` pattern — pause and resume are transparent to bullet-time and slow-motion systems
-- One-line global audio pause via `AudioListener.pause` — no per-source tracking needed
-- EventBus-driven: `GamePausedEvent`, `GameResumedEvent`, `ApplicationFocusLostEvent`, `ApplicationFocusGainedEvent` — zero coupling
-- Auto-pauses on alt-tab / focus loss (toggle per platform); deliberately never auto-resumes
-- Guard clauses prevent duplicate events from rapid key presses
-- All configuration (pause key, audio toggle, focus-loss behaviour, debug logging) exposed in the Inspector
+- Fully data-driven — all dialogue lives in ScriptableObject assets, not in code
+- Supports branching and multi-path dialogue trees
+- Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
+- Add new conversations without touching any existing scripts
+- Scales to large narrative systems without architectural changes
 
 ---
 
