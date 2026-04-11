@@ -185,7 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Currency System](#3-currency-system) | [Aayush Khopade](https://github.com/aayushashokkhopade) | Systems / Economy | [▶ Watch](VIDEO_LINK) |
+| 23 | [Currency System](#23-currency-system) | [Aayush Khopade](https://github.com/aayushashokkhopade) [Krishna Patidar](https://github.com/krishna-p060) | Systems / Economy | [▶ Watch](https://www.loom.com/share/01de26ff40114577a2aff1fce3f39ec2) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -275,16 +275,16 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 
 ---
 
-### 3. Currency System
+### 23. Currency System
 
 | | |
 |---|---|
-| **Author** | [Aayush Khopade](https://github.com/aayushashokkhopade) |
+| **Author** | [Aayush Khopade](https://github.com/aayushashokkhopade) [Krishna Patidar](https://github.com/krishna-p060) |
 | **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
 | **Location** | `Runtime/Systems/3. CurrencySystem/CurrencySystem_UMFOSS.cs` |
 | **Category** | Systems / Economy |
 | **Demo Scene** | `Samples~/CurrencySystem/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Walkthrough](VIDEO_LINK) |
+| **Video** | [▶ Watch Walkthrough](https://www.loom.com/share/01de26ff40114577a2aff1fce3f39ec2) |
 
 **What it does**
 
