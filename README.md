@@ -185,7 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch] |
-| 60 | [Quest/Objective system](#60-quest-objective-system) | [Prem](https://github.com/MrPhenomenal3110), [Kushagra](https://github.com/skushagra) | Systems | [▶ Demo Video](https://github.com/vijit101/UnityMechanicsFramework/blob/main/Samples~/QuestSystem/QuestSystemTutorial.mov.zip) |
+| 60 | [Quest/Objective system](#60-quest-objective-system) | [Prem](https://github.com/MrPhenomenal3110), [Kushagra](https://github.com/skushagra), Satyam | Systems | [▶ Demo Video](https://github.com/vijit101/UnityMechanicsFramework/blob/main/Samples~/QuestSystem/QuestSystemTutorial.mov.zip) |
 | 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch Tutorial](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
