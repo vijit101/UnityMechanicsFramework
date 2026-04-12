@@ -61,32 +61,32 @@ The goal is simple: build the mechanic once, document it properly, and let every
 
 ---
 
-## 3. Getting Started
+### 3. Dash System
 
-### Option A — Clone the full repository
+| | |
+|---|---|
+| **Author** | [Mahak](https://github.com/mahak-juriani)  [Nayanshi](https://github.com/nayanshisingh)|
+| **Namespace** | `GameplayMechanicsUMFOSS.Movement` |
+| **Location** | `Runtime/Movement/DashSystem_UMFOSS.cs` |
+| **Category** | Movement |
+| **Demo Scene** | `Samples~/DashSystem/Assets/Scenes/DemoScene2D.unity` |
+| **Video** | [▶ Watch Walkthrough](https://drive.google.com/file/d/1X4BJAQY857pYzvWX7VvdsZhuPkfkc28D/view?usp=drivesdk) |
 
-```bash
-git clone https://github.com/vijit101/UnityMechanicsFramework.git
-```
+**What it does**
 
-Import this Unity as a github pacakge using Unity Package manager . All packages import automatically via `package.json`.
+A fully modular and configurable dash system supporting both 2D and 3D environments using an adapter-based physics abstraction.  
+It includes dash cooldowns, charge-based usage, iframe support, and multiple direction modes, making it suitable for platformers, top-down games, and action systems.
 
-### Option B — Grab a single mechanic
+**How to use it**
 
-Each mechanic lives in its own self-contained folder under `Samples~/`. Copy any mechanic folder directly into your existing project without pulling in the entire repository.
+```csharp
+using GameplayMechanicsUMFOSS.Movement;
 
-### Running a demo
+// Step 1: Attach DashSystem_UMFOSS to your player GameObject
+DashSystem_UMFOSS dash = GetComponent<DashSystem_UMFOSS>();
 
-```
-1. Open the repo in Unity (2021.3 LTS or later)
-2. Go to Samples~/ and open any mechanic folder
-3. Open Assets/Scenes/DemoScene.unity
-4. Press Play
-```
-
-There are only scripts that you would need to load up as a package and follow the video to understand how to use it . For some the runnable demos are also present but its not a mandate due to sheer size of the repo and unity projects.
-
----
+// Step 2: Trigger dash (typically via input system)
+dash.TriggerDash();
 
 ## 4. Folder Structure
 
