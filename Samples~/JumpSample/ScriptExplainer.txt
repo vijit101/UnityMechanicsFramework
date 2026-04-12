@@ -1,0 +1,123 @@
+====================================================
+SCRIPTS: Modular Jump System
+AUTHOR: UnityMechanicsFramework Contributors
+NAMESPACE: GameplayMechanicsUMFOSS.Movement
+====================================================
+
+PURPOSE:
+A fully modular jump controller that supports multi-jump, coyote time,
+jump buffering, and gravity modification. Works in both 2D and 3D by
+communicating through IPhysicsAdapter rather than directly with Rigidbody.
+
+----------------------------------------------------
+FILE: JumpState_UMFOSS.cs
+----------------------------------------------------
+
+Code    : public enum JumpState { Grounded, Rising, Falling }
+Explain : Tracks the character's current vertical state. Used internally by the
+          jump system to decide which gravity multiplier to apply (e.g., heavier
+          gravity while falling for a snappier feel). External systems can read
+          CurrentState to trigger animations or sound effects.
+
+----------------------------------------------------
+FILE: ModularJumpSystem_UMFOSS.cs
+----------------------------------------------------
+
+Code    : [SerializeField] private DimensionMode dimensionMode = DimensionMode.Mode2D
+Explain : Inspector dropdown that tells the system whether to look for a
+          Physics2DAdapter or Physics3DAdapter on the same GameObject. Set this
+          once based on whether your game is 2D or 3D.
+
+Code    : [SerializeField] private int maxJumps = 2
+Explain : How many times the character can jump before needing to touch ground.
+          Set to 1 for single jump, 2 for double jump, etc. Jumps reset on
+          landing.
+
+Code    : [SerializeField] private float jumpForce = 12f
+Explain : The upward velocity applied when jumping. Higher values = higher jumps.
+          When consistentJumpHeight is true, this is set directly as the Y
+          velocity. When false, it's added to the current velocity.
+
+Code    : [SerializeField] private bool consistentJumpHeight = true
+Explain : When true, each jump reaches exactly the same height regardless of
+          the character's current vertical velocity. This works by setting
+          velocity to jumpForce (replacing current velocity). When false,
+          jumpForce is added to current velocity, and releasing the button
+          early cuts the jump short for variable jump height.
+
+Code    : [SerializeField] private float fallingGravityMultiplier = 2.5f
+Explain : Multiplies gravity while the character is falling. A value of 2.5
+          makes the descent feel snappy and weighty, which is the standard
+          in platformers like Celeste and Hollow Knight. Without this, jumps
+          feel "floaty" on the way down.
+
+Code    : [SerializeField] private float risingGravityMultiplier = 1f
+Explain : Multiplies gravity while the character is rising. Usually 1 (normal).
+          Increase it to make the character decelerate faster at the top of
+          the jump arc.
+
+Code    : [SerializeField] private float coyoteTimeDuration = 0.12f
+Explain : Grace period (in seconds) after walking off a platform edge during
+          which the player can still jump. This makes the game feel more
+          forgiving. Named after the cartoon coyote who runs off cliffs and
+          only falls when he looks down.
+
+Code    : [SerializeField] private float jumpBufferDuration = 0.1f
+Explain : If the player presses jump slightly before landing, the jump is
+          "buffered" and executes automatically on landing. This prevents
+          the frustrating case where the player presses jump one frame too
+          early and nothing happens.
+
+Code    : [SerializeField] private float airControlModifier = 0.8f
+Explain : A multiplier (0 to 1) that movement controllers should apply to
+          horizontal input while the character is airborne. The jump system
+          exposes this as a property but does not handle horizontal movement
+          itself — that's the responsibility of a separate movement system.
+
+Code    : [SerializeField] private InputActionReference jumpInputAction
+Explain : A reference to a Unity Input System action (e.g., "Jump"). This
+          decouples the jump system from specific keys — the input binding
+          is configured in an InputActions asset, not in code. Supports
+          keyboard, gamepad, and any other input device.
+
+Code    : public event Action OnJumpStart
+Explain : Fired the instant a jump executes. Subscribe to this for jump
+          animations, sound effects, or particle effects. Uses System.Action
+          (not UnityEvent) for performance and programmatic decoupling.
+
+Code    : public event Action OnJumpEnd
+Explain : Fired when the character lands after being airborne. Subscribe for
+          landing effects (dust particles, camera shake, footstep sounds).
+
+Code    : jumpInputAction.action.performed += OnJumpInputPerformed
+Explain : Subscribes to the Input System action's "performed" callback. This
+          fires when the jump button is pressed. We subscribe in OnEnable and
+          unsubscribe in OnDisable to prevent memory leaks and ghost inputs.
+
+Code    : jumpInputAction.action.canceled += OnJumpInputCanceled
+Explain : Subscribes to the button release. Used for variable jump height —
+          when consistentJumpHeight is false, releasing the button while
+          rising halves the upward velocity, cutting the jump short.
+
+Code    : bool canCoyoteJump = coyoteTimeCounter > 0f && jumpsRemaining == maxJumps
+Explain : Coyote jump is only allowed when the player hasn't used any jumps yet
+          (jumpsRemaining == maxJumps). This means they walked off an edge
+          without jumping. If they already jumped and are mid-air, coyote time
+          should not grant an extra jump — that's what multi-jump is for.
+
+Code    : physicsAdapter.SetVerticalVelocity(jumpForce)
+Explain : The core jump action. Sets vertical velocity directly through the
+          adapter. The adapter handles the physics-engine-specific
+          implementation (Vector2 for 2D, Vector3 for 3D).
+
+Code    : physicsAdapter.GravityScale = targetScale
+Explain : Adjusts gravity each FixedUpdate based on current state. While
+          falling, gravity is multiplied by fallingGravityMultiplier for a
+          snappier descent. While rising, it uses risingGravityMultiplier.
+          The adapter translates this to the correct physics API.
+
+Code    : public void TriggerJump()
+Explain : Public method for triggering a jump programmatically (bypassing
+          input). Useful for AI controllers, tutorials, or scripted sequences.
+          Sets the jump buffer and calls TryJump, so coyote time and jump
+          count rules still apply.
