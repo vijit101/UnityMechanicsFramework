@@ -185,6 +185,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Modular Jump System](#3-modular-jump-system) | [Abhinav Nagar](https://github.com/abhinav26966) | Movement | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/JumpSample/Video) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -271,6 +272,48 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 - Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
 - Add new conversations without touching any existing scripts
 - Scales to large narrative systems without architectural changes
+
+---
+
+### 3. Modular Jump System
+
+| | |
+|---|---|
+| **Author** | [Abhinav Nagar](https://github.com/abhinav26966) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Movement` |
+| **Location** | `Runtime/Movement/ModularJumpSystem_UMFOSS.cs` |
+| **Category** | Movement |
+| **Demo Scene** | `Samples~/JumpSample/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch JumpQuest Demo](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/JumpSample/Video/JumpQuestGameTutorial.mp4) · [▶ Watch FlappyBird Demo](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/JumpSample/Video/FlappyBirdGameTutorial.mp4) |
+
+**What it does**
+
+A fully modular, configurable jump controller that works in both 2D and 3D Unity projects. It solves the problem of rewriting jump logic from scratch every project by providing production-ready features like multi-jump, coyote time, jump buffering, and gravity modifiers — all configurable from the Inspector. Any platformer, endless runner, or physics-based game can drop this in and have polished jump feel within minutes.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Movement;
+using GameplayMechanicsUMFOSS.Physics;
+
+// Step 1: Add a Physics2DAdapter (or Physics3DAdapter) component to your player
+// Step 2: Add the ModularJumpSystem component to the same GameObject
+// Step 3: Assign a Jump InputActionReference in the Inspector
+
+// Subscribe to jump events for audio, particles, or animations:
+ModularJumpSystem jumpSystem = GetComponent<ModularJumpSystem>();
+jumpSystem.OnJumpStart += () => Debug.Log("Jumped!");
+jumpSystem.OnJumpEnd += () => Debug.Log("Landed!");
+
+// Trigger a jump programmatically (for AI or scripted sequences):
+jumpSystem.TriggerJump();
+```
+
+**Highlights**
+
+- Interface-driven physics — supports both 2D and 3D via `IPhysicsAdapter` with zero code changes
+- Production-ready platformer feel — coyote time, jump buffering, variable jump height, and gravity modifiers out of the box
+- Demonstrates the Adapter pattern and event-driven architecture (`OnJumpStart` / `OnJumpEnd`) for decoupled game systems
 
 ---
 
