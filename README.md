@@ -373,7 +373,7 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 | **Location**   | `Runtime/Systems/QuestManager_UMFOSS.cs`, `QuestSystem_UMFOSS.cs` |
 | **Category**   | Systems / RPG                                                     |
 | **Demo Scene** | `Samples~/QuestSystem/Assets/Scenes/DemoScene.unity`              |
-| **Video**      | — (record demo to `Samples~/QuestSystem/Video/` and link here)    |
+| **Video**      | [▶ Watch Walkthrough](Samples~/QuestSystem/Video/QuestSystemTutorial.mov) |
 
 **What it does**
 

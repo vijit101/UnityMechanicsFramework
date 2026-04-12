@@ -1,0 +1,20 @@
+{
+    "name": "GameplayMechanicsUMFOSS.Tests.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:3d8838c146c224b5cba05a4eafa1b68f"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
