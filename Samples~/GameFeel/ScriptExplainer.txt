@@ -2,7 +2,7 @@
 SCRIPT: GameFeel_UMFOSS.cs
 AUTHOR: Indrajeet Yadav
 NAMESPACE: GameplayMechanicsUMFOSS.Systems
-VIDEO: https://www.loom.com/share/e41698af5fa14397b2f30dca8a3d1687
+VIDEO: Samples~/GameFeel/Video/GameFeelTutorial.zip
 DEPENDENCIES: TextMeshPro (for demo UI only)
 ====================================================
 
