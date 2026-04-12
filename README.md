@@ -184,8 +184,11 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 | # | Mechanic | Author | Category | Video |
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
-| 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Modular Interaction System](#3-modular-interaction-system) | [Shivam Tiwari](https://github.com/shivam1234100), [Pranav Aggarwal](https://github.com/pranav-1100) | Interaction | [▶ Watch](https://drive.google.com/file/d/14Vbwd34_-NEBNbNXI_ZbUPgDlrW5ub_7/view?usp=sharing) |
+| 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch]
+| 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
+(https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Modular Interaction System](#3-modular-interaction-system) | [Shivam Tiwari](https://github.com/shivam1234100), [Pranav Aggarwal](https://github.com/pranav-1100) | Interaction | [▶ Watch](https://drive.google.com/file/d/14Vbwd34_-NEBNbNXI_ZbUPgDlrW5ub_7/view?usp=sharing)  
+Also in Samples~/InteractionSystem/Video |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -275,6 +278,94 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 
 ---
 
+### 64 . Utils
+
+| | |
+|---|---|
+| **Author** | [Shubham](https://github.com/vijit101) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Core` 
+| **Location** | [`RuntimeMechanics/Dialogue/2. GenericAndScalableDialogueSystem/`](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem) |
+| **Category** | Dialogue / Narrative |
+| **Demo Scene** | `Samples~/DialogueExample/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Tutorial](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/dailogueSample/Video) |
+
+**What it does**
+
+A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data, not code.
+
+**How to use it**
+ Note to maintainer: need to fix the part for how to use the dialogue system later / for the one using it find the video and watch it  
+```csharp
+using GameplayMechanicsUMFOSS.Dialogue;
+
+// Step 1: Create DialogueNode ScriptableObjects in the Inspector
+// Step 2: Link them into a DialogueDatabase asset
+// Step 3: Reference the database from your DialogueSystem component
+
+[SerializeField] private DialogueSystem dialogueSystem;
+[SerializeField] private DialogueDatabase npcDatabase;
+
+// Step 4: Start a conversation
+dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
+{
+    Debug.Log("Conversation finished.");
+});
+```
+
+**Highlights**
+
+- Fully data-driven — all dialogue lives in ScriptableObject assets, not in code
+- Supports branching and multi-path dialogue trees
+- Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
+- Add new conversations without touching any existing scripts
+- Scales to large narrative systems without architectural changes
+
+---
+
+### 64 . Utils
+
+| | |
+|---|---|
+| **Author** | [Shubham](https://github.com/vijit101) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Core` 
+| **Location** | [`RuntimeMechanics/Dialogue/2. GenericAndScalableDialogueSystem/`](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem) |
+| **Category** | Dialogue / Narrative |
+| **Demo Scene** | `Samples~/DialogueExample/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Tutorial](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/dailogueSample/Video) |
+
+**What it does**
+
+A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data, not code.
+
+**How to use it**
+ Note to maintainer: need to fix the part for how to use the dialogue system later / for the one using it find the video and watch it  
+```csharp
+using GameplayMechanicsUMFOSS.Dialogue;
+
+// Step 1: Create DialogueNode ScriptableObjects in the Inspector
+// Step 2: Link them into a DialogueDatabase asset
+// Step 3: Reference the database from your DialogueSystem component
+
+[SerializeField] private DialogueSystem dialogueSystem;
+[SerializeField] private DialogueDatabase npcDatabase;
+
+// Step 4: Start a conversation
+dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
+{
+    Debug.Log("Conversation finished.");
+});
+```
+
+**Highlights**
+
+- Fully data-driven — all dialogue lives in ScriptableObject assets, not in code
+- Supports branching and multi-path dialogue trees
+- Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
+- Add new conversations without touching any existing scripts
+- Scales to large narrative systems without architectural changes
+
+---
+
 ### 3. Modular Interaction System
 
 | | |
@@ -284,7 +375,8 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 | **Location** | `Runtime/Interaction/InteractionController_UMFOSS.cs` |
 | **Category** | Interaction |
 | **Demo Scene** | `Samples~/InteractionSystem/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Walkthrough](https://drive.google.com/file/d/14Vbwd34_-NEBNbNXI_ZbUPgDlrW5ub_7/view?usp=sharing) |
+| **Video** | [▶ Watch Walkthrough](https://drive.google.com/file/d/14Vbwd34_-NEBNbNXI_ZbUPgDlrW5ub_7/view?usp=sharing)  
+Also in Samples~/InteractionSystem/Video |
 
 **What it does**
 
