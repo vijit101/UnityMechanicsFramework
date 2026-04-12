@@ -1,0 +1,50 @@
+Code : using UnityEngine;
+// Imports core Unity engine functionalities like MonoBehaviour, Debug, etc.
+
+Code : using UnityEngine.SceneManagement;
+// Imports Unity's SceneManager API used to load, reload, and manage scenes.
+
+Code : namespace GameplayMechanicsUMFOSS.Core
+// Defines the namespace for the script to keep it organized within the framework structure.
+
+Code : {
+// Opens the namespace scope.
+
+Code : public static class Utils
+// Declares a static utility class named Utils, meaning it cannot be instantiated and only contains static methods.
+
+Code : {
+// Opens the class scope.
+
+Code : public static void ReloadLvl()
+// Declares a static method that reloads the currently active scene.
+
+Code : {
+// Opens the method scope.
+
+Code : int indx = SceneManager.GetActiveScene().buildIndex;
+// Gets the currently active scene and stores its build index (position in build settings).
+
+Code : SceneManager.LoadScene(indx);
+// Reloads the scene by loading it again using its build index.
+
+Code : }
+// Closes the ReloadLvl method.
+
+Code : public static void LoadAnyLvl(int lvl)
+// Declares a static method that loads any scene using its build index passed as a parameter.
+
+Code : {
+// Opens the method scope.
+
+Code : SceneManager.LoadScene(lvl);
+// Loads the scene corresponding to the given build index.
+
+Code : }
+// Closes the LoadAnyLvl method.
+
+Code : }
+// Closes the Utils class.
+
+Code : }
+// Closes the namespace.
