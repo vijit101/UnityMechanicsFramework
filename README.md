@@ -184,9 +184,9 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 | # | Mechanic | Author | Category | Video |
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
-| 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch]
-| 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
-(https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch] |
+| 60 | [Quest/Objective system](#60-quest-objective-system) | [Prem](https://github.com/MrPhenomenal3110), [Kushagra](https://github.com/skushagra), Satyam | Systems | [▶ Demo Video](https://github.com/vijit101/UnityMechanicsFramework/blob/main/Samples~/QuestSystem/QuestSystemTutorial.mov.zip) |
+| 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch Tutorial](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -273,6 +273,75 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 - Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
 - Add new conversations without touching any existing scripts
 - Scales to large narrative systems without architectural changes
+
+---
+
+### 60. Quest/Objective System
+
+| | |
+|---|---|
+| **Author** | [Prem](https://github.com/MrPhenomenal3110), [Kushagra](https://github.com/skushagra) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Systems` (quests), `GameplayMechanicsUMFOSS.Core` (`EventBus`, `GameEventPayload`) |
+| **Location** | `Runtime/Systems/QuestSystem_UMFOSS.cs`, `QuestManager_UMFOSS.cs`, `QuestData_UMFOSS.cs`, `ObjectiveData_UMFOSS.cs`, `QuestEvents_UMFOSS.cs` |
+| **Category** | Systems / Progression |
+| **Demo Scene** | Tutorial assets: `Samples~/QuestSystem/` (`QuestSystemTutorial.mov.zip`, `QuestSystemProject.zip`) |
+| **Video** | [▶ Demo Video](https://github.com/vijit101/UnityMechanicsFramework/blob/main/Samples~/QuestSystem/QuestSystemTutorial.mov.zip) |
+
+**What it does**
+
+A **data-driven** quest and objective layer: you author `QuestData_UMFOSS` and `ObjectiveData_UMFOSS` ScriptableObjects, add `QuestManager_UMFOSS` to a bootstrap GameObject, and **drive progress by publishing** `GameEventPayload` on the shared `EventBus`. The manager matches each objective’s `eventTypeKey` (and optional property filters) to incoming payloads, fires lifecycle events for UI/audio, supports prerequisites, optional/hidden objectives, auto-start, repeatables, fail-on-death, and **save/restore** via `ISaveable_UMFOSS`.
+
+**How to use it**
+
+1. Add **`QuestManager_UMFOSS`** to a persistent bootstrap object (optionally add **`QuestSystem_UMFOSS`** on the same object — it only exposes `Manager`).
+2. Assign **`knownQuests`** on the manager and/or place `QuestData_UMFOSS` assets under **`Resources/Quests`** (IDs must be unique and non-empty).
+3. Create **ObjectiveData** assets (`UMFOSS/Quest/ObjectiveData`): set **`eventTypeKey`** to the string you will publish on `GameEventPayload.EventType`; use **`filterKey`** / **`filterValue`** to narrow matches (string dictionary on the payload). Set **`requiredCount`**, and optionally **`isOptional`** or **`isHidden`** (hidden objectives reveal on first matching event).
+4. Create **QuestData** assets (`UMFOSS/Quest/QuestData`): wire **objectives**, **requiredQuests**, **`requiredLevel`** (0 = none), rewards, **`unlockedQuests`**, and flags **`autoStart`**, **`isRepeatable`**, **`failOnDeath`** as needed.
+5. From gameplay, publish payloads when something should count toward an objective. Keep **player level** in sync with `SetCurrentPlayerLevel` or by publishing **`PlayerLevelChangedEvent`** with `Properties["level"]` as a numeric string (see constants on `QuestManager_UMFOSS`).
+6. Listen for **`QuestRewardGrantedEvent_UMFOSS`** (and related events in `QuestEvents_UMFOSS.cs`) to grant XP, currency, and items in *your* inventory/economy code — the quest system publishes the intent, not the grant itself.
+
+```csharp
+using System.Collections.Generic;
+using GameplayMechanicsUMFOSS.Core;
+using GameplayMechanicsUMFOSS.Systems;
+using UnityEngine;
+
+public class QuestGameplayBridge : MonoBehaviour
+{
+    [SerializeField] private QuestData_UMFOSS killGoblinsQuest;
+
+    private void Start()
+    {
+        // Manual start (or rely on quest.autoStart when prerequisites are met)
+        QuestManager_UMFOSS.Instance.StartQuest(killGoblinsQuest);
+    }
+
+    public void OnGoblinDefeated()
+    {
+        // Must match ObjectiveData.eventTypeKey and optional filterKey/filterValue
+        EventBus.Publish(new GameEventPayload(
+            "EnemyDiedEvent",
+            new Dictionary<string, string> { ["enemyType"] = "Goblin" }));
+    }
+
+    public void OnPlayerLeveledUp(int newLevel)
+    {
+        EventBus.Publish(new GameEventPayload(
+            QuestManager_UMFOSS.PlayerLevelChangedEventType,
+            new Dictionary<string, string> { ["level"] = newLevel.ToString() }));
+    }
+}
+```
+
+**Highlights**
+
+- **Event-bus driven** — objectives advance only from `GameEventPayload` + `EventBus`, so gameplay stays decoupled from quest scripts
+- **Filtering** — optional `filterKey` / `filterValue` on objectives map to `GameEventPayload.Properties`
+- **Prerequisites** — prior quests (`requiredQuests`) and `requiredLevel`; `CanStartQuest` / `QuestStartFailedEvent_UMFOSS` for UX
+- **Optional and hidden objectives** — hidden objectives emit `ObjectiveStartedEvent_UMFOSS` when first revealed
+- **Lifecycle + hooks** — start, abandon, fail, complete; `QuestRewardGrantedEvent_UMFOSS` and `QuestUnlockedEvent_UMFOSS` for rewards and gating
+- **Persistence** — `QuestManager_UMFOSS` implements `ISaveable_UMFOSS` (`CaptureState` / `RestoreState`) for active quests and completed IDs
+- **Content discovery** — merges inspector `knownQuests` with `Resources.LoadAll<QuestData_UMFOSS>("Quests")`; `RegisterQuestData` for tests or runtime registration
 
 ---
 
