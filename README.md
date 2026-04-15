@@ -187,6 +187,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch]
 | 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
 (https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Base Inventory System](#3-base-inventory-system) | [Amlan](https://github.com/amlanxbghn) | Inventory | [▶ Watch](Samples~/InventorySystem/Video/InventorySystemTutorial.mp4) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -320,6 +321,49 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 
 ---
 
+### 3. Base Inventory System
+
+| | |
+|---|---|
+| **Author** | [Amlan](https://github.com/amlanxbghn) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Inventory` |
+| **Location** | `Runtime/Inventory/InventorySystem_UMFOSS.cs` |
+| **Category** | Inventory |
+| **Demo Scene** | `Samples~/InventorySystem/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](Samples~/InventorySystem/Video/InventorySystemTutorial.mp4) |
+
+**What it does**
+
+A ScriptableObject-driven base inventory system that works for any game — RPG, survival, action, or sandbox. Handles item stacking, weight limits, slot management, and fires events for UI synchronisation without coupling to any specific player, UI, or game implementation. Future systems (equipment, shops, crafting, save/load) build on top of this foundation without modifying the core.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Inventory;
+
+// Step 1: Add InventorySystem_UMFOSS component to your Player or GameManager
+InventorySystem_UMFOSS inventory = GetComponent<InventorySystem_UMFOSS>();
+
+// Step 2: Add items at runtime (ItemData is a ScriptableObject asset)
+inventory.AddItem(healthPotionData, 3);  // adds 3 health potions, fills stacks first
+inventory.AddItem(swordData);            // adds 1 sword (non-stackable)
+
+// Step 3: Query and remove
+if (inventory.HasItem(healthPotionData, 2))
+    inventory.RemoveItem(healthPotionData, 2);
+
+// Step 4: React to changes via events
+inventory.OnItemAdded += (item, qty, slot) => RefreshSlotUI(slot);
+inventory.OnInventoryFull += () => ShowFullMessage();
+```
+
+**Highlights**
+- Fully data-driven — all item definitions live in ScriptableObject assets, zero code needed to add new item types
+- Decoupled event system keeps inventory, UI, audio, and game logic completely independent
+- Demonstrates the Data vs Instance separation pattern — the most important design decision in any RPG inventory system
+
+---
+
 <!--
 ================================================================
 CONTRIBUTOR ENTRY TEMPLATE
@@ -377,7 +421,7 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 | `GameplayMechanicsUMFOSS.Dialogue` | DialogueSystem, nodes, database | ✅ Active |
 | `GameplayMechanicsUMFOSS.Input` | InputAdapter | ✅ Active |
 | `GameplayMechanicsUMFOSS.Utils` | TimerUtility, helpers | ✅ Active |
-| `GameplayMechanicsUMFOSS.Inventory` | Item systems, loot, equipment | 🔓 Open for contribution |
+| `GameplayMechanicsUMFOSS.Inventory` | Item systems, loot, equipment | ✅ Active |
 | `GameplayMechanicsUMFOSS.Combat` | Hitboxes, damage, status effects | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.UI` | HUD, menus, tooltips | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.AI` | Patrol, pathfinding, decisions | 🔓 Open for contribution |
