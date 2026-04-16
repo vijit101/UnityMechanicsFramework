@@ -1,0 +1,44 @@
+Script: NumberType.cs
+Location: Runtime/UI/NumberType.cs
+
+Line 1: namespace GameplayMechanicsUMFOSS.UI
+Explanation: Places the types in `GameplayMechanicsUMFOSS.UI` so the mechanic follows the framework namespace structure and avoids naming collisions.
+
+Line 2: {
+Explanation: Opens the current code scope.
+
+Line 3:     public enum NumberType
+Explanation: Declares `NumberType`, which groups the allowed named values used by this mechanic.
+
+Line 4:     {
+Explanation: Opens the current code scope.
+
+Line 5:         Damage = 0,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 6:         CriticalHit = 1,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 7:         DamageTaken = 2,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 8:         Heal = 3,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 9:         PoisonDamage = 4,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 10:         ShieldBlock = 5,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 11:         Miss = 6,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 12:         Experience = 7
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 13:     }
+Explanation: Closes the current code scope.
+
+Line 14: }
+Explanation: Closes the current code scope.

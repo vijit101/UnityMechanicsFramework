@@ -1,0 +1,1178 @@
+Script: FloatingDamageNumbers_UMFOSS.cs
+Location: Runtime/UI/FloatingDamageNumbers_UMFOSS.cs
+
+Line 1: ﻿using System.Collections.Generic;
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 2: using GameplayMechanicsUMFOSS.Combat;
+Explanation: Imports `GameplayMechanicsUMFOSS.Combat` so the script can use those types without fully qualifying every reference.
+
+Line 3: using GameplayMechanicsUMFOSS.Core;
+Explanation: Imports `GameplayMechanicsUMFOSS.Core` so the script can use those types without fully qualifying every reference.
+
+Line 4: using GameplayMechanicsUMFOSS.Utils;
+Explanation: Imports `GameplayMechanicsUMFOSS.Utils` so the script can use those types without fully qualifying every reference.
+
+Line 5: using TMPro;
+Explanation: Imports `TMPro` so the script can use those types without fully qualifying every reference.
+
+Line 6: using UnityEngine;
+Explanation: Imports `UnityEngine` so the script can use those types without fully qualifying every reference.
+
+Line 7: using UnityEngine.UI;
+Explanation: Imports `UnityEngine.UI` so the script can use those types without fully qualifying every reference.
+
+Line 8:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 9: namespace GameplayMechanicsUMFOSS.UI
+Explanation: Places the types in `GameplayMechanicsUMFOSS.UI` so the mechanic follows the framework namespace structure and avoids naming collisions.
+
+Line 10: {
+Explanation: Opens the current code scope.
+
+Line 11:     /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 12:     /// Listens to health-related events and displays pooled floating numbers for the entire scene.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 13:     /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 14:     public class FloatingDamageNumbers_UMFOSS : MonoBehaviour
+Explanation: Declares class `FloatingDamageNumbers_UMFOSS`, which encapsulates part of the floating damage number feature.
+
+Line 15:     {
+Explanation: Opens the current code scope.
+
+Line 16:         [Header("Configuration")]
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 17:         [SerializeField] private FloatingNumberConfig_UMFOSS config;
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 18:         [SerializeField] private GameObject numberPrefab;
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 19:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 20:         [Header("Display Settings")]
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 21:         [SerializeField] private bool showDamage = true;
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 22:         [SerializeField] private bool showHealing = true;
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 23:         [SerializeField] private bool showCrits = true;
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 24:         [SerializeField] private int decimalPlaces = 0;
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 25:         [SerializeField] private bool combineRapid = false;
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 26:         [SerializeField] private float rapidWindow = 0.1f;
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 27:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 28:         [Header("Canvas Settings")]
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 29:         [SerializeField] private Canvas targetCanvas;
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 30:         [SerializeField] private RenderMode renderMode = RenderMode.WorldSpace;
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 31:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 32:         private readonly FloatingNumberCombineBuffer_UMFOSS combineBuffer = new FloatingNumberCombineBuffer_UMFOSS();
+Explanation: Declares `FloatingNumberCombineBuffer_UMFOSS`, one of the callable behaviors used by this mechanic.
+
+Line 33:         private readonly List<FloatingNumberCombineBuffer_UMFOSS.CombinedNumber> expiredCombinedNumbers = new List<FloatingNumberCombineBuffer_UMFOSS.CombinedNumber>();
+Explanation: Declares `this method`, one of the callable behaviors used by this mechanic.
+
+Line 34:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 35:         private GameObject runtimeNumberPrefab;
+Explanation: Declares `runtimeNumberPrefab`, storing state or references needed by the mechanic.
+
+Line 36:         private bool initialized;
+Explanation: Declares `initialized`, storing state or references needed by the mechanic.
+
+Line 37:         private bool ownsRuntimePrefab;
+Explanation: Declares `ownsRuntimePrefab`, storing state or references needed by the mechanic.
+
+Line 38:         private bool previousCombineRapid;
+Explanation: Declares `previousCombineRapid`, storing state or references needed by the mechanic.
+
+Line 39:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 40:         public FloatingNumberConfig_UMFOSS Config => config;
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 41:         public bool CombineRapid
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 42:         {
+Explanation: Opens the current code scope.
+
+Line 43:             get => combineRapid;
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 44:             set => combineRapid = value;
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 45:         }
+Explanation: Closes the current code scope.
+
+Line 46:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 47:         public float RapidWindow
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 48:         {
+Explanation: Opens the current code scope.
+
+Line 49:             get => rapidWindow;
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 50:             set => rapidWindow = Mathf.Max(0.01f, value);
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 51:         }
+Explanation: Closes the current code scope.
+
+Line 52:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 53:         public int DecimalPlaces
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 54:         {
+Explanation: Opens the current code scope.
+
+Line 55:             get => decimalPlaces;
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 56:             set => decimalPlaces = Mathf.Max(0, value);
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 57:         }
+Explanation: Closes the current code scope.
+
+Line 58:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 59:         public RenderMode ActiveRenderMode => renderMode;
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 60:         public Canvas TargetCanvas => targetCanvas;
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 61:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 62:         private void Awake()
+Explanation: Declares `Awake`, one of the callable behaviors used by this mechanic.
+
+Line 63:         {
+Explanation: Opens the current code scope.
+
+Line 64:             InitializeIfNeeded();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 65:         }
+Explanation: Closes the current code scope.
+
+Line 66:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 67:         private void OnEnable()
+Explanation: Declares `OnEnable`, one of the callable behaviors used by this mechanic.
+
+Line 68:         {
+Explanation: Opens the current code scope.
+
+Line 69:             InitializeIfNeeded();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 70:             EventBus.Subscribe<DamageTakenEvent>(OnDamageTaken);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 71:             EventBus.Subscribe<HealedEvent>(OnHealed);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 72:             EventBus.Subscribe<CriticalHitEvent>(OnCriticalHit);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 73:             EventBus.Subscribe<ShieldBlockEvent>(OnShieldBlock);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 74:             EventBus.Subscribe<MissEvent>(OnMiss);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 75:             EventBus.Subscribe<ExperienceGainedEvent>(OnExperienceGained);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 76:         }
+Explanation: Closes the current code scope.
+
+Line 77:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 78:         private void Update()
+Explanation: Declares `Update`, one of the callable behaviors used by this mechanic.
+
+Line 79:         {
+Explanation: Opens the current code scope.
+
+Line 80:             if (!combineRapid && previousCombineRapid)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 81:             {
+Explanation: Opens the current code scope.
+
+Line 82:                 combineBuffer.Clear();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 83:             }
+Explanation: Closes the current code scope.
+
+Line 84:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 85:             if (combineRapid)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 86:             {
+Explanation: Opens the current code scope.
+
+Line 87:                 FlushExpiredCombinedNumbers(Time.unscaledTime);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 88:             }
+Explanation: Closes the current code scope.
+
+Line 89:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 90:             previousCombineRapid = combineRapid;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 91:         }
+Explanation: Closes the current code scope.
+
+Line 92:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 93:         private void OnDisable()
+Explanation: Declares `OnDisable`, one of the callable behaviors used by this mechanic.
+
+Line 94:         {
+Explanation: Opens the current code scope.
+
+Line 95:             EventBus.Unsubscribe<DamageTakenEvent>(OnDamageTaken);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 96:             EventBus.Unsubscribe<HealedEvent>(OnHealed);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 97:             EventBus.Unsubscribe<CriticalHitEvent>(OnCriticalHit);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 98:             EventBus.Unsubscribe<ShieldBlockEvent>(OnShieldBlock);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 99:             EventBus.Unsubscribe<MissEvent>(OnMiss);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 100:             EventBus.Unsubscribe<ExperienceGainedEvent>(OnExperienceGained);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 101:             combineBuffer.Clear();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 102:         }
+Explanation: Closes the current code scope.
+
+Line 103:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 104:         private void OnDestroy()
+Explanation: Declares `OnDestroy`, one of the callable behaviors used by this mechanic.
+
+Line 105:         {
+Explanation: Opens the current code scope.
+
+Line 106:             if (ownsRuntimePrefab && runtimeNumberPrefab != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 107:             {
+Explanation: Opens the current code scope.
+
+Line 108:                 Destroy(runtimeNumberPrefab);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 109:             }
+Explanation: Closes the current code scope.
+
+Line 110:         }
+Explanation: Closes the current code scope.
+
+Line 111:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 112:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 113:         /// Replaces the current configuration object and reapplies pool prewarm settings.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 114:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 115:         public void SetConfiguration(FloatingNumberConfig_UMFOSS configuration)
+Explanation: Declares `SetConfiguration`, one of the callable behaviors used by this mechanic.
+
+Line 116:         {
+Explanation: Opens the current code scope.
+
+Line 117:             config = configuration;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 118:             initialized = false;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 119:             InitializeIfNeeded();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 120:         }
+Explanation: Closes the current code scope.
+
+Line 121:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 122:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 123:         /// Returns current pool usage for the popup prefab.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 124:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 125:         public ObjectPoolManager_UMFOSS.PoolStats GetPoolStats()
+Explanation: Declares `GetPoolStats`, one of the callable behaviors used by this mechanic.
+
+Line 126:         {
+Explanation: Opens the current code scope.
+
+Line 127:             InitializeIfNeeded();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 128:             return runtimeNumberPrefab == null
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 129:                 ? default
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 130:                 : ObjectPoolManager_UMFOSS.Instance.GetStats(runtimeNumberPrefab);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 131:         }
+Explanation: Closes the current code scope.
+
+Line 132:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 133:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 134:         /// Applies either world-space or screen-space positioning for an active popup.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 135:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 136:         public void ApplyPopupPosition(FloatingNumber_UMFOSS floatingNumber, Vector3 worldPosition)
+Explanation: Declares `ApplyPopupPosition`, one of the callable behaviors used by this mechanic.
+
+Line 137:         {
+Explanation: Opens the current code scope.
+
+Line 138:             if (floatingNumber == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 139:             {
+Explanation: Opens the current code scope.
+
+Line 140:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 141:             }
+Explanation: Closes the current code scope.
+
+Line 142:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 143:             if (renderMode == RenderMode.WorldSpace)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 144:             {
+Explanation: Opens the current code scope.
+
+Line 145:                 floatingNumber.RectTransform.position = worldPosition;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 146:                 FaceCamera(floatingNumber.RectTransform);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 147:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 148:             }
+Explanation: Closes the current code scope.
+
+Line 149:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 150:             Camera renderCamera = ResolveCamera();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 151:             Vector3 screenPoint = renderCamera != null ? renderCamera.WorldToScreenPoint(worldPosition) : worldPosition;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 152:             floatingNumber.RectTransform.position = screenPoint;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 153:         }
+Explanation: Closes the current code scope.
+
+Line 154:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 155:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 156:         /// Publishes the return event for one popup instance.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 157:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 158:         public void NotifyNumberReturned(NumberType type)
+Explanation: Declares `NotifyNumberReturned`, one of the callable behaviors used by this mechanic.
+
+Line 159:         {
+Explanation: Opens the current code scope.
+
+Line 160:             EventBus.Publish(new FloatingNumberReturnedEvent(type));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 161:         }
+Explanation: Closes the current code scope.
+
+Line 162:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 163:         private void InitializeIfNeeded()
+Explanation: Declares `InitializeIfNeeded`, one of the callable behaviors used by this mechanic.
+
+Line 164:         {
+Explanation: Opens the current code scope.
+
+Line 165:             if (initialized)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 166:             {
+Explanation: Opens the current code scope.
+
+Line 167:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 168:             }
+Explanation: Closes the current code scope.
+
+Line 169:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 170:             if (config == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 171:             {
+Explanation: Opens the current code scope.
+
+Line 172:                 config = FloatingNumberConfig_UMFOSS.CreateDefault();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 173:             }
+Explanation: Closes the current code scope.
+
+Line 174:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 175:             if (targetCanvas == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 176:             {
+Explanation: Opens the current code scope.
+
+Line 177:                 targetCanvas = CreateCanvas();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 178:             }
+Explanation: Closes the current code scope.
+
+Line 179:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 180:             ownsRuntimePrefab = numberPrefab == null;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 181:             runtimeNumberPrefab = numberPrefab != null ? numberPrefab : CreateRuntimeNumberPrefab();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 182:             ObjectPoolManager_UMFOSS.Instance.Prewarm(runtimeNumberPrefab, Mathf.Max(1, config.poolSize), targetCanvas.transform);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 183:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 184:             initialized = true;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 185:             previousCombineRapid = combineRapid;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 186:         }
+Explanation: Closes the current code scope.
+
+Line 187:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 188:         private void OnDamageTaken(DamageTakenEvent eventData)
+Explanation: Declares `OnDamageTaken`, one of the callable behaviors used by this mechanic.
+
+Line 189:         {
+Explanation: Opens the current code scope.
+
+Line 190:             if (!showDamage)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 191:             {
+Explanation: Opens the current code scope.
+
+Line 192:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 193:             }
+Explanation: Closes the current code scope.
+
+Line 194:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 195:             NumberType numberType = MapDamageType(eventData.Presentation);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 196:             QueueOrSpawn(eventData.Target, eventData.Amount, numberType);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 197:         }
+Explanation: Closes the current code scope.
+
+Line 198:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 199:         private void OnHealed(HealedEvent eventData)
+Explanation: Declares `OnHealed`, one of the callable behaviors used by this mechanic.
+
+Line 200:         {
+Explanation: Opens the current code scope.
+
+Line 201:             if (!showHealing)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 202:             {
+Explanation: Opens the current code scope.
+
+Line 203:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 204:             }
+Explanation: Closes the current code scope.
+
+Line 205:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 206:             QueueOrSpawn(eventData.Target, eventData.Amount, NumberType.Heal);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 207:         }
+Explanation: Closes the current code scope.
+
+Line 208:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 209:         private void OnCriticalHit(CriticalHitEvent eventData)
+Explanation: Declares `OnCriticalHit`, one of the callable behaviors used by this mechanic.
+
+Line 210:         {
+Explanation: Opens the current code scope.
+
+Line 211:             if (!showDamage || !showCrits)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 212:             {
+Explanation: Opens the current code scope.
+
+Line 213:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 214:             }
+Explanation: Closes the current code scope.
+
+Line 215:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 216:             QueueOrSpawn(eventData.Target, eventData.Amount, NumberType.CriticalHit);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 217:         }
+Explanation: Closes the current code scope.
+
+Line 218:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 219:         private void OnShieldBlock(ShieldBlockEvent eventData)
+Explanation: Declares `OnShieldBlock`, one of the callable behaviors used by this mechanic.
+
+Line 220:         {
+Explanation: Opens the current code scope.
+
+Line 221:             QueueOrSpawn(eventData.Target, eventData.Amount, NumberType.ShieldBlock);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 222:         }
+Explanation: Closes the current code scope.
+
+Line 223:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 224:         private void OnMiss(MissEvent eventData)
+Explanation: Declares `OnMiss`, one of the callable behaviors used by this mechanic.
+
+Line 225:         {
+Explanation: Opens the current code scope.
+
+Line 226:             SpawnImmediate(0f, NumberType.Miss, ResolveWorldPosition(eventData.Target));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 227:         }
+Explanation: Closes the current code scope.
+
+Line 228:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 229:         private void OnExperienceGained(ExperienceGainedEvent eventData)
+Explanation: Declares `OnExperienceGained`, one of the callable behaviors used by this mechanic.
+
+Line 230:         {
+Explanation: Opens the current code scope.
+
+Line 231:             QueueOrSpawn(eventData.Target, eventData.Amount, NumberType.Experience);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 232:         }
+Explanation: Closes the current code scope.
+
+Line 233:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 234:         private void QueueOrSpawn(Transform target, float amount, NumberType type)
+Explanation: Declares `QueueOrSpawn`, one of the callable behaviors used by this mechanic.
+
+Line 235:         {
+Explanation: Opens the current code scope.
+
+Line 236:             Vector3 worldPosition = ResolveWorldPosition(target);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 237:             if (!combineRapid || !IsCombinable(type))
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 238:             {
+Explanation: Opens the current code scope.
+
+Line 239:                 SpawnImmediate(amount, type, worldPosition);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 240:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 241:             }
+Explanation: Closes the current code scope.
+
+Line 242:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 243:             int targetInstanceId = target != null ? target.GetInstanceID() : 0;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 244:             combineBuffer.Add(targetInstanceId, type, amount, worldPosition, Time.unscaledTime, rapidWindow);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 245:         }
+Explanation: Closes the current code scope.
+
+Line 246:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 247:         private void FlushExpiredCombinedNumbers(float currentTime)
+Explanation: Declares `FlushExpiredCombinedNumbers`, one of the callable behaviors used by this mechanic.
+
+Line 248:         {
+Explanation: Opens the current code scope.
+
+Line 249:             expiredCombinedNumbers.Clear();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 250:             combineBuffer.CollectExpired(currentTime, expiredCombinedNumbers);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 251:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 252:             for (int index = 0; index < expiredCombinedNumbers.Count; index++)
+Explanation: Loops through a sequence of values so repeated setup or processing can happen in order.
+
+Line 253:             {
+Explanation: Opens the current code scope.
+
+Line 254:                 FloatingNumberCombineBuffer_UMFOSS.CombinedNumber combinedNumber = expiredCombinedNumbers[index];
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 255:                 SpawnImmediate(combinedNumber.Amount, combinedNumber.Type, combinedNumber.Position);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 256:             }
+Explanation: Closes the current code scope.
+
+Line 257:         }
+Explanation: Closes the current code scope.
+
+Line 258:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 259:         private void SpawnImmediate(float amount, NumberType type, Vector3 worldPosition)
+Explanation: Declares `SpawnImmediate`, one of the callable behaviors used by this mechanic.
+
+Line 260:         {
+Explanation: Opens the current code scope.
+
+Line 261:             InitializeIfNeeded();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 262:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 263:             FloatingNumberConfig_UMFOSS.NumberStyle style = config.GetStyle(type);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 264:             FloatingNumberConfig_UMFOSS.AnimationStyle animationStyle = config.GetAnimation(type);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 265:             float fontSize = style.critThreshold > 0f && amount >= style.critThreshold
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 266:                 ? style.fontSizeCrit
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 267:                 : style.fontSize;
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 268:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 269:             string text = FloatingNumberFormatter_UMFOSS.Format(amount, type, decimalPlaces);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 270:             GameObject pooledObject = ObjectPoolManager_UMFOSS.Instance.Get(runtimeNumberPrefab, targetCanvas.transform);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 271:             if (pooledObject == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 272:             {
+Explanation: Opens the current code scope.
+
+Line 273:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 274:             }
+Explanation: Closes the current code scope.
+
+Line 275:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 276:             Vector3 horizontalSpread = new Vector3(Random.Range(-animationStyle.randomOffset.x, animationStyle.randomOffset.x), 0f, 0f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 277:             Vector3 spawnPosition = worldPosition + config.spawnOffset + horizontalSpread;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 278:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 279:             FloatingNumber_UMFOSS floatingNumber = pooledObject.GetComponent<FloatingNumber_UMFOSS>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 280:             floatingNumber.Setup(this, text, style.colour, fontSize, type, spawnPosition, animationStyle);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 281:             floatingNumber.Animate();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 282:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 283:             EventBus.Publish(new FloatingNumberSpawnedEvent(type, amount, worldPosition));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 284:         }
+Explanation: Closes the current code scope.
+
+Line 285:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 286:         private Canvas CreateCanvas()
+Explanation: Declares `CreateCanvas`, one of the callable behaviors used by this mechanic.
+
+Line 287:         {
+Explanation: Opens the current code scope.
+
+Line 288:             string canvasName = renderMode == RenderMode.WorldSpace
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 289:                 ? "FloatingDamageNumbers_WorldCanvas"
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 290:                 : "FloatingDamageNumbers_ScreenCanvas";
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 291:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 292:             GameObject canvasObject = new GameObject(canvasName, typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 293:             canvasObject.transform.SetParent(transform, false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 294:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 295:             Canvas canvas = canvasObject.GetComponent<Canvas>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 296:             canvas.renderMode = renderMode == RenderMode.WorldSpace ? RenderMode.WorldSpace : RenderMode.ScreenSpaceOverlay;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 297:             canvas.overrideSorting = true;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 298:             canvas.sortingOrder = 100;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 299:             canvas.worldCamera = ResolveCamera();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 300:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 301:             RectTransform rectTransform = canvas.GetComponent<RectTransform>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 302:             if (canvas.renderMode == RenderMode.WorldSpace)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 303:             {
+Explanation: Opens the current code scope.
+
+Line 304:                 rectTransform.sizeDelta = new Vector2(32f, 18f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 305:                 rectTransform.localScale = Vector3.one * 0.01f;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 306:             }
+Explanation: Closes the current code scope.
+
+Line 307:             else
+Explanation: Provides the fallback branch for the preceding conditional logic.
+
+Line 308:             {
+Explanation: Opens the current code scope.
+
+Line 309:                 rectTransform.anchorMin = Vector2.zero;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 310:                 rectTransform.anchorMax = Vector2.one;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 311:                 rectTransform.offsetMin = Vector2.zero;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 312:                 rectTransform.offsetMax = Vector2.zero;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 313:             }
+Explanation: Closes the current code scope.
+
+Line 314:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 315:             CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 316:             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 317:             scaler.referenceResolution = new Vector2(1920f, 1080f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 318:             return canvas;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 319:         }
+Explanation: Closes the current code scope.
+
+Line 320:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 321:         private GameObject CreateRuntimeNumberPrefab()
+Explanation: Declares `CreateRuntimeNumberPrefab`, one of the callable behaviors used by this mechanic.
+
+Line 322:         {
+Explanation: Opens the current code scope.
+
+Line 323:             GameObject popupObject = new GameObject("FloatingNumber_RuntimePrefab", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI), typeof(FloatingNumber_UMFOSS));
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 324:             popupObject.SetActive(false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 325:             popupObject.hideFlags = HideFlags.HideAndDontSave;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 326:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 327:             RectTransform rectTransform = popupObject.GetComponent<RectTransform>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 328:             rectTransform.sizeDelta = new Vector2(280f, 90f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 329:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 330:             TextMeshProUGUI textMesh = popupObject.GetComponent<TextMeshProUGUI>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 331:             textMesh.alignment = TextAlignmentOptions.Center;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 332:             textMesh.raycastTarget = false;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 333:             textMesh.textWrappingMode = TextWrappingModes.NoWrap;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 334:             textMesh.overflowMode = TextOverflowModes.Overflow;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 335:             textMesh.text = string.Empty;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 336:             textMesh.fontSize = 36f;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 337:             if (TMP_Settings.defaultFontAsset != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 338:             {
+Explanation: Opens the current code scope.
+
+Line 339:                 textMesh.font = TMP_Settings.defaultFontAsset;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 340:             }
+Explanation: Closes the current code scope.
+
+Line 341:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 342:             return popupObject;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 343:         }
+Explanation: Closes the current code scope.
+
+Line 344:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 345:         private void FaceCamera(Transform popupTransform)
+Explanation: Declares `FaceCamera`, one of the callable behaviors used by this mechanic.
+
+Line 346:         {
+Explanation: Opens the current code scope.
+
+Line 347:             Camera renderCamera = ResolveCamera();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 348:             if (renderCamera == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 349:             {
+Explanation: Opens the current code scope.
+
+Line 350:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 351:             }
+Explanation: Closes the current code scope.
+
+Line 352:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 353:             popupTransform.LookAt(
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 354:                 popupTransform.position + renderCamera.transform.rotation * Vector3.forward,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 355:                 renderCamera.transform.rotation * Vector3.up);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 356:         }
+Explanation: Closes the current code scope.
+
+Line 357:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 358:         private Camera ResolveCamera()
+Explanation: Declares `ResolveCamera`, one of the callable behaviors used by this mechanic.
+
+Line 359:         {
+Explanation: Opens the current code scope.
+
+Line 360:             if (targetCanvas != null && targetCanvas.worldCamera != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 361:             {
+Explanation: Opens the current code scope.
+
+Line 362:                 return targetCanvas.worldCamera;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 363:             }
+Explanation: Closes the current code scope.
+
+Line 364:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 365:             return Camera.main;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 366:         }
+Explanation: Closes the current code scope.
+
+Line 367:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 368:         private static bool IsCombinable(NumberType type)
+Explanation: Declares `IsCombinable`, one of the callable behaviors used by this mechanic.
+
+Line 369:         {
+Explanation: Opens the current code scope.
+
+Line 370:             return type != NumberType.Miss;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 371:         }
+Explanation: Closes the current code scope.
+
+Line 372:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 373:         private static NumberType MapDamageType(DamagePresentation presentation)
+Explanation: Declares `MapDamageType`, one of the callable behaviors used by this mechanic.
+
+Line 374:         {
+Explanation: Opens the current code scope.
+
+Line 375:             switch (presentation)
+Explanation: Starts a switch block so the script can choose behavior based on the current value.
+
+Line 376:             {
+Explanation: Opens the current code scope.
+
+Line 377:                 case DamagePresentation.DamageTaken:
+Explanation: Handles one named value inside the surrounding switch statement.
+
+Line 378:                     return NumberType.DamageTaken;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 379:                 case DamagePresentation.PoisonDamage:
+Explanation: Handles one named value inside the surrounding switch statement.
+
+Line 380:                     return NumberType.PoisonDamage;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 381:                 default:
+Explanation: Defines the fallback switch branch when no named case matched.
+
+Line 382:                     return NumberType.Damage;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 383:             }
+Explanation: Closes the current code scope.
+
+Line 384:         }
+Explanation: Closes the current code scope.
+
+Line 385:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 386:         private static Vector3 ResolveWorldPosition(Transform target)
+Explanation: Declares `ResolveWorldPosition`, one of the callable behaviors used by this mechanic.
+
+Line 387:         {
+Explanation: Opens the current code scope.
+
+Line 388:             return target != null ? target.position : Vector3.zero;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 389:         }
+Explanation: Closes the current code scope.
+
+Line 390:     }
+Explanation: Closes the current code scope.
+
+Line 391: }
+Explanation: Closes the current code scope.
+
+Line 392:
+Explanation: This blank line separates logical sections so the script stays readable.

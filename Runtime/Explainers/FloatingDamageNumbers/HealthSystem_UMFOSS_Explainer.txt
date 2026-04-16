@@ -1,0 +1,344 @@
+Script: HealthSystem_UMFOSS.cs
+Location: Runtime/Combat/HealthSystem_UMFOSS.cs
+
+Line 1: using GameplayMechanicsUMFOSS.Core;
+Explanation: Imports `GameplayMechanicsUMFOSS.Core` so the script can use those types without fully qualifying every reference.
+
+Line 2: using UnityEngine;
+Explanation: Imports `UnityEngine` so the script can use those types without fully qualifying every reference.
+
+Line 3:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 4: namespace GameplayMechanicsUMFOSS.Combat
+Explanation: Places the types in `GameplayMechanicsUMFOSS.Combat` so the mechanic follows the framework namespace structure and avoids naming collisions.
+
+Line 5: {
+Explanation: Opens the current code scope.
+
+Line 6:     /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 7:     /// Provides a simple health driver that publishes combat presentation events through the EventBus.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 8:     /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 9:     public class HealthSystem_UMFOSS : MonoBehaviour
+Explanation: Declares class `HealthSystem_UMFOSS`, which encapsulates part of the floating damage number feature.
+
+Line 10:     {
+Explanation: Opens the current code scope.
+
+Line 11:         private const float MIN_VALUE = 0f;
+Explanation: Declares `MIN_VALUE`, storing state or references needed by the mechanic.
+
+Line 12:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 13:         [Header("Health")]
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 14:         [SerializeField] private float maxHealth = 100f;
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 15:         [SerializeField] private float currentHealth = 100f;
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 16:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 17:         public float MaxHealth => maxHealth;
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 18:         public float CurrentHealth => currentHealth;
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 19:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 20:         private void Awake()
+Explanation: Declares `Awake`, one of the callable behaviors used by this mechanic.
+
+Line 21:         {
+Explanation: Opens the current code scope.
+
+Line 22:             currentHealth = Mathf.Clamp(currentHealth, MIN_VALUE, maxHealth);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 23:         }
+Explanation: Closes the current code scope.
+
+Line 24:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 25:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 26:         /// Applies non-critical damage and publishes a damage event for UI responders.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 27:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 28:         public void ApplyDamage(float amount, DamagePresentation presentation = DamagePresentation.Damage)
+Explanation: Declares `ApplyDamage`, one of the callable behaviors used by this mechanic.
+
+Line 29:         {
+Explanation: Opens the current code scope.
+
+Line 30:             if (amount <= MIN_VALUE)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 31:             {
+Explanation: Opens the current code scope.
+
+Line 32:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 33:             }
+Explanation: Closes the current code scope.
+
+Line 34:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 35:             currentHealth = Mathf.Max(MIN_VALUE, currentHealth - amount);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 36:             EventBus.Publish(new DamageTakenEvent(transform, amount, presentation));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 37:         }
+Explanation: Closes the current code scope.
+
+Line 38:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 39:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 40:         /// Applies a critical hit and publishes a dedicated critical event so listeners only spawn one popup.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 41:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 42:         public void ApplyCriticalDamage(float amount)
+Explanation: Declares `ApplyCriticalDamage`, one of the callable behaviors used by this mechanic.
+
+Line 43:         {
+Explanation: Opens the current code scope.
+
+Line 44:             if (amount <= MIN_VALUE)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 45:             {
+Explanation: Opens the current code scope.
+
+Line 46:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 47:             }
+Explanation: Closes the current code scope.
+
+Line 48:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 49:             currentHealth = Mathf.Max(MIN_VALUE, currentHealth - amount);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 50:             EventBus.Publish(new CriticalHitEvent(transform, amount));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 51:         }
+Explanation: Closes the current code scope.
+
+Line 52:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 53:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 54:         /// Restores health and publishes the actual healed amount.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 55:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 56:         public void Heal(float amount)
+Explanation: Declares `Heal`, one of the callable behaviors used by this mechanic.
+
+Line 57:         {
+Explanation: Opens the current code scope.
+
+Line 58:             if (amount <= MIN_VALUE)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 59:             {
+Explanation: Opens the current code scope.
+
+Line 60:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 61:             }
+Explanation: Closes the current code scope.
+
+Line 62:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 63:             float previousHealth = currentHealth;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 64:             currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 65:             float healedAmount = currentHealth - previousHealth;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 66:             if (healedAmount > MIN_VALUE)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 67:             {
+Explanation: Opens the current code scope.
+
+Line 68:                 EventBus.Publish(new HealedEvent(transform, healedAmount));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 69:             }
+Explanation: Closes the current code scope.
+
+Line 70:         }
+Explanation: Closes the current code scope.
+
+Line 71:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 72:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 73:         /// Publishes a shield block presentation event without changing health.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 74:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 75:         public void BlockDamage(float amount)
+Explanation: Declares `BlockDamage`, one of the callable behaviors used by this mechanic.
+
+Line 76:         {
+Explanation: Opens the current code scope.
+
+Line 77:             if (amount <= MIN_VALUE)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 78:             {
+Explanation: Opens the current code scope.
+
+Line 79:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 80:             }
+Explanation: Closes the current code scope.
+
+Line 81:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 82:             EventBus.Publish(new ShieldBlockEvent(transform, amount));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 83:         }
+Explanation: Closes the current code scope.
+
+Line 84:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 85:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 86:         /// Publishes a miss event for this target.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 87:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 88:         public void RegisterMiss()
+Explanation: Declares `RegisterMiss`, one of the callable behaviors used by this mechanic.
+
+Line 89:         {
+Explanation: Opens the current code scope.
+
+Line 90:             EventBus.Publish(new MissEvent(transform));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 91:         }
+Explanation: Closes the current code scope.
+
+Line 92:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 93:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 94:         /// Publishes a sample experience gain event for this target.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 95:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 96:         public void GainExperience(float amount)
+Explanation: Declares `GainExperience`, one of the callable behaviors used by this mechanic.
+
+Line 97:         {
+Explanation: Opens the current code scope.
+
+Line 98:             if (amount <= MIN_VALUE)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 99:             {
+Explanation: Opens the current code scope.
+
+Line 100:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 101:             }
+Explanation: Closes the current code scope.
+
+Line 102:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 103:             EventBus.Publish(new ExperienceGainedEvent(transform, amount));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 104:         }
+Explanation: Closes the current code scope.
+
+Line 105:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 106:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 107:         /// Resets the component back to full health.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 108:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 109:         public void ResetHealth()
+Explanation: Declares `ResetHealth`, one of the callable behaviors used by this mechanic.
+
+Line 110:         {
+Explanation: Opens the current code scope.
+
+Line 111:             currentHealth = maxHealth;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 112:         }
+Explanation: Closes the current code scope.
+
+Line 113:     }
+Explanation: Closes the current code scope.
+
+Line 114: }
+Explanation: Closes the current code scope.

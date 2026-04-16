@@ -1,0 +1,86 @@
+Script: FloatingNumberEvents_UMFOSS.cs
+Location: Runtime/UI/FloatingNumberEvents_UMFOSS.cs
+
+Line 1: using UnityEngine;
+Explanation: Imports `UnityEngine` so the script can use those types without fully qualifying every reference.
+
+Line 2:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 3: namespace GameplayMechanicsUMFOSS.UI
+Explanation: Places the types in `GameplayMechanicsUMFOSS.UI` so the mechanic follows the framework namespace structure and avoids naming collisions.
+
+Line 4: {
+Explanation: Opens the current code scope.
+
+Line 5:     public readonly struct FloatingNumberSpawnedEvent
+Explanation: Declares struct `FloatingNumberSpawnedEvent`, which encapsulates part of the floating damage number feature.
+
+Line 6:     {
+Explanation: Opens the current code scope.
+
+Line 7:         public FloatingNumberSpawnedEvent(NumberType type, float amount, Vector3 position)
+Explanation: Declares `FloatingNumberSpawnedEvent`, one of the callable behaviors used by this mechanic.
+
+Line 8:         {
+Explanation: Opens the current code scope.
+
+Line 9:             Type = type;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 10:             Amount = amount;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 11:             Position = position;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 12:         }
+Explanation: Closes the current code scope.
+
+Line 13:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 14:         public NumberType Type { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 15:         public float Amount { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 16:         public Vector3 Position { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 17:     }
+Explanation: Closes the current code scope.
+
+Line 18:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 19:     public readonly struct FloatingNumberReturnedEvent
+Explanation: Declares struct `FloatingNumberReturnedEvent`, which encapsulates part of the floating damage number feature.
+
+Line 20:     {
+Explanation: Opens the current code scope.
+
+Line 21:         public FloatingNumberReturnedEvent(NumberType type)
+Explanation: Declares `FloatingNumberReturnedEvent`, one of the callable behaviors used by this mechanic.
+
+Line 22:         {
+Explanation: Opens the current code scope.
+
+Line 23:             Type = type;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 24:         }
+Explanation: Closes the current code scope.
+
+Line 25:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 26:         public NumberType Type { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 27:     }
+Explanation: Closes the current code scope.
+
+Line 28: }
+Explanation: Closes the current code scope.

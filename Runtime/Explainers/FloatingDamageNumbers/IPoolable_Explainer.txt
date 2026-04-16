@@ -1,0 +1,35 @@
+Script: IPoolable.cs
+Location: Runtime/Utils/IPoolable.cs
+
+Line 1: namespace GameplayMechanicsUMFOSS.Utils
+Explanation: Places the types in `GameplayMechanicsUMFOSS.Utils` so the mechanic follows the framework namespace structure and avoids naming collisions.
+
+Line 2: {
+Explanation: Opens the current code scope.
+
+Line 3:     /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 4:     /// Implemented by pooled objects that need lifecycle callbacks when borrowed or returned.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 5:     /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 6:     public interface IPoolable
+Explanation: Declares `IPoolable`, defining the contract other classes must implement.
+
+Line 7:     {
+Explanation: Opens the current code scope.
+
+Line 8:         void OnSpawnFromPool();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 9:         void OnReturnToPool();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 10:     }
+Explanation: Closes the current code scope.
+
+Line 11: }
+Explanation: Closes the current code scope.

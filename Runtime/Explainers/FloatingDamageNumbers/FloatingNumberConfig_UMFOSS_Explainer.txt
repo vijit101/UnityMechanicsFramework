@@ -1,0 +1,422 @@
+Script: FloatingNumberConfig_UMFOSS.cs
+Location: Runtime/UI/FloatingNumberConfig_UMFOSS.cs
+
+Line 1: using System;
+Explanation: Imports `System` so the script can use those types without fully qualifying every reference.
+
+Line 2: using UnityEngine;
+Explanation: Imports `UnityEngine` so the script can use those types without fully qualifying every reference.
+
+Line 3:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 4: namespace GameplayMechanicsUMFOSS.UI
+Explanation: Places the types in `GameplayMechanicsUMFOSS.UI` so the mechanic follows the framework namespace structure and avoids naming collisions.
+
+Line 5: {
+Explanation: Opens the current code scope.
+
+Line 6:     [CreateAssetMenu(fileName = "FloatingNumberConfig", menuName = "UMFOSS/UI/FloatingNumberConfig")]
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 7:     public class FloatingNumberConfig_UMFOSS : ScriptableObject
+Explanation: Declares class `FloatingNumberConfig_UMFOSS`, which encapsulates part of the floating damage number feature.
+
+Line 8:     {
+Explanation: Opens the current code scope.
+
+Line 9:         [Serializable]
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 10:         public class NumberStyle
+Explanation: Declares class `NumberStyle`, which encapsulates part of the floating damage number feature.
+
+Line 11:         {
+Explanation: Opens the current code scope.
+
+Line 12:             public NumberType type;
+Explanation: Declares `type`, storing state or references needed by the mechanic.
+
+Line 13:             public Color colour = Color.white;
+Explanation: Declares `colour`, storing state or references needed by the mechanic.
+
+Line 14:             public float fontSize = 36f;
+Explanation: Declares `fontSize`, storing state or references needed by the mechanic.
+
+Line 15:             public float fontSizeCrit = 52f;
+Explanation: Declares `fontSizeCrit`, storing state or references needed by the mechanic.
+
+Line 16:             public float critThreshold = 0f;
+Explanation: Declares `critThreshold`, storing state or references needed by the mechanic.
+
+Line 17:         }
+Explanation: Closes the current code scope.
+
+Line 18:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 19:         [Serializable]
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 20:         public class AnimationStyle
+Explanation: Declares class `AnimationStyle`, which encapsulates part of the floating damage number feature.
+
+Line 21:         {
+Explanation: Opens the current code scope.
+
+Line 22:             public NumberType type;
+Explanation: Declares `type`, storing state or references needed by the mechanic.
+
+Line 23:             public float floatHeight = 1.5f;
+Explanation: Declares `floatHeight`, storing state or references needed by the mechanic.
+
+Line 24:             public float floatDuration = 0.8f;
+Explanation: Declares `floatDuration`, storing state or references needed by the mechanic.
+
+Line 25:             [Range(0f, 1f)] public float fadeStartAt = 0.5f;
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 26:             public AnimationCurve movementCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+Explanation: Declares `EaseInOut`, one of the callable behaviors used by this mechanic.
+
+Line 27:             public AnimationCurve fadeCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
+Explanation: Declares `Linear`, one of the callable behaviors used by this mechanic.
+
+Line 28:             public Vector2 randomOffset = new Vector2(0.3f, 0f);
+Explanation: Declares `Vector2`, one of the callable behaviors used by this mechanic.
+
+Line 29:         }
+Explanation: Closes the current code scope.
+
+Line 30:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 31:         [Header("Visual Styles")]
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 32:         public NumberStyle[] styles;
+Explanation: Declares `styles`, storing state or references needed by the mechanic.
+
+Line 33:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 34:         [Header("Animation Styles")]
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 35:         public AnimationStyle[] animations;
+Explanation: Declares `animations`, storing state or references needed by the mechanic.
+
+Line 36:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 37:         [Header("Defaults")]
+Explanation: Applies Unity or C# metadata so the next member gets special editor or runtime behavior.
+
+Line 38:         public int poolSize = 20;
+Explanation: Declares `poolSize`, storing state or references needed by the mechanic.
+
+Line 39:         public Vector3 spawnOffset = new Vector3(0f, 1f, 0f);
+Explanation: Declares `Vector3`, one of the callable behaviors used by this mechanic.
+
+Line 40:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 41:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 42:         /// Creates a sensible default configuration for runtime-generated demos and tests.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 43:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 44:         public static FloatingNumberConfig_UMFOSS CreateDefault()
+Explanation: Declares `CreateDefault`, one of the callable behaviors used by this mechanic.
+
+Line 45:         {
+Explanation: Opens the current code scope.
+
+Line 46:             FloatingNumberConfig_UMFOSS config = CreateInstance<FloatingNumberConfig_UMFOSS>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 47:             config.styles = new[]
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 48:             {
+Explanation: Opens the current code scope.
+
+Line 49:                 CreateStyle(NumberType.Damage, Color.white, 36f, 52f, 75f),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 50:                 CreateStyle(NumberType.CriticalHit, Color.yellow, 52f, 60f, 0f),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 51:                 CreateStyle(NumberType.DamageTaken, new Color(1f, 0.35f, 0.35f), 36f, 52f, 75f),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 52:                 CreateStyle(NumberType.Heal, new Color(0.35f, 1f, 0.45f), 36f, 48f, 50f),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 53:                 CreateStyle(NumberType.PoisonDamage, new Color(0.66f, 0.32f, 0.88f), 36f, 48f, 40f),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 54:                 CreateStyle(NumberType.ShieldBlock, new Color(0.3f, 0.65f, 1f), 34f, 46f, 60f),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 55:                 CreateStyle(NumberType.Miss, new Color(0.7f, 0.7f, 0.7f), 34f, 34f, 0f),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 56:                 CreateStyle(NumberType.Experience, new Color(1f, 0.83f, 0.18f), 34f, 46f, 80f)
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 57:             };
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 58:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 59:             config.animations = new[]
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 60:             {
+Explanation: Opens the current code scope.
+
+Line 61:                 CreateAnimation(NumberType.Damage, 1.4f, 0.85f, 0.5f, new Vector2(0.3f, 0f)),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 62:                 CreateAnimation(NumberType.CriticalHit, 1.75f, 1f, 0.55f, new Vector2(0.35f, 0.1f)),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 63:                 CreateAnimation(NumberType.DamageTaken, 1.5f, 0.9f, 0.5f, new Vector2(0.3f, 0f)),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 64:                 CreateAnimation(NumberType.Heal, 1.3f, 0.8f, 0.45f, new Vector2(0.25f, 0.05f)),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 65:                 CreateAnimation(NumberType.PoisonDamage, 1.25f, 0.95f, 0.45f, new Vector2(0.2f, 0.1f)),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 66:                 CreateAnimation(NumberType.ShieldBlock, 1.1f, 0.7f, 0.45f, new Vector2(0.2f, 0f)),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 67:                 CreateAnimation(NumberType.Miss, 0.9f, 0.7f, 0.4f, new Vector2(0.2f, 0f)),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 68:                 CreateAnimation(NumberType.Experience, 1.6f, 1f, 0.55f, new Vector2(0.25f, 0.15f))
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 69:             };
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 70:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 71:             config.poolSize = 20;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 72:             config.spawnOffset = new Vector3(0f, 1f, 0f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 73:             return config;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 74:         }
+Explanation: Closes the current code scope.
+
+Line 75:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 76:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 77:         /// Returns the configured visual style for a number type.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 78:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 79:         public NumberStyle GetStyle(NumberType type)
+Explanation: Declares `GetStyle`, one of the callable behaviors used by this mechanic.
+
+Line 80:         {
+Explanation: Opens the current code scope.
+
+Line 81:             if (styles != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 82:             {
+Explanation: Opens the current code scope.
+
+Line 83:                 for (int index = 0; index < styles.Length; index++)
+Explanation: Loops through a sequence of values so repeated setup or processing can happen in order.
+
+Line 84:                 {
+Explanation: Opens the current code scope.
+
+Line 85:                     if (styles[index] != null && styles[index].type == type)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 86:                     {
+Explanation: Opens the current code scope.
+
+Line 87:                         return styles[index];
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 88:                     }
+Explanation: Closes the current code scope.
+
+Line 89:                 }
+Explanation: Closes the current code scope.
+
+Line 90:             }
+Explanation: Closes the current code scope.
+
+Line 91:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 92:             return CreateStyle(type, Color.white, 36f, 52f, 0f);
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 93:         }
+Explanation: Closes the current code scope.
+
+Line 94:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 95:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 96:         /// Returns the configured animation style for a number type.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 97:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 98:         public AnimationStyle GetAnimation(NumberType type)
+Explanation: Declares `GetAnimation`, one of the callable behaviors used by this mechanic.
+
+Line 99:         {
+Explanation: Opens the current code scope.
+
+Line 100:             if (animations != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 101:             {
+Explanation: Opens the current code scope.
+
+Line 102:                 for (int index = 0; index < animations.Length; index++)
+Explanation: Loops through a sequence of values so repeated setup or processing can happen in order.
+
+Line 103:                 {
+Explanation: Opens the current code scope.
+
+Line 104:                     if (animations[index] != null && animations[index].type == type)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 105:                     {
+Explanation: Opens the current code scope.
+
+Line 106:                         return animations[index];
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 107:                     }
+Explanation: Closes the current code scope.
+
+Line 108:                 }
+Explanation: Closes the current code scope.
+
+Line 109:             }
+Explanation: Closes the current code scope.
+
+Line 110:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 111:             return CreateAnimation(type, 1.5f, 0.8f, 0.5f, new Vector2(0.3f, 0f));
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 112:         }
+Explanation: Closes the current code scope.
+
+Line 113:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 114:         private static NumberStyle CreateStyle(NumberType type, Color colour, float fontSize, float fontSizeCrit, float critThreshold)
+Explanation: Declares `CreateStyle`, one of the callable behaviors used by this mechanic.
+
+Line 115:         {
+Explanation: Opens the current code scope.
+
+Line 116:             return new NumberStyle
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 117:             {
+Explanation: Opens the current code scope.
+
+Line 118:                 type = type,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 119:                 colour = colour,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 120:                 fontSize = fontSize,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 121:                 fontSizeCrit = fontSizeCrit,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 122:                 critThreshold = critThreshold
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 123:             };
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 124:         }
+Explanation: Closes the current code scope.
+
+Line 125:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 126:         private static AnimationStyle CreateAnimation(NumberType type, float floatHeight, float floatDuration, float fadeStartAt, Vector2 randomOffset)
+Explanation: Declares `CreateAnimation`, one of the callable behaviors used by this mechanic.
+
+Line 127:         {
+Explanation: Opens the current code scope.
+
+Line 128:             return new AnimationStyle
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 129:             {
+Explanation: Opens the current code scope.
+
+Line 130:                 type = type,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 131:                 floatHeight = floatHeight,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 132:                 floatDuration = floatDuration,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 133:                 fadeStartAt = fadeStartAt,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 134:                 movementCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 135:                 fadeCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 136:                 randomOffset = randomOffset
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 137:             };
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 138:         }
+Explanation: Closes the current code scope.
+
+Line 139:     }
+Explanation: Closes the current code scope.
+
+Line 140: }
+Explanation: Closes the current code scope.

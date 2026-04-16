@@ -12,6 +12,11 @@
   },
   "samples": [
     {
+      "displayName": "Floating Damage Numbers",
+      "description": "Demo scene and walkthrough assets for the Floating Damage Numbers mechanic.",
+      "path": "Samples~/FloatingDamageNumbers"
+    },
+    {
       "displayName": "Boomerang Weapon Demo",
       "description": "God-of-War-style throw-and-return weapon with damage, knockback, camera shake, and one-click scene builder.",
       "path": "Samples~/BoomerangWeapon"

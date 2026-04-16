@@ -1,0 +1,251 @@
+Script: CombatEvents_UMFOSS.cs
+Location: Runtime/Combat/CombatEvents_UMFOSS.cs
+
+Line 1: using UnityEngine;
+Explanation: Imports `UnityEngine` so the script can use those types without fully qualifying every reference.
+
+Line 2:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 3: namespace GameplayMechanicsUMFOSS.Combat
+Explanation: Places the types in `GameplayMechanicsUMFOSS.Combat` so the mechanic follows the framework namespace structure and avoids naming collisions.
+
+Line 4: {
+Explanation: Opens the current code scope.
+
+Line 5:     public enum DamagePresentation
+Explanation: Declares `DamagePresentation`, which groups the allowed named values used by this mechanic.
+
+Line 6:     {
+Explanation: Opens the current code scope.
+
+Line 7:         Damage = 0,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 8:         DamageTaken = 1,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 9:         PoisonDamage = 2
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 10:     }
+Explanation: Closes the current code scope.
+
+Line 11:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 12:     public readonly struct DamageTakenEvent
+Explanation: Declares struct `DamageTakenEvent`, which encapsulates part of the floating damage number feature.
+
+Line 13:     {
+Explanation: Opens the current code scope.
+
+Line 14:         public DamageTakenEvent(Transform target, float amount, DamagePresentation presentation)
+Explanation: Declares `DamageTakenEvent`, one of the callable behaviors used by this mechanic.
+
+Line 15:         {
+Explanation: Opens the current code scope.
+
+Line 16:             Target = target;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 17:             Amount = amount;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 18:             Presentation = presentation;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 19:         }
+Explanation: Closes the current code scope.
+
+Line 20:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 21:         public Transform Target { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 22:         public float Amount { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 23:         public DamagePresentation Presentation { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 24:     }
+Explanation: Closes the current code scope.
+
+Line 25:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 26:     public readonly struct HealedEvent
+Explanation: Declares struct `HealedEvent`, which encapsulates part of the floating damage number feature.
+
+Line 27:     {
+Explanation: Opens the current code scope.
+
+Line 28:         public HealedEvent(Transform target, float amount)
+Explanation: Declares `HealedEvent`, one of the callable behaviors used by this mechanic.
+
+Line 29:         {
+Explanation: Opens the current code scope.
+
+Line 30:             Target = target;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 31:             Amount = amount;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 32:         }
+Explanation: Closes the current code scope.
+
+Line 33:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 34:         public Transform Target { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 35:         public float Amount { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 36:     }
+Explanation: Closes the current code scope.
+
+Line 37:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 38:     public readonly struct CriticalHitEvent
+Explanation: Declares struct `CriticalHitEvent`, which encapsulates part of the floating damage number feature.
+
+Line 39:     {
+Explanation: Opens the current code scope.
+
+Line 40:         public CriticalHitEvent(Transform target, float amount)
+Explanation: Declares `CriticalHitEvent`, one of the callable behaviors used by this mechanic.
+
+Line 41:         {
+Explanation: Opens the current code scope.
+
+Line 42:             Target = target;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 43:             Amount = amount;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 44:         }
+Explanation: Closes the current code scope.
+
+Line 45:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 46:         public Transform Target { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 47:         public float Amount { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 48:     }
+Explanation: Closes the current code scope.
+
+Line 49:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 50:     public readonly struct ShieldBlockEvent
+Explanation: Declares struct `ShieldBlockEvent`, which encapsulates part of the floating damage number feature.
+
+Line 51:     {
+Explanation: Opens the current code scope.
+
+Line 52:         public ShieldBlockEvent(Transform target, float amount)
+Explanation: Declares `ShieldBlockEvent`, one of the callable behaviors used by this mechanic.
+
+Line 53:         {
+Explanation: Opens the current code scope.
+
+Line 54:             Target = target;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 55:             Amount = amount;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 56:         }
+Explanation: Closes the current code scope.
+
+Line 57:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 58:         public Transform Target { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 59:         public float Amount { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 60:     }
+Explanation: Closes the current code scope.
+
+Line 61:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 62:     public readonly struct MissEvent
+Explanation: Declares struct `MissEvent`, which encapsulates part of the floating damage number feature.
+
+Line 63:     {
+Explanation: Opens the current code scope.
+
+Line 64:         public MissEvent(Transform target)
+Explanation: Declares `MissEvent`, one of the callable behaviors used by this mechanic.
+
+Line 65:         {
+Explanation: Opens the current code scope.
+
+Line 66:             Target = target;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 67:         }
+Explanation: Closes the current code scope.
+
+Line 68:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 69:         public Transform Target { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 70:     }
+Explanation: Closes the current code scope.
+
+Line 71:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 72:     public readonly struct ExperienceGainedEvent
+Explanation: Declares struct `ExperienceGainedEvent`, which encapsulates part of the floating damage number feature.
+
+Line 73:     {
+Explanation: Opens the current code scope.
+
+Line 74:         public ExperienceGainedEvent(Transform target, float amount)
+Explanation: Declares `ExperienceGainedEvent`, one of the callable behaviors used by this mechanic.
+
+Line 75:         {
+Explanation: Opens the current code scope.
+
+Line 76:             Target = target;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 77:             Amount = amount;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 78:         }
+Explanation: Closes the current code scope.
+
+Line 79:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 80:         public Transform Target { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 81:         public float Amount { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 82:     }
+Explanation: Closes the current code scope.
+
+Line 83: }
+Explanation: Closes the current code scope.

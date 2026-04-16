@@ -1,0 +1,89 @@
+Script: FloatingNumberFormatter_UMFOSS.cs
+Location: Runtime/UI/FloatingNumberFormatter_UMFOSS.cs
+
+Line 1: using UnityEngine;
+Explanation: Imports `UnityEngine` so the script can use those types without fully qualifying every reference.
+
+Line 2:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 3: namespace GameplayMechanicsUMFOSS.UI
+Explanation: Places the types in `GameplayMechanicsUMFOSS.UI` so the mechanic follows the framework namespace structure and avoids naming collisions.
+
+Line 4: {
+Explanation: Opens the current code scope.
+
+Line 5:     /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 6:     /// Centralizes text formatting rules for floating numbers and keeps them easy to test.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 7:     /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 8:     public static class FloatingNumberFormatter_UMFOSS
+Explanation: Declares class `FloatingNumberFormatter_UMFOSS`, which encapsulates part of the floating damage number feature.
+
+Line 9:     {
+Explanation: Opens the current code scope.
+
+Line 10:         public static string Format(float amount, NumberType type, int decimalPlaces)
+Explanation: Declares `Format`, one of the callable behaviors used by this mechanic.
+
+Line 11:         {
+Explanation: Opens the current code scope.
+
+Line 12:             string formattedValue = decimalPlaces <= 0
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 13:                 ? Mathf.RoundToInt(amount).ToString()
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 14:                 : amount.ToString("F" + decimalPlaces);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 15:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 16:             switch (type)
+Explanation: Starts a switch block so the script can choose behavior based on the current value.
+
+Line 17:             {
+Explanation: Opens the current code scope.
+
+Line 18:                 case NumberType.Miss:
+Explanation: Handles one named value inside the surrounding switch statement.
+
+Line 19:                     return "MISS";
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 20:                 case NumberType.CriticalHit:
+Explanation: Handles one named value inside the surrounding switch statement.
+
+Line 21:                     return formattedValue + "!";
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 22:                 case NumberType.Experience:
+Explanation: Handles one named value inside the surrounding switch statement.
+
+Line 23:                     return "+" + formattedValue + " XP";
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 24:                 default:
+Explanation: Defines the fallback switch branch when no named case matched.
+
+Line 25:                     return formattedValue;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 26:             }
+Explanation: Closes the current code scope.
+
+Line 27:         }
+Explanation: Closes the current code scope.
+
+Line 28:     }
+Explanation: Closes the current code scope.
+
+Line 29: }
+Explanation: Closes the current code scope.

@@ -1,0 +1,449 @@
+Script: FloatingNumberCombineBuffer_UMFOSS.cs
+Location: Runtime/UI/FloatingNumberCombineBuffer_UMFOSS.cs
+
+Line 1: using System;
+Explanation: Imports `System` so the script can use those types without fully qualifying every reference.
+
+Line 2: using System.Collections.Generic;
+Explanation: Imports `System.Collections.Generic` so the script can use those types without fully qualifying every reference.
+
+Line 3: using UnityEngine;
+Explanation: Imports `UnityEngine` so the script can use those types without fully qualifying every reference.
+
+Line 4:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 5: namespace GameplayMechanicsUMFOSS.UI
+Explanation: Places the types in `GameplayMechanicsUMFOSS.UI` so the mechanic follows the framework namespace structure and avoids naming collisions.
+
+Line 6: {
+Explanation: Opens the current code scope.
+
+Line 7:     /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 8:     /// Buffers rapid numeric hits so they can be emitted as one combined popup after a short delay.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 9:     /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 10:     public sealed class FloatingNumberCombineBuffer_UMFOSS
+Explanation: Declares class `FloatingNumberCombineBuffer_UMFOSS`, which encapsulates part of the floating damage number feature.
+
+Line 11:     {
+Explanation: Opens the current code scope.
+
+Line 12:         public readonly struct CombinedNumber
+Explanation: Declares struct `CombinedNumber`, which encapsulates part of the floating damage number feature.
+
+Line 13:         {
+Explanation: Opens the current code scope.
+
+Line 14:             public CombinedNumber(int targetInstanceId, NumberType type, float amount, Vector3 position)
+Explanation: Declares `CombinedNumber`, one of the callable behaviors used by this mechanic.
+
+Line 15:             {
+Explanation: Opens the current code scope.
+
+Line 16:                 TargetInstanceId = targetInstanceId;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 17:                 Type = type;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 18:                 Amount = amount;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 19:                 Position = position;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 20:             }
+Explanation: Closes the current code scope.
+
+Line 21:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 22:             public int TargetInstanceId { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 23:             public NumberType Type { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 24:             public float Amount { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 25:             public Vector3 Position { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 26:         }
+Explanation: Closes the current code scope.
+
+Line 27:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 28:         private readonly struct CombineKey : IEquatable<CombineKey>
+Explanation: Declares struct `CombineKey`, which encapsulates part of the floating damage number feature.
+
+Line 29:         {
+Explanation: Opens the current code scope.
+
+Line 30:             public CombineKey(int targetInstanceId, NumberType type)
+Explanation: Declares `CombineKey`, one of the callable behaviors used by this mechanic.
+
+Line 31:             {
+Explanation: Opens the current code scope.
+
+Line 32:                 TargetInstanceId = targetInstanceId;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 33:                 Type = type;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 34:             }
+Explanation: Closes the current code scope.
+
+Line 35:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 36:             public int TargetInstanceId { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 37:             public NumberType Type { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 38:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 39:             public bool Equals(CombineKey other)
+Explanation: Declares `Equals`, one of the callable behaviors used by this mechanic.
+
+Line 40:             {
+Explanation: Opens the current code scope.
+
+Line 41:                 return TargetInstanceId == other.TargetInstanceId && Type == other.Type;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 42:             }
+Explanation: Closes the current code scope.
+
+Line 43:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 44:             public override bool Equals(object obj)
+Explanation: Declares `Equals`, one of the callable behaviors used by this mechanic.
+
+Line 45:             {
+Explanation: Opens the current code scope.
+
+Line 46:                 return obj is CombineKey other && Equals(other);
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 47:             }
+Explanation: Closes the current code scope.
+
+Line 48:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 49:             public override int GetHashCode()
+Explanation: Declares `GetHashCode`, one of the callable behaviors used by this mechanic.
+
+Line 50:             {
+Explanation: Opens the current code scope.
+
+Line 51:                 unchecked
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 52:                 {
+Explanation: Opens the current code scope.
+
+Line 53:                     return (TargetInstanceId * 397) ^ (int)Type;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 54:                 }
+Explanation: Closes the current code scope.
+
+Line 55:             }
+Explanation: Closes the current code scope.
+
+Line 56:         }
+Explanation: Closes the current code scope.
+
+Line 57:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 58:         private struct PendingCombine
+Explanation: Declares struct `PendingCombine`, which encapsulates part of the floating damage number feature.
+
+Line 59:         {
+Explanation: Opens the current code scope.
+
+Line 60:             public float totalAmount;
+Explanation: Declares `totalAmount`, storing state or references needed by the mechanic.
+
+Line 61:             public Vector3 position;
+Explanation: Declares `position`, storing state or references needed by the mechanic.
+
+Line 62:             public float expiryTime;
+Explanation: Declares `expiryTime`, storing state or references needed by the mechanic.
+
+Line 63:         }
+Explanation: Closes the current code scope.
+
+Line 64:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 65:         private readonly Dictionary<CombineKey, PendingCombine> pendingCombines = new Dictionary<CombineKey, PendingCombine>();
+Explanation: Declares `this method`, one of the callable behaviors used by this mechanic.
+
+Line 66:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 67:         public int Count => pendingCombines.Count;
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 68:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 69:         public void Add(int targetInstanceId, NumberType type, float amount, Vector3 position, float currentTime, float combineWindow)
+Explanation: Declares `Add`, one of the callable behaviors used by this mechanic.
+
+Line 70:         {
+Explanation: Opens the current code scope.
+
+Line 71:             CombineKey key = new CombineKey(targetInstanceId, type);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 72:             if (pendingCombines.TryGetValue(key, out PendingCombine pendingCombine))
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 73:             {
+Explanation: Opens the current code scope.
+
+Line 74:                 pendingCombine.totalAmount += amount;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 75:                 pendingCombine.position = position;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 76:                 pendingCombine.expiryTime = currentTime + combineWindow;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 77:                 pendingCombines[key] = pendingCombine;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 78:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 79:             }
+Explanation: Closes the current code scope.
+
+Line 80:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 81:             pendingCombines[key] = new PendingCombine
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 82:             {
+Explanation: Opens the current code scope.
+
+Line 83:                 totalAmount = amount,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 84:                 position = position,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 85:                 expiryTime = currentTime + combineWindow
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 86:             };
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 87:         }
+Explanation: Closes the current code scope.
+
+Line 88:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 89:         public void CollectExpired(float currentTime, List<CombinedNumber> results)
+Explanation: Declares `CollectExpired`, one of the callable behaviors used by this mechanic.
+
+Line 90:         {
+Explanation: Opens the current code scope.
+
+Line 91:             if (results == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 92:             {
+Explanation: Opens the current code scope.
+
+Line 93:                 throw new ArgumentNullException(nameof(results));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 94:             }
+Explanation: Closes the current code scope.
+
+Line 95:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 96:             if (pendingCombines.Count == 0)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 97:             {
+Explanation: Opens the current code scope.
+
+Line 98:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 99:             }
+Explanation: Closes the current code scope.
+
+Line 100:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 101:             List<CombineKey> expiredKeys = null;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 102:             foreach (KeyValuePair<CombineKey, PendingCombine> entry in pendingCombines)
+Explanation: Iterates over each item in the collection so the same logic can be applied repeatedly.
+
+Line 103:             {
+Explanation: Opens the current code scope.
+
+Line 104:                 if (entry.Value.expiryTime > currentTime)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 105:                 {
+Explanation: Opens the current code scope.
+
+Line 106:                     continue;
+Explanation: Skips to the next loop iteration without running the rest of the current body.
+
+Line 107:                 }
+Explanation: Closes the current code scope.
+
+Line 108:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 109:                 if (expiredKeys == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 110:                 {
+Explanation: Opens the current code scope.
+
+Line 111:                     expiredKeys = new List<CombineKey>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 112:                 }
+Explanation: Closes the current code scope.
+
+Line 113:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 114:                 expiredKeys.Add(entry.Key);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 115:                 results.Add(new CombinedNumber(entry.Key.TargetInstanceId, entry.Key.Type, entry.Value.totalAmount, entry.Value.position));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 116:             }
+Explanation: Closes the current code scope.
+
+Line 117:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 118:             if (expiredKeys == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 119:             {
+Explanation: Opens the current code scope.
+
+Line 120:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 121:             }
+Explanation: Closes the current code scope.
+
+Line 122:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 123:             for (int index = 0; index < expiredKeys.Count; index++)
+Explanation: Loops through a sequence of values so repeated setup or processing can happen in order.
+
+Line 124:             {
+Explanation: Opens the current code scope.
+
+Line 125:                 pendingCombines.Remove(expiredKeys[index]);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 126:             }
+Explanation: Closes the current code scope.
+
+Line 127:         }
+Explanation: Closes the current code scope.
+
+Line 128:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 129:         public void FlushAll(List<CombinedNumber> results)
+Explanation: Declares `FlushAll`, one of the callable behaviors used by this mechanic.
+
+Line 130:         {
+Explanation: Opens the current code scope.
+
+Line 131:             if (results == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 132:             {
+Explanation: Opens the current code scope.
+
+Line 133:                 throw new ArgumentNullException(nameof(results));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 134:             }
+Explanation: Closes the current code scope.
+
+Line 135:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 136:             foreach (KeyValuePair<CombineKey, PendingCombine> entry in pendingCombines)
+Explanation: Iterates over each item in the collection so the same logic can be applied repeatedly.
+
+Line 137:             {
+Explanation: Opens the current code scope.
+
+Line 138:                 results.Add(new CombinedNumber(entry.Key.TargetInstanceId, entry.Key.Type, entry.Value.totalAmount, entry.Value.position));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 139:             }
+Explanation: Closes the current code scope.
+
+Line 140:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 141:             pendingCombines.Clear();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 142:         }
+Explanation: Closes the current code scope.
+
+Line 143:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 144:         public void Clear()
+Explanation: Declares `Clear`, one of the callable behaviors used by this mechanic.
+
+Line 145:         {
+Explanation: Opens the current code scope.
+
+Line 146:             pendingCombines.Clear();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 147:         }
+Explanation: Closes the current code scope.
+
+Line 148:     }
+Explanation: Closes the current code scope.
+
+Line 149: }
+Explanation: Closes the current code scope.
