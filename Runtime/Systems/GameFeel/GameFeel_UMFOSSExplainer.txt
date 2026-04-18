@@ -1,0 +1,704 @@
+====================================================
+SCRIPT: GameFeel_UMFOSS.cs
+PATH:   Runtime/Systems/GameFeel/GameFeel_UMFOSS.cs
+AUTHOR: Indrajeet Yadav
+====================================================
+
+Line 1: using System.Collections;
+Explanation: Imports IEnumerator so we can write Unity coroutines (hitpause, flash, squash recovery, afterimage fade all use coroutines).
+
+Line 2: using UnityEngine;
+Explanation: Imports MonoBehaviour, Coroutine, Vector3, Color, AnimationCurve and the rest of Unity's runtime types.
+
+Line 3: using UnityEngine.UI;
+Explanation: Imports Canvas, CanvasScaler, Image, RectTransform — used to auto-create the screen flash overlay at runtime.
+
+Line 4: using GameplayMechanicsUMFOSS.Core;
+Explanation: Imports the EventBus namespace so we can Subscribe/Unsubscribe without a fully qualified name.
+
+Line 5: using GameplayMechanicsUMFOSS.Utils;
+Explanation: Imports ObjectPoolManager_UMFOSS. We use a pool for afterimage sprites so spawning never allocates at runtime.
+
+Line 7: namespace GameplayMechanicsUMFOSS.Systems
+Explanation: Places this script in the Systems namespace. Systems are self-contained mechanics that may depend on Core or Utils.
+
+Line 19: public class GameFeel_UMFOSS : MonoBehaviour
+Explanation: Declares the main GameFeel component. Attach this to any GameObject (typically the player) to give it hitpause, squash, afterimage, flash, and ghost trail feedback.
+
+Line 25: [Header("Hitpause")]
+Explanation: Groups the hitpause fields under a labelled heading in the Inspector so designers can fold sections independently.
+
+Line 27: [SerializeField] private bool hitpauseEnabled = true;
+Explanation: Runtime kill switch for the hitpause effect. When false, TriggerHitpause is a single boolean check with zero cost.
+
+Line 30: [SerializeField, Range(0.01f, 0.2f)] private float hitpauseDuration = 0.05f;
+Explanation: How long the pause lasts in seconds. The Range attribute clamps the Inspector slider to the usable window — 0.02–0.08s is the sweet spot (1–4 frames at 60fps).
+
+Line 33: [SerializeField, Range(0f, 0.1f)] private float hitpauseTimeScale = 0f;
+Explanation: Time.timeScale value during the pause. 0 = full freeze, 0.05 = near-freeze slow motion. Range prevents designers from accidentally configuring a "pause" that is actually a slowdown.
+
+Line 39: [Header("Squash & Stretch")]
+Explanation: Heading for the squash/stretch group.
+
+Line 41: [SerializeField] private bool squashStretchEnabled = true;
+Explanation: Runtime kill switch for squash/stretch.
+
+Line 44: [SerializeField] private Transform squashTarget;
+Explanation: The transform that actually gets scaled. Leave null to scale the component's own transform. Useful when the visual mesh is a child of the logic GameObject.
+
+Line 47: [SerializeField] private Vector3 jumpStretchScale = new Vector3(0.8f, 1.3f, 1f);
+Explanation: Scale multiplier on jump — narrow horizontally, tall vertically. Communicates upward force even though real objects do not stretch this way. Straight out of Disney's 12 animation principles.
+
+Line 50: [SerializeField] private Vector3 landSquashScale = new Vector3(1.3f, 0.7f, 1f);
+Explanation: Scale multiplier on landing — wide, flat. Reads as weight and impact.
+
+Line 53: [SerializeField] private Vector3 hitSquashScale = new Vector3(1.2f, 0.8f, 1f);
+Explanation: Scale multiplier on damage — a quick pinch. Tells the player their character felt the hit.
+
+Line 56: [SerializeField] private Vector3 pickupPopScale = new Vector3(1.15f, 1.15f, 1f);
+Explanation: Uniform pop on pickup. Uniform (not squash) because pickups are celebratory, not impactful.
+
+Line 59: [SerializeField, Range(1f, 30f)] private float squashRecoverySpeed = 12f;
+Explanation: How fast the scale recovers. Higher = snappier. The recovery duration is the reciprocal (1 / speed).
+
+Line 62: [SerializeField] private AnimationCurve squashRecoveryCurve = new AnimationCurve(...);
+Explanation: Curve that shapes the recovery. The default peaks above 1.0 around t=0.4, producing a springy overshoot. Designers can edit it in the Inspector without touching code.
+
+Line 73: [Header("Afterimage")]
+Explanation: Heading for the afterimage group.
+
+Line 75: [SerializeField] private bool afterimageEnabled = true;
+Explanation: Runtime kill switch for afterimages.
+
+Line 78: [SerializeField] private SpriteRenderer sourceSprite;
+Explanation: The SpriteRenderer whose current sprite gets copied into each afterimage. Must be assigned for afterimages to render; we guard against null at spawn time.
+
+Line 81: [SerializeField, Range(0.01f, 0.2f)] private float afterimageSpawnInterval = 0.05f;
+Explanation: Time between spawns. 0.05s = 20 ghosts per second — smooth but not overwhelming.
+
+Line 84: [SerializeField, Range(0.1f, 2f)] private float afterimageLifetime = 0.4f;
+Explanation: How long each ghost exists before returning to the pool.
+
+Line 87: [SerializeField] private Color afterimageStartColor = new Color(0.5f, 0.8f, 1f, 0.6f);
+Explanation: Initial ghost tint — a soft translucent blue. Tinting distinguishes the ghost from the real sprite so players do not see a confusing duplicate.
+
+Line 90: [SerializeField] private Color afterimageEndColor = new Color(0.5f, 0.8f, 1f, 0f);
+Explanation: Final ghost tint — same hue, zero alpha. The color lerp fades the ghost out.
+
+Line 93: [SerializeField, Range(1, 30)] private int afterimagePoolSize = 10;
+Explanation: Pool size. At 0.05s interval and 0.4s lifetime, at most 8 ghosts are alive at once; 10 is a small safety margin.
+
+Line 99: [Header("Screen Flash")]
+Explanation: Heading for the screen flash group.
+
+Line 101: [SerializeField] private bool screenFlashEnabled = true;
+Explanation: Runtime kill switch for the flash.
+
+Line 104: [SerializeField] private Color flashColorHit = new Color(1f, 1f, 1f, 0.4f);
+Explanation: Default flash tint for a generic hit — white, 40% alpha. White reads as impact without implying damage (which is red).
+
+Line 107: [SerializeField] private Color flashColorDamage = new Color(1f, 1f, 1f, 0.3f);
+Explanation: Flash tint when the player takes damage — also white but slightly weaker, so a hit feels heavier than taking damage.
+
+Line 110: [SerializeField] private Color flashColorDeath = new Color(1f, 0f, 0f, 0.5f);
+Explanation: Flash tint on death — saturated red, high alpha. Red is unambiguously death/danger.
+
+Line 113: [SerializeField] private Color flashColorPickup = new Color(1f, 0.9f, 0.3f, 0.15f);
+Explanation: Subtle yellow on pickup. Low alpha keeps it from being disorienting during normal play.
+
+Line 116: [SerializeField, Range(0.05f, 1f)] private float flashDuration = 0.15f;
+Explanation: How long the flash is visible in seconds.
+
+Line 119: [SerializeField] private AnimationCurve flashCurve = new AnimationCurve(...);
+Explanation: Alpha curve over the flash's lifetime. Sharp spike + decay reads as impact; a slow ramp would read as a transition.
+
+Line 129: [Header("Ghost Trail")]
+Explanation: Heading for the ghost trail group.
+
+Line 131: [SerializeField] private bool ghostTrailEnabled = true;
+Explanation: Runtime kill switch for the trail.
+
+Line 134: [SerializeField, Range(0.1f, 20f)] private float ghostTrailSpeedThreshold = 5f;
+Explanation: Speed at which the trail automatically turns on. Lets the trail appear on fast movement even without a dash.
+
+Line 137: [SerializeField] private TrailRenderer ghostTrailRenderer;
+Explanation: Optional reference to a TrailRenderer. If null, SetupGhostTrail tries to find one on this GameObject.
+
+Line 140: [SerializeField, Range(0.05f, 2f)] private float ghostTrailTime = 0.3f;
+Explanation: TrailRenderer.time — how long each point in the trail persists. 0.3s produces a short, punchy streak.
+
+Line 143: [SerializeField] private Color ghostTrailStartColor = new Color(0.3f, 0.6f, 1f, 0.8f);
+Explanation: Trail color at the head (near the sprite).
+
+Line 146: [SerializeField] private Color ghostTrailEndColor = new Color(0.3f, 0.6f, 1f, 0f);
+Explanation: Trail color at the tail — same hue, zero alpha. The trail fades over its length.
+
+Line 152: private Vector3 originalScale;
+Explanation: The squash target's scale at Awake. Every squash effect returns to this value, so non-uniform starting scales are preserved.
+
+Line 153: private Coroutine squashCoroutine;
+Explanation: Tracks the currently running squash coroutine so a new squash can cancel an in-progress one.
+
+Line 154: private Coroutine flashCoroutine;
+Explanation: Tracks the currently running flash coroutine (same reason as squashCoroutine).
+
+Line 155: private Coroutine hitpauseCoroutine;
+Explanation: Tracks the currently running hitpause coroutine. Used to detect "already paused" on back-to-back hits.
+
+Line 156: private bool isAfterimageActive;
+Explanation: Gates afterimage spawning. Set true by OnDashStart, false by OnDashEnd, or manually via ManualSetAfterimageActive.
+
+Line 157: private float afterimageTimer;
+Explanation: Countdown to the next afterimage spawn.
+
+Line 158: private bool isDashGhostTrailActive;
+Explanation: Forces the ghost trail on regardless of velocity. Set true during a dash.
+
+Line 159: private float preHitpauseTimeScale = 1f;
+Explanation: Remembered Time.timeScale from before the pause, so we restore exactly the right value — even if the player was already in slow motion.
+
+Line 162: private Canvas flashCanvas;
+Explanation: Runtime-created canvas that hosts the screen flash image. Built in CreateScreenFlashCanvas.
+
+Line 163: private Image flashImage;
+Explanation: Full-screen UI Image whose color is tinted and faded during a flash.
+
+Line 166: private ObjectPoolManager_UMFOSS afterimagePool;
+Explanation: The pool that hands out and recycles afterimage GameObjects.
+
+Line 167: private GameObject afterimagePrefab;
+Explanation: The runtime-built template the pool clones. We build it in code so users do not need to set up a prefab in the Inspector.
+
+Line 170: private Vector3 previousPosition;
+Explanation: The previous frame's position. Subtracting from current position gives velocity for the ghost trail threshold check.
+
+Line 176: private void Awake()
+Explanation: Unity lifecycle hook. Runs once when the component loads.
+
+Line 178: CacheOriginalScale();
+Explanation: Records the target's current localScale so squash recovery knows where to return to.
+
+Line 179: CreateScreenFlashCanvas();
+Explanation: Builds the full-screen flash canvas and image at runtime. No Inspector setup required.
+
+Line 180: CreateAfterimagePool();
+Explanation: Builds the afterimage prefab and initializes the pool. Pre-warms the pool so the Profiler shows zero Instantiate calls during gameplay.
+
+Line 181: SetupGhostTrail();
+Explanation: Configures the TrailRenderer with our time and color values and records the starting position.
+
+Line 184: private void OnEnable()
+Explanation: Unity lifecycle hook. Runs every time the component is enabled, including after scene load. This is where we subscribe to events.
+
+Line 186: EventBus.Subscribe<OnHitRegistered>(HandleHitRegistered);
+Explanation: Registers our hit handler so any mechanic that publishes OnHitRegistered triggers hitpause + flash.
+
+Line 187: EventBus.Subscribe<OnDamageTaken>(HandleDamageTaken);
+Explanation: Registers the damage handler — hitpause + hit squash + flash.
+
+Line 188: EventBus.Subscribe<OnDeath>(HandleDeath);
+Explanation: Registers the death handler — red flash + death squash.
+
+Line 189: EventBus.Subscribe<OnJumpStart>(HandleJumpStart);
+Explanation: Registers the jump handler — upward stretch.
+
+Line 190: EventBus.Subscribe<OnLanding>(HandleLanding);
+Explanation: Registers the landing handler — flat squash.
+
+Line 191: EventBus.Subscribe<OnDashStart>(HandleDashStart);
+Explanation: Registers the dash-start handler — enables afterimage + ghost trail.
+
+Line 192: EventBus.Subscribe<OnDashEnd>(HandleDashEnd);
+Explanation: Registers the dash-end handler — disables afterimage + ghost trail.
+
+Line 193: EventBus.Subscribe<OnItemPickedUp>(HandleItemPickedUp);
+Explanation: Registers the pickup handler — pop squash + yellow flash.
+
+Line 196: private void OnDisable()
+Explanation: Unity lifecycle hook. Always pair with OnEnable to tear down subscriptions — otherwise a disabled component still receives events and can touch a destroyed transform.
+
+Lines 198-205: EventBus.Unsubscribe<T>(HandleT);
+Explanation: Unsubscribes every handler registered in OnEnable, in the same order. This is critical for avoiding dangling references after scene reloads.
+
+Line 207: RestoreTimeScale();
+Explanation: Safety net — if we're disabled mid-hitpause, the game would stay frozen. This call resets Time.timeScale to its pre-pause value.
+
+Line 210: private void OnDestroy()
+Explanation: Unity lifecycle hook. Runs when the component is destroyed.
+
+Line 213: if (flashCanvas != null)
+Explanation: Guards against double destruction and against the canvas never being created.
+
+Line 215: Destroy(flashCanvas.gameObject);
+Explanation: We create the flash canvas at scene root (not as a child of this GameObject) so the squash scale does not distort the overlay. Since Unity does not auto-destroy non-children, we must destroy it ourselves here.
+
+Line 219: private void Update()
+Explanation: Unity lifecycle hook. Runs once per frame.
+
+Line 221: UpdateAfterimage();
+Explanation: Drives the afterimage spawn timer and handles each spawn.
+
+Line 222: UpdateGhostTrail();
+Explanation: Measures velocity and toggles the trail's emitting flag based on the threshold.
+
+Line 223: previousPosition = transform.position;
+Explanation: Updates the position history at the end of the frame so the next frame's velocity calculation is accurate.
+
+Line 230: private void HandleHitRegistered(OnHitRegistered evt)
+Explanation: Event handler for OnHitRegistered.
+
+Line 232: TriggerHitpause();
+Explanation: Freezes time briefly — the single most important effect for making a hit feel solid.
+
+Line 233: TriggerScreenFlash(flashColorHit);
+Explanation: White flash layered on top of the hitpause.
+
+Line 236: private void HandleDamageTaken(OnDamageTaken evt)
+Explanation: Event handler for OnDamageTaken.
+
+Line 238: TriggerHitpause();
+Explanation: Same freeze as a generic hit — reusing the effect keeps the system coherent.
+
+Line 239: TriggerSquashStretch(hitSquashScale);
+Explanation: The pinch squash that says "my character felt it."
+
+Line 240: TriggerScreenFlash(flashColorDamage);
+Explanation: A slightly weaker flash than a landed hit.
+
+Line 243: private void HandleDeath(OnDeath evt)
+Explanation: Event handler for OnDeath.
+
+Line 245: TriggerScreenFlash(flashColorDeath);
+Explanation: Saturated red flash — unambiguous "you died."
+
+Line 246: TriggerSquashStretch(hitSquashScale);
+Explanation: Reuses the damage squash; death feels like an amplified damage event.
+
+Line 249: private void HandleJumpStart(OnJumpStart evt)
+Explanation: Event handler for OnJumpStart.
+
+Line 251: TriggerSquashStretch(jumpStretchScale);
+Explanation: Upward stretch that communicates force.
+
+Line 254: private void HandleLanding(OnLanding evt)
+Explanation: Event handler for OnLanding.
+
+Line 256: TriggerSquashStretch(landSquashScale);
+Explanation: Flat squash that communicates weight.
+
+Line 259: private void HandleDashStart(OnDashStart evt)
+Explanation: Event handler for OnDashStart. Instead of coroutines, this just flips two booleans.
+
+Line 261: isAfterimageActive = true;
+Explanation: Starts the afterimage spawn loop in Update.
+
+Line 262: isDashGhostTrailActive = true;
+Explanation: Forces the ghost trail on regardless of velocity.
+
+Line 265: private void HandleDashEnd(OnDashEnd evt)
+Explanation: Event handler for OnDashEnd. Mirrors HandleDashStart.
+
+Line 267: isAfterimageActive = false;
+Explanation: Stops the afterimage spawn loop. Existing ghosts fade and return themselves to the pool naturally.
+
+Line 268: isDashGhostTrailActive = false;
+Explanation: Returns the ghost trail to velocity-threshold-only activation.
+
+Line 271: private void HandleItemPickedUp(OnItemPickedUp evt)
+Explanation: Event handler for OnItemPickedUp.
+
+Line 273: TriggerSquashStretch(pickupPopScale);
+Explanation: A uniform pop — distinct from the squash/stretch shapes used for impact.
+
+Line 274: TriggerScreenFlash(flashColorPickup);
+Explanation: Subtle yellow flash — celebratory but not intrusive.
+
+Line 286: private void TriggerHitpause()
+Explanation: Starts a hitpause. Guards against being disabled and handles re-triggered pauses without corrupting the saved timeScale.
+
+Line 288: if (!hitpauseEnabled) return;
+Explanation: Zero-cost kill switch. A disabled effect is a single branch and a return.
+
+Line 293: if (hitpauseCoroutine != null)
+Explanation: Detects an in-flight hitpause.
+
+Line 295: StopCoroutine(hitpauseCoroutine);
+Explanation: Stops the running pause so the new one wins. We do NOT re-read Time.timeScale here — if we did, we would capture the current (frozen) value as "previous" and restore to zero forever.
+
+Line 299: preHitpauseTimeScale = Time.timeScale;
+Explanation: Only captured when there is no running pause. This is the fix for the classic back-to-back hitpause bug.
+
+Line 302: hitpauseCoroutine = StartCoroutine(HitpauseCoroutine());
+Explanation: Kicks off the coroutine and stores the handle so a subsequent call can cancel it.
+
+Line 305: private IEnumerator HitpauseCoroutine()
+Explanation: The actual pause logic — freeze, wait, restore.
+
+Line 307: Time.timeScale = hitpauseTimeScale;
+Explanation: Freezes the game (0) or slows it dramatically (0.05).
+
+Line 311: yield return new WaitForSecondsRealtime(hitpauseDuration);
+Explanation: THE critical line. WaitForSeconds uses scaled time — if timeScale is 0, it waits forever. WaitForSecondsRealtime uses wall-clock time, so it always completes.
+
+Line 313: Time.timeScale = preHitpauseTimeScale;
+Explanation: Restores the captured pre-pause value. If the game was already in slow-motion, that slow motion is preserved.
+
+Line 314: hitpauseCoroutine = null;
+Explanation: Clears the handle so the next call treats this as a fresh pause.
+
+Line 317: private void RestoreTimeScale()
+Explanation: Called from OnDisable. Ensures the game never gets permanently stuck in a frozen state if this component is disabled mid-pause.
+
+Line 321: if (hitpauseCoroutine != null)
+Explanation: Only runs if a pause is actually in flight.
+
+Line 323: StopCoroutine(hitpauseCoroutine);
+Explanation: Cancels the coroutine so it cannot finish after OnDisable and overwrite a manual timeScale change.
+
+Line 325: Time.timeScale = preHitpauseTimeScale;
+Explanation: Forcibly restores the pre-pause value — safety net for the player.
+
+Line 339: private void TriggerSquashStretch(Vector3 targetScaleMultiplier)
+Explanation: Entry point for any squash/stretch effect. Cancels any in-flight squash so effects do not layer in unpredictable ways.
+
+Line 341: if (!squashStretchEnabled) return;
+Explanation: Zero-cost kill switch.
+
+Line 343: if (squashCoroutine != null) StopCoroutine(squashCoroutine);
+Explanation: Stops an in-flight squash so the new one replaces it cleanly.
+
+Line 348: Transform target = squashTarget != null ? squashTarget : transform;
+Explanation: Falls back to this component's transform if no target was assigned.
+
+Line 349: Vector3 deformedScale = Vector3.Scale(originalScale, targetScaleMultiplier);
+Explanation: Computes the deformed scale by component-multiplying the original with the multiplier. This preserves non-uniform starting scales.
+
+Line 350: squashCoroutine = StartCoroutine(SquashStretchCoroutine(target, deformedScale));
+Explanation: Runs the deform-and-recover animation as a coroutine.
+
+Line 353: private IEnumerator SquashStretchCoroutine(Transform target, Vector3 deformedScale)
+Explanation: The deform-and-recover animation.
+
+Line 355: target.localScale = deformedScale;
+Explanation: Snaps to the deformed scale instantly — the deform is the punch; the recovery is what sells the motion.
+
+Line 357: float duration = 1f / squashRecoverySpeed;
+Explanation: Inverts speed to duration. Designers set "how snappy" in the Inspector; we convert to seconds internally.
+
+Line 359: while (elapsed < duration)
+Explanation: Loops for the full recovery duration.
+
+Line 361: elapsed += Time.deltaTime;
+Explanation: Advances the timer by this frame's time.
+
+Line 362: float normalizedTime = Mathf.Clamp01(elapsed / duration);
+Explanation: Maps elapsed time into 0..1 for the curve lookup.
+
+Line 363: float curveValue = squashRecoveryCurve.Evaluate(normalizedTime);
+Explanation: Reads the curve at the current time. The curve can output values above 1.0, which is what drives the overshoot.
+
+Line 367: target.localScale = Vector3.LerpUnclamped(deformedScale, originalScale, curveValue);
+Explanation: The key line. Vector3.Lerp clamps t to [0,1]; LerpUnclamped does not. A curve value of 1.15 produces a 15% overshoot past originalScale, which is what makes squash/stretch feel springy and alive rather than mechanical.
+
+Line 368: yield return null;
+Explanation: Waits one frame.
+
+Line 371: target.localScale = originalScale;
+Explanation: Snaps to exactly originalScale at the end so floating-point drift never leaves a subtle permanent deformation.
+
+Line 372: squashCoroutine = null;
+Explanation: Clears the handle so the next TriggerSquashStretch starts fresh.
+
+Line 384: private void UpdateAfterimage()
+Explanation: Driven from Update. Spawns afterimages at a fixed interval while the effect is active.
+
+Line 386: if (!afterimageEnabled || !isAfterimageActive || sourceSprite == null) return;
+Explanation: Triple guard — when any is false, this method is a single boolean check with no allocations. This is what "zero cost when disabled" means in practice.
+
+Line 388: afterimageTimer -= Time.deltaTime;
+Explanation: Counts down the spawn timer.
+
+Line 390: if (afterimageTimer <= 0f)
+Explanation: Fires when the interval expires.
+
+Line 392: afterimageTimer = afterimageSpawnInterval;
+Explanation: Resets for the next spawn.
+
+Line 393: SpawnAfterimage();
+Explanation: Pulls a ghost from the pool, configures it, and starts its fade coroutine.
+
+Line 397: private void SpawnAfterimage()
+Explanation: Pools a ghost GameObject, copies the current sprite state to it, and starts its fade.
+
+Line 399: if (afterimagePool == null) return;
+Explanation: Safety guard in case the pool was not initialized.
+
+Line 401: GameObject ghost = afterimagePool.Get(transform.position, transform.rotation);
+Explanation: Pulls an active, positioned ghost from the pool — zero allocation.
+
+Line 402: SpriteRenderer ghostRenderer = ghost.GetComponent<SpriteRenderer>();
+Explanation: Grabs the renderer we added when the pool was built.
+
+Line 406: ghostRenderer.sprite = sourceSprite.sprite;
+Explanation: Copies the exact current sprite (including animation frame) so the ghost captures the pose at the moment of spawn.
+
+Line 407: ghostRenderer.flipX = sourceSprite.flipX;
+Explanation: Copies facing direction so ghosts match the character when it runs left vs right.
+
+Line 408: ghostRenderer.flipY = sourceSprite.flipY;
+Explanation: Copies vertical flip (rare but cheap to support).
+
+Line 409: ghost.transform.localScale = transform.localScale;
+Explanation: Matches scale so squash/stretch effects are reflected in the ghosts too.
+
+Line 412: StartCoroutine(FadeAndReturnAfterimage(ghost, ghostRenderer));
+Explanation: Runs the per-ghost fade. When done, the ghost returns itself to the pool.
+
+Line 415: private IEnumerator FadeAndReturnAfterimage(GameObject ghost, SpriteRenderer renderer)
+Explanation: Lifetime coroutine for one afterimage.
+
+Line 419: while (elapsed < afterimageLifetime)
+Explanation: Loops for the configured lifetime.
+
+Line 421: elapsed += Time.deltaTime;
+Explanation: Advances the timer.
+
+Line 422: float normalizedTime = elapsed / afterimageLifetime;
+Explanation: Normalizes to 0..1 for the color lerp.
+
+Line 426: renderer.color = Color.Lerp(afterimageStartColor, afterimageEndColor, normalizedTime);
+Explanation: Fades the ghost from start color to end color over its lifetime.
+
+Line 429: yield return null;
+Explanation: Waits one frame.
+
+Line 434: afterimagePool.Return(ghost);
+Explanation: Deactivates and re-enqueues the ghost for the next spawn. This is how we achieve zero-allocation afterimages.
+
+Line 447: private void TriggerScreenFlash(Color color)
+Explanation: Entry point for the flash. Cancels any in-flight flash for the same reason squash does.
+
+Line 449: if (!screenFlashEnabled) return;
+Explanation: Zero-cost kill switch.
+
+Line 451: if (flashCoroutine != null) StopCoroutine(flashCoroutine);
+Explanation: Kills the in-flight flash so the new one replaces it cleanly.
+
+Line 456: flashCoroutine = StartCoroutine(ScreenFlashCoroutine(color));
+Explanation: Runs the alpha curve over flashDuration.
+
+Line 459: private IEnumerator ScreenFlashCoroutine(Color color)
+Explanation: The flash animation coroutine.
+
+Line 461: flashImage.gameObject.SetActive(true);
+Explanation: Activates the Image so it starts rendering.
+
+Line 464: while (elapsed < flashDuration)
+Explanation: Loops for the configured flash duration.
+
+Line 466: elapsed += Time.unscaledDeltaTime;
+Explanation: Uses unscaled time so the flash continues playing during a hitpause (when timeScale is 0). Without this, hit + flash triggered together would freeze the flash mid-animation.
+
+Line 467: float normalizedTime = Mathf.Clamp01(elapsed / flashDuration);
+Explanation: Normalizes to 0..1 for the curve lookup.
+
+Line 468: float curveAlpha = flashCurve.Evaluate(normalizedTime);
+Explanation: Reads the curve to get the alpha multiplier.
+
+Line 471: currentColor.a = color.a * curveAlpha;
+Explanation: Multiplies the base alpha by the curve — keeps per-event alpha differences while shaping the fade.
+
+Line 472: flashImage.color = currentColor;
+Explanation: Applies the color + scaled alpha to the full-screen image.
+
+Line 474: yield return null;
+Explanation: Waits one frame.
+
+Line 477: flashImage.color = Color.clear;
+Explanation: Forces fully transparent at the end.
+
+Line 478: flashImage.gameObject.SetActive(false);
+Explanation: Deactivates the Image so it no longer contributes to UI cost. Always ensure the flash is cleanly hidden after playback.
+
+Line 490: private void UpdateGhostTrail()
+Explanation: Driven from Update. Toggles TrailRenderer.emitting based on velocity or dash state.
+
+Line 492: if (!ghostTrailEnabled || ghostTrailRenderer == null) return;
+Explanation: Zero-cost kill switch plus null guard.
+
+Line 495: if (Time.deltaTime <= 0f) return;
+Explanation: Guards against division by zero on the first frame or during a full hitpause.
+
+Line 497: float velocity = (transform.position - previousPosition).magnitude / Time.deltaTime;
+Explanation: Position delta over frame time = speed. Works on any moving object — kinematic bodies, animated transforms, tweens — not just physics-driven entities.
+
+Line 498: bool shouldBeActive = isDashGhostTrailActive || velocity > ghostTrailSpeedThreshold;
+Explanation: Two paths to "on": forced on during a dash, or automatic when fast enough.
+
+Line 500: if (shouldBeActive && !ghostTrailRenderer.emitting)
+Explanation: Edge-triggered enable — only writes to the TrailRenderer when its state actually changes.
+
+Line 502: ghostTrailRenderer.emitting = true;
+Explanation: Turns the trail on.
+
+Line 504: else if (!shouldBeActive && ghostTrailRenderer.emitting)
+Explanation: Edge-triggered disable.
+
+Line 506: ghostTrailRenderer.emitting = false;
+Explanation: Turns the trail off. Existing trail points finish their own lifetime and fade out naturally.
+
+Line 514: private void CacheOriginalScale()
+Explanation: Records the target's starting scale. Called once from Awake.
+
+Line 516: Transform target = squashTarget != null ? squashTarget : transform;
+Explanation: Same fallback as TriggerSquashStretch — use squashTarget if set, otherwise use this transform.
+
+Line 517: originalScale = target.localScale;
+Explanation: Stores the scale so every recovery returns to exactly this value.
+
+Line 526: private void CreateScreenFlashCanvas()
+Explanation: Builds the flash UI at runtime. Users do not need to add a Canvas to the scene manually.
+
+Line 531: GameObject canvasObj = new GameObject("GameFeel_ScreenFlashCanvas");
+Explanation: Creates a fresh GameObject at scene root — NOT parented to this transform so squash/stretch does not distort the overlay.
+
+Line 533: flashCanvas = canvasObj.AddComponent<Canvas>();
+Explanation: Adds the Canvas component.
+
+Line 534: flashCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+Explanation: Overlay mode — renders on top of everything, independent of the camera.
+
+Line 535: flashCanvas.sortingOrder = 999;
+Explanation: Places the flash above any other UI in the scene so it never gets occluded.
+
+Line 537: CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
+Explanation: Adds a CanvasScaler so the UI resolves sensibly across aspect ratios.
+
+Line 538: scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+Explanation: Scales UI with screen size — the full-screen flash fills any resolution.
+
+Line 539: scaler.referenceResolution = new Vector2(1920f, 1080f);
+Explanation: Standard HD reference resolution.
+
+Line 541: GameObject imageObj = new GameObject("FlashImage");
+Explanation: Child GameObject for the Image component.
+
+Line 542: imageObj.transform.SetParent(canvasObj.transform, false);
+Explanation: Parents the image to the canvas without adjusting for world space (the false argument).
+
+Line 544: flashImage = imageObj.AddComponent<Image>();
+Explanation: Adds the UI Image that we will tint.
+
+Line 545: flashImage.color = Color.clear;
+Explanation: Starts fully transparent so the flash is invisible until triggered.
+
+Line 546: flashImage.raycastTarget = false;
+Explanation: Disables raycasting so the overlay never intercepts gameplay clicks or UI input.
+
+Line 549: RectTransform rect = flashImage.rectTransform;
+Explanation: Grabs the RectTransform to configure anchoring.
+
+Line 550: rect.anchorMin = Vector2.zero;
+Explanation: Anchors the bottom-left corner to the canvas's bottom-left.
+
+Line 551: rect.anchorMax = Vector2.one;
+Explanation: Anchors the top-right corner to the canvas's top-right. Combined with the min anchor, this stretches the image to fill the screen.
+
+Line 552: rect.offsetMin = Vector2.zero;
+Explanation: No inset from the bottom-left.
+
+Line 553: rect.offsetMax = Vector2.zero;
+Explanation: No inset from the top-right.
+
+Line 555: imageObj.SetActive(false);
+Explanation: Hides the image until the first flash fires. Avoids drawing a fully transparent full-screen quad every frame.
+
+Line 563: private void CreateAfterimagePool()
+Explanation: Builds the afterimage prefab template and initializes the pool — all programmatic, no Inspector setup.
+
+Line 567: afterimagePrefab = new GameObject("AfterimageTemplate");
+Explanation: Template GameObject the pool will clone.
+
+Line 568: afterimagePrefab.transform.SetParent(transform);
+Explanation: Parents the template to this transform so it is destroyed alongside this component.
+
+Line 569: SpriteRenderer renderer = afterimagePrefab.AddComponent<SpriteRenderer>();
+Explanation: Adds the only component the template needs.
+
+Line 570: renderer.sortingOrder = -1;
+Explanation: Draws ghosts BEHIND the source sprite. Without this, the last ghost would cover the character.
+
+Line 571: afterimagePrefab.SetActive(false);
+Explanation: Deactivates the template so it never renders itself.
+
+Line 573: GameObject poolObj = new GameObject("GameFeel_AfterimagePool");
+Explanation: Container GameObject to host the pool component and hold pooled instances.
+
+Line 574: poolObj.transform.SetParent(transform);
+Explanation: Keeps the hierarchy tidy and ties pool lifetime to this component.
+
+Line 575: afterimagePool = poolObj.AddComponent<ObjectPoolManager_UMFOSS>();
+Explanation: Adds the pool manager from the Utils namespace.
+
+Line 576: afterimagePool.Initialize(afterimagePrefab, afterimagePoolSize);
+Explanation: Runtime-initializes and pre-warms the pool with our template and configured size.
+
+Line 579: private void SetupGhostTrail()
+Explanation: Configures the TrailRenderer with our color and time settings.
+
+Line 581: if (ghostTrailRenderer == null)
+Explanation: If no renderer was assigned in the Inspector, try to find one on this GameObject.
+
+Line 583: ghostTrailRenderer = GetComponent<TrailRenderer>();
+Explanation: Picks up a TrailRenderer sibling component if one exists.
+
+Line 588: ghostTrailRenderer.time = ghostTrailTime;
+Explanation: Applies our configured trail time.
+
+Line 589: ghostTrailRenderer.startColor = ghostTrailStartColor;
+Explanation: Applies our configured head color.
+
+Line 590: ghostTrailRenderer.endColor = ghostTrailEndColor;
+Explanation: Applies our configured tail color.
+
+Line 591: ghostTrailRenderer.emitting = false;
+Explanation: Starts the trail disabled. UpdateGhostTrail will enable it when appropriate.
+
+Line 594: previousPosition = transform.position;
+Explanation: Seeds the velocity calculation so the first frame's velocity is zero rather than a huge spike from origin.
+
+Line 605: public void ManualHitpause() => TriggerHitpause();
+Explanation: Public shortcut for testing or direct integration — trigger hitpause without publishing an EventBus event.
+
+Line 611: public void ManualSquashStretch(Vector3 scaleMultiplier) => TriggerSquashStretch(scaleMultiplier);
+Explanation: Public shortcut to trigger a squash with a custom multiplier.
+
+Line 617: public void ManualScreenFlash(Color color) => TriggerScreenFlash(color);
+Explanation: Public shortcut to trigger a flash with a custom color.
+
+Line 623: public void ManualSetAfterimageActive(bool active) => isAfterimageActive = active;
+Explanation: Public shortcut to start/stop afterimage spawning without publishing OnDashStart/End.
+
+Line 629: public void ManualSetGhostTrailActive(bool active) => isDashGhostTrailActive = active;
+Explanation: Public shortcut to force the ghost trail on/off.
+
+Line 636: public void SetHitpauseEnabled(bool enabled) => hitpauseEnabled = enabled;
+Explanation: Runtime toggle for hitpause. UI Toggles can call this directly via onValueChanged.
+
+Line 639: public void SetSquashStretchEnabled(bool enabled) => squashStretchEnabled = enabled;
+Explanation: Runtime toggle for squash/stretch.
+
+Line 642: public void SetAfterimageEnabled(bool enabled) => afterimageEnabled = enabled;
+Explanation: Runtime toggle for afterimage.
+
+Line 645: public void SetScreenFlashEnabled(bool enabled) => screenFlashEnabled = enabled;
+Explanation: Runtime toggle for screen flash.
+
+Line 648: public void SetGhostTrailEnabled(bool enabled) => ghostTrailEnabled = enabled;
+Explanation: Runtime toggle for ghost trail.
+
+Line 651: public void SetAllEffectsEnabled(bool enabled)
+Explanation: Master toggle — flips every effect at once. Used by the demo's ALL ON / ALL OFF button to prove the perceptual difference.
+
+Lines 653-657: hitpauseEnabled = enabled; squashStretchEnabled = enabled; afterimageEnabled = enabled; screenFlashEnabled = enabled; ghostTrailEnabled = enabled;
+Explanation: Sets each effect's kill switch to the same value.

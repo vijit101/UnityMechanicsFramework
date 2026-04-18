@@ -1,0 +1,225 @@
+====================================================
+SCRIPT: GameFeelDemoPlayer.cs
+PATH:   Samples~/GameFeel/Assets/Scripts/GameFeelDemoPlayer.cs
+AUTHOR: Indrajeet Yadav
+NOTE:   Demo-only script. Not compiled into the Runtime assembly.
+====================================================
+
+Line 1: using UnityEngine;
+Explanation: Imports Unity's MonoBehaviour, Input, Rigidbody2D, Physics2D, Vector2, LayerMask, Gizmos — all used below.
+
+Line 2: using GameplayMechanicsUMFOSS.Core;
+Explanation: Imports the EventBus so we can publish GameFeel events without a fully qualified name.
+
+Line 3: using GameplayMechanicsUMFOSS.Systems;
+Explanation: Imports the GameFeel event structs (OnJumpStart, OnDashStart, etc.).
+
+Line 5: namespace GameplayMechanicsUMFOSS.Samples.GameFeel
+Explanation: Demo-specific namespace. Keeps demo code separate from the Runtime namespaces so imports are unambiguous.
+
+Line 21: [RequireComponent(typeof(Rigidbody2D))]
+Explanation: Guarantees a Rigidbody2D exists on the same GameObject. Unity auto-adds one if missing, so the demo scene cannot be misconfigured.
+
+Line 22: public class GameFeelDemoPlayer : MonoBehaviour
+Explanation: Declares the demo player controller. A minimal 2D platformer controller whose only job is to publish events into the EventBus so GameFeel reacts.
+
+Line 25: [SerializeField] private float moveSpeed = 8f;
+Explanation: Horizontal movement speed in units per second.
+
+Line 26: [SerializeField] private float jumpForce = 14f;
+Explanation: Initial upward velocity applied on jump.
+
+Line 29: [SerializeField] private float dashSpeed = 20f;
+Explanation: Velocity magnitude during a dash — noticeably faster than walking.
+
+Line 30: [SerializeField] private float dashDuration = 0.2f;
+Explanation: How long the dash lasts. Short enough to feel snappy, long enough for the afterimage trail to read.
+
+Line 33: [SerializeField] private Transform groundCheckPoint;
+Explanation: A child transform placed at the character's feet. Used as the center of the ground-check circle.
+
+Line 34: [SerializeField] private float groundCheckRadius = 0.15f;
+Explanation: Radius of the ground-check circle. Small enough to avoid phantom grounded states when standing next to a wall.
+
+Line 35: [SerializeField] private LayerMask groundLayer;
+Explanation: Which layers count as "ground." Configured in the Inspector to point at the ground collider layer.
+
+Line 37: private Rigidbody2D rb;
+Explanation: Cached Rigidbody2D reference. Cached once in Awake to avoid GetComponent calls every frame.
+
+Line 38: private bool isGrounded;
+Explanation: True when the character is touching ground this frame.
+
+Line 39: private bool wasGrounded;
+Explanation: The previous frame's grounded state. Comparing with isGrounded detects the exact landing frame.
+
+Line 40: private bool isDashing;
+Explanation: True while a dash is in progress.
+
+Line 41: private float dashTimer;
+Explanation: Countdown for how long the current dash has left.
+
+Line 42: private Vector2 dashDirection;
+Explanation: Direction vector used during the active dash.
+
+Line 44: private void Awake()
+Explanation: Unity lifecycle hook. Caches references once.
+
+Line 46: rb = GetComponent<Rigidbody2D>();
+Explanation: Caches the Rigidbody2D. Safe because RequireComponent guarantees one exists.
+
+Line 49: private void Update()
+Explanation: Unity lifecycle hook. Drives all input handling once per frame.
+
+Line 51: CheckGround();
+Explanation: Updates isGrounded based on the overlap circle.
+
+Line 52: HandleMovement();
+Explanation: Reads horizontal input and sets velocity.
+
+Line 53: HandleJump();
+Explanation: Reads jump input and publishes OnJumpStart.
+
+Line 54: HandleDash();
+Explanation: Handles dash start, dash progression, and dash end events.
+
+Line 55: HandleAttack();
+Explanation: Reads attack input and publishes OnHitRegistered.
+
+Line 56: HandleDamage();
+Explanation: Reads the F key and publishes OnDamageTaken (simulates taking damage).
+
+Line 57: HandleDeath();
+Explanation: Reads the G key and publishes OnDeath.
+
+Line 58: HandlePickup();
+Explanation: Reads the E key and publishes OnItemPickedUp.
+
+Line 59: DetectLanding();
+Explanation: Compares wasGrounded and isGrounded to detect the exact landing frame and publish OnLanding.
+
+Line 61: wasGrounded = isGrounded;
+Explanation: Stores this frame's grounded state for next frame's landing detection. Must be done at the END of Update so DetectLanding compared values are correct.
+
+Line 64: private void CheckGround()
+Explanation: Updates isGrounded by checking if the ground-check point overlaps the ground layer.
+
+Line 66: if (groundCheckPoint != null)
+Explanation: Null-guards the optional reference so the script does not throw if the scene forgot to assign it.
+
+Line 68: isGrounded = Physics2D.OverlapCircle(groundCheckPoint.position, groundCheckRadius, groundLayer);
+Explanation: Casts a circle at the feet to detect ground. Cheaper than a raycast for small feet and gives a small grace margin.
+
+Line 76: private void HandleMovement()
+Explanation: Sets the character's horizontal velocity from Input.
+
+Line 78: if (isDashing) return;
+Explanation: Movement is overridden during a dash — HandleDash is the only thing driving velocity then.
+
+Line 80: float horizontal = Input.GetAxisRaw("Horizontal");
+Explanation: GetAxisRaw (not GetAxis) returns -1/0/+1 without smoothing — feels snappier for a platformer.
+
+Line 81: rb.linearVelocity = new Vector2(horizontal * moveSpeed, rb.linearVelocity.y);
+Explanation: Overwrites horizontal velocity; preserves vertical velocity (so gravity and jump impulses are untouched).
+
+Line 84: private void HandleJump()
+Explanation: Triggers a jump when Space is pressed while grounded.
+
+Line 86: if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+Explanation: GetKeyDown fires exactly on the press frame; the grounded check prevents air-jumps.
+
+Line 88: rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+Explanation: Sets vertical velocity directly (rather than AddForce) so jump height is deterministic regardless of frame rate.
+
+Line 89: EventBus.Publish(new OnJumpStart { jumpForce = jumpForce });
+Explanation: Publishes the jump event. GameFeel reacts with the upward stretch — no direct reference to GameFeel required.
+
+Line 93: private void HandleDash()
+Explanation: Dash state machine — progress active dash each frame, start new dash on key press.
+
+Line 95: if (isDashing)
+Explanation: Branch for the active-dash case.
+
+Line 97: dashTimer -= Time.deltaTime;
+Explanation: Counts down the dash timer.
+
+Line 98: rb.linearVelocity = dashDirection * dashSpeed;
+Explanation: Forces velocity along the dash direction every frame until the timer runs out.
+
+Line 100: if (dashTimer <= 0f)
+Explanation: Fires when the dash completes.
+
+Line 102: isDashing = false;
+Explanation: Resets the dash state so HandleMovement regains control.
+
+Line 103: EventBus.Publish(new OnDashEnd());
+Explanation: Publishes dash-end. GameFeel disables afterimage and ghost trail.
+
+Line 105: return;
+Explanation: Skips the "start new dash" branch below when a dash is already active.
+
+Line 108: if (Input.GetKeyDown(KeyCode.LeftShift))
+Explanation: Dash input — LShift on the press frame.
+
+Line 110: isDashing = true;
+Explanation: Enters dash state.
+
+Line 111: dashTimer = dashDuration;
+Explanation: Starts the countdown.
+
+Line 112: float facing = Mathf.Sign(transform.localScale.x);
+Explanation: Reads character facing from scale.x sign — a common 2D sprite trick for left/right facing.
+
+Line 113: float horizontal = Input.GetAxisRaw("Horizontal");
+Explanation: Reads current horizontal input to prefer input direction over facing direction.
+
+Line 114: dashDirection = horizontal != 0 ? new Vector2(horizontal, 0f).normalized : new Vector2(facing, 0f);
+Explanation: Dash in the direction the player is pressing; fall back to facing if no input. Prevents "neutral dash" from doing nothing.
+
+Line 118: EventBus.Publish(new OnDashStart { dashDirection = dashDirection });
+Explanation: Publishes dash-start. GameFeel enables afterimage and forces the ghost trail on.
+
+Line 122: private void HandleAttack()
+Explanation: Publishes OnHitRegistered on left-click — simulates a landed attack.
+
+Line 124: if (Input.GetMouseButtonDown(0))
+Explanation: Fires on the press frame.
+
+Line 126: EventBus.Publish(new OnHitRegistered { hitPoint = transform.position + transform.right, intensity = 1f });
+Explanation: hitPoint is placed one unit in front of the character so downstream systems can spawn particles at the "sword tip." intensity 1f = full-strength hit.
+
+Line 134: private void HandleDamage()
+Explanation: Publishes OnDamageTaken on F — simulates receiving damage.
+
+Line 138: EventBus.Publish(new OnDamageTaken { damageAmount = 10f, hitDirection = -transform.right });
+Explanation: Hardcoded damage and direction for demo purposes. In a real game, combat code would compute these values.
+
+Line 146: private void HandleDeath()
+Explanation: Publishes OnDeath on G.
+
+Line 150: EventBus.Publish(new OnDeath { deathPosition = transform.position });
+Explanation: Publishes the current position so death particles can spawn at the right place.
+
+Line 154: private void HandlePickup()
+Explanation: Publishes OnItemPickedUp on E.
+
+Line 158: EventBus.Publish(new OnItemPickedUp { itemName = "DemoItem" });
+Explanation: Hardcoded item name for the demo. Real inventory systems would pass the actual item.
+
+Line 162: private void DetectLanding()
+Explanation: Detects the exact frame the character touched ground after being airborne.
+
+Line 164: if (isGrounded && !wasGrounded)
+Explanation: Edge detection — true only on the single frame ground contact resumes.
+
+Line 166: EventBus.Publish(new OnLanding { fallSpeed = Mathf.Abs(rb.linearVelocity.y) });
+Explanation: Publishes landing with fall speed. Hard landings can be made to squash more in a full implementation.
+
+Line 170: private void OnDrawGizmosSelected()
+Explanation: Unity editor callback. Runs only when this GameObject is selected.
+
+Line 174: Gizmos.color = Color.green;
+Explanation: Makes the ground check visualisation obvious.
+
+Line 175: Gizmos.DrawWireSphere(groundCheckPoint.position, groundCheckRadius);
+Explanation: Draws the ground-check radius in the Scene view so designers can verify placement without running the game.

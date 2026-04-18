@@ -1,0 +1,110 @@
+====================================================
+SCRIPT: ObjectPoolManager_UMFOSS.cs
+PATH:   Runtime/Utils/ObjectPoolManager_UMFOSS.cs
+AUTHOR: Indrajeet Yadav
+====================================================
+
+Line 1: using System.Collections.Generic;
+Explanation: Imports generic collections. We use Queue for the pool and List for tracking every object ever created.
+
+Line 2: using UnityEngine;
+Explanation: Imports Unity's MonoBehaviour, GameObject, and the Instantiate helper.
+
+Line 4: namespace GameplayMechanicsUMFOSS.Utils
+Explanation: Places the pool in the Utils namespace. Any mechanic that needs pooling depends on Utils.
+
+Line 12: public class ObjectPoolManager_UMFOSS : MonoBehaviour
+Explanation: Declares the pool as a MonoBehaviour so it can be attached to a GameObject in a scene.
+
+Line 15: [SerializeField] private GameObject prefab;
+Explanation: The prefab to pool. SerializeField makes it Inspector-assignable while keeping the field private at the code level.
+
+Line 16: [SerializeField] private int initialPoolSize = 10;
+Explanation: How many copies to pre-create on Awake. Tune this to the maximum number of objects that can be alive at once.
+
+Line 18: private readonly Queue<GameObject> availableObjects = new Queue<GameObject>();
+Explanation: Inactive objects currently waiting to be handed out. Queue gives O(1) Dequeue/Enqueue — ideal for a fast-cycling pool.
+
+Line 19: private readonly List<GameObject> allObjects = new List<GameObject>();
+Explanation: Every object this pool has ever created, active or not. Used if you ever need to iterate over the whole population.
+
+Line 21: private void Awake()
+Explanation: Unity lifecycle hook. Runs once when the component loads.
+
+Line 27: if (prefab != null)
+Explanation: Guards against the programmatic-init case. If Initialize() will set the prefab later, we must not call PreWarm here with a null prefab.
+
+Line 29: PreWarm();
+Explanation: Front-loads all the Instantiate calls now, so there are no allocation spikes during gameplay.
+
+Line 37: private void PreWarm()
+Explanation: Creates the configured number of inactive objects and enqueues them.
+
+Line 39: for (int i = 0; i < initialPoolSize; i++)
+Explanation: Runs once per object to pre-create.
+
+Line 41: GameObject obj = CreateNewObject();
+Explanation: Instantiates one copy of the prefab and records it in allObjects.
+
+Line 42: obj.SetActive(false);
+Explanation: Starts the object deactivated. A pooled object is invisible until Get() activates it.
+
+Line 43: availableObjects.Enqueue(obj);
+Explanation: Adds the new object to the queue of things ready to hand out.
+
+Line 55: public GameObject Get(Vector3 position, Quaternion rotation)
+Explanation: Retrieves an object from the pool, positions it, activates it, and returns it.
+
+Line 59: if (availableObjects.Count > 0)
+Explanation: Fast path — there is already a pooled object ready.
+
+Line 61: obj = availableObjects.Dequeue();
+Explanation: Removes and returns the front of the queue.
+
+Line 65: obj = CreateNewObject();
+Explanation: Fallback — the pool was exhausted, so grow it by one. The pool never shrinks, so this one-time growth pays back on every later call.
+
+Line 68: obj.transform.SetPositionAndRotation(position, rotation);
+Explanation: Places the object at the requested pose. SetPositionAndRotation is slightly faster than setting position and rotation separately.
+
+Line 69: obj.SetActive(true);
+Explanation: Turns the object on so it renders and ticks.
+
+Line 70: return obj;
+Explanation: Hands the ready-to-use object to the caller.
+
+Line 78: public void Return(GameObject obj)
+Explanation: Returns an object to the pool when the caller is done with it. Always call this instead of Destroy.
+
+Line 80: obj.SetActive(false);
+Explanation: Hides the object and stops it from ticking.
+
+Line 81: availableObjects.Enqueue(obj);
+Explanation: Puts it back at the end of the queue so the next Get() picks the oldest returned object first.
+
+Line 84: private GameObject CreateNewObject()
+Explanation: Internal helper that instantiates one prefab copy and records it.
+
+Line 86: GameObject obj = Instantiate(prefab, transform);
+Explanation: Instantiates the prefab as a child of this pool's transform. Parenting keeps the hierarchy tidy and ensures the pool's lifetime owns the instances.
+
+Line 87: obj.SetActive(false);
+Explanation: Ensures every newly created object starts inactive, even if created mid-game by the exhaustion fallback.
+
+Line 88: allObjects.Add(obj);
+Explanation: Records the created object in the full-population list.
+
+Line 89: return obj;
+Explanation: Returns the new instance to whichever caller needed one.
+
+Line 99: public void Initialize(GameObject poolPrefab, int size)
+Explanation: Public API for runtime configuration. Used by GameFeel_UMFOSS to build its afterimage pool programmatically without any Inspector setup.
+
+Line 101: prefab = poolPrefab;
+Explanation: Stores the prefab for CreateNewObject to use.
+
+Line 102: initialPoolSize = size;
+Explanation: Stores the target pool size for PreWarm.
+
+Line 103: PreWarm();
+Explanation: Immediately pre-instantiates the pool. After this call the pool is ready for Get/Return traffic.
