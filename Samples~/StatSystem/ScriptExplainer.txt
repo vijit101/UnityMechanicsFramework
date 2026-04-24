@@ -1,0 +1,291 @@
+===========================================================================
+  StatSystem_UMFOSS — Line-by-Line Script Explainer
+  Namespace: GameplayMechanicsUMFOSS.Systems
+  Files:     Runtime/Systems/StatSystem_UMFOSS.cs
+             Runtime/Utils/TimerUtility_UMFOSS.cs
+===========================================================================
+
+This document explains every design decision in the Stat System line by line.
+It is intended for developers learning the pattern, not just using it.
+
+---------------------------------------------------------------------------
+WHY THIS SYSTEM EXISTS — THE STACKING PROBLEM
+---------------------------------------------------------------------------
+
+Without a stat system, a game with upgrades ends up with code like this
+scattered across dozens of scripts:
+
+  float damage = baseDamage + swordBonus + ringBonus;
+  damage *= 1 + potionBonus;
+
+The problems:
+  1. Order is inconsistent — whoever wrote the script decided the order.
+  2. Removal is painful — you have to find every place a bonus was added.
+  3. Duration-based effects require coroutines or manual timers everywhere.
+  4. No single source of truth for what a stat's current value actually is.
+
+The Stat System solves all four problems in one place.
+
+---------------------------------------------------------------------------
+SECTION 1 — StatType_UMFOSS (enum)
+---------------------------------------------------------------------------
+
+  public enum StatType_UMFOSS { MaxHealth, Damage, MoveSpeed, ... }
+
+Every addressable stat is listed here.  This is the key — instead of
+scattered float fields (playerHealth, playerDamage, etc.), every stat is
+identified by this enum.  Adding a new stat type is one line here.
+No other code changes.
+
+---------------------------------------------------------------------------
+SECTION 2 — ModifierType_UMFOSS (enum)
+---------------------------------------------------------------------------
+
+  Flat           — adds a fixed number.
+  PercentAdd     — adds a percentage, summed with other PercentAdd values.
+  PercentMultiply — multiplies the running total.
+
+The enum value order (Flat = 0, PercentAdd = 1, PercentMultiply = 2) is
+not accidental.  The CalculateFinalValue method sorts modifiers by type
+using this enum order, which enforces the correct stacking sequence
+automatically without any if-chains.
+
+---------------------------------------------------------------------------
+SECTION 3 — StatModifier_UMFOSS (plain C# class)
+---------------------------------------------------------------------------
+
+  public readonly float             Value;
+  public readonly ModifierType_UMFOSS Type;
+  public readonly int               Order;
+  public readonly object            Source;
+
+All fields are readonly.  A modifier is immutable once created.  This
+prevents bugs where the same modifier instance is accidentally mutated
+while it is live on a stat.
+
+WHY SOURCE IS OBJECT (NOT A SPECIFIC TYPE):
+  Source can be any object — an item instance, a MonoBehaviour, a string,
+  an enum value.  The system only compares by reference equality:
+
+    ReferenceEquals(m.Source, swordInstance)
+
+  So the sword item IS the key.  Unequip the sword, pass the same
+  reference, and everything it added is removed.  The system never needs
+  to know what type of thing the source is.
+
+WHY ORDER EXISTS:
+  Two flat modifiers from different items should apply in a predictable
+  sequence.  Order lets the designer control which flat modifier is
+  applied first within the same type.  Usually order = 0 is fine; it
+  exists for edge cases where sequence matters (e.g., a capped bonus
+  that should apply after other flats).
+
+---------------------------------------------------------------------------
+SECTION 4 — Stat_UMFOSS — THE DIRTY FLAG
+---------------------------------------------------------------------------
+
+  private bool  _isDirty = true;
+  private float _cachedFinalValue;
+
+  public float FinalValue
+  {
+      get
+      {
+          if (_isDirty)
+          {
+              _cachedFinalValue = CalculateFinalValue();
+              _isDirty = false;
+          }
+          return _cachedFinalValue;
+      }
+  }
+
+WHY THE DIRTY FLAG EXISTS:
+  A stat like MoveSpeed might be read every frame: GetValue(MoveSpeed)
+  to set Rigidbody.velocity.  Without the dirty flag, that is a full
+  sort + loop through the modifier list every frame.
+
+  With the dirty flag:
+  - AddModifier()  → sets _isDirty = true
+  - RemoveModifier() → sets _isDirty = true
+  - FinalValue (first call after change) → recalculates, sets _isDirty = false
+  - FinalValue (every subsequent call) → returns cached value instantly
+
+  Result: one calculation per modifier change, regardless of how often
+  the value is read.  Zero cost for high-frequency reads.
+
+---------------------------------------------------------------------------
+SECTION 5 — CalculateFinalValue — THE STACKING FORMULA
+---------------------------------------------------------------------------
+
+  private float CalculateFinalValue()
+  {
+      float flat            = BaseValue;
+      float percentAdd      = 0f;
+      float percentMultiply = 1f;
+
+      var sorted = _modifiers.OrderBy(m => m.Type).ThenBy(m => m.Order);
+
+      foreach (var mod in sorted)
+      {
+          switch (mod.Type)
+          {
+              case Flat:           flat            += mod.Value; break;
+              case PercentAdd:     percentAdd      += mod.Value; break;
+              case PercentMultiply:percentMultiply *= mod.Value; break;
+          }
+      }
+
+      return (float)Math.Round(flat * (1 + percentAdd) * percentMultiply, 4);
+  }
+
+WHY FLAT BEFORE PERCENTAGE (INDUSTRY STANDARD):
+  Base: 10.  Sword: +15 flat.  Ring: +50% damage.
+
+  Percentage first:  10 × 1.5 = 15 → 15 + 15 = 30   ← WRONG
+  Flat first:        10 + 15  = 25 → 25 × 1.5 = 37.5 ← CORRECT
+
+  The correct order means "+50% damage" boosts your sword-equipped damage,
+  not your bare hands.  Diablo, Path of Exile, Dark Souls, Elden Ring —
+  every shipped RPG uses flat before percentage for this reason.
+
+WHY PERCENTADD IS ADDITIVE (NOT MULTIPLICATIVE):
+  If two +20% items multiplied independently:
+    10 × 1.2 × 1.2 = 14.4  (two +20% items gave +44%)
+
+  With additive PercentAdd:
+    (1 + 0.2 + 0.2) = 1.4  → 10 × 1.4 = 14  (two +20% items give +40%)
+
+  Additive stacking is predictable and fair.  Players understand "+20%
+  damage" means "+20 points per 100 damage", not a cascading multiplier.
+  PercentMultiply exists separately for intentional big spikes where the
+  designer WANTS the compounding effect (legendary items, boss modes).
+
+WHY Math.Round TO 4 DECIMAL PLACES:
+  Float arithmetic is not exact.  After 100 add/remove cycles:
+    30.0000004 instead of 30.0000000
+
+  Rounding to 4 decimal places keeps the precision needed for gameplay
+  (0.0001 error is invisible) while preventing the drift from accumulating
+  into values that should be exactly equal to their base.
+
+---------------------------------------------------------------------------
+SECTION 6 — RemoveAllModifiersFromSource — REFERENCE EQUALITY
+---------------------------------------------------------------------------
+
+  public bool RemoveAllModifiersFromSource(object source)
+  {
+      int removedCount = _modifiers.RemoveAll(m => ReferenceEquals(m.Source, source));
+      ...
+  }
+
+ReferenceEquals checks if two variables point to the exact same object
+in memory — not if they have the same value.
+
+  var sword = new SwordItem();
+  AddModifier(slot, new StatModifier(15, Flat, source: sword));
+  RemoveAllModifiersFromSource(sword);  // works — same reference ✓
+  RemoveAllModifiersFromSource(new SwordItem()); // does nothing — different object ✗
+
+The source object IS the key.  As long as the same reference is used
+for Add and Remove, the system self-cleans without any external tracking.
+Equipment systems, ability systems, status effect systems all benefit
+from this — they never need a modifier reference list.
+
+---------------------------------------------------------------------------
+SECTION 7 — StatSheet_UMFOSS.AddTimedModifier — NO COROUTINES
+---------------------------------------------------------------------------
+
+  public void AddTimedModifier(StatType_UMFOSS type, StatModifier_UMFOSS modifier, float duration)
+  {
+      AddModifier(type, modifier);
+
+      var timer = TimerUtility_UMFOSS.Create(duration, () =>
+      {
+          RemoveModifier(type, modifier);
+          StatEventBus.Publish(new StatModifierExpiredEvent { ... });
+      });
+
+      timer.Start();
+  }
+
+WHY NO COROUTINES IN StatSheet:
+  StatSheet_UMFOSS is a MonoBehaviour, so it could start coroutines.
+  But coroutines die if the object is disabled.  They are also harder to
+  test and cancel.
+
+  TimerUtility_UMFOSS uses its own hidden MonoBehaviour (TimerRunner) that
+  is never destroyed.  The timer fires even if the entity is disabled.
+  Cancel() is available if the effect needs to be interrupted early.
+
+The lambda captures both `type` and `modifier` by closure.  When the
+timer fires, it removes exactly the modifier that was applied — not
+all modifiers of this type.  Multiple timed modifiers of the same type
+(two different potions) work correctly because each timer closes over
+its own modifier reference.
+
+---------------------------------------------------------------------------
+SECTION 8 — GetSnapshot — SAVE SYSTEM BOUNDARY
+---------------------------------------------------------------------------
+
+  public Dictionary<StatType_UMFOSS, float> GetSnapshot()
+  {
+      var snapshot = new Dictionary<StatType_UMFOSS, float>(_stats.Count);
+      foreach (var kvp in _stats)
+          snapshot[kvp.Key] = kvp.Value.FinalValue;
+      return snapshot;
+  }
+
+The snapshot is a plain Dictionary<enum, float>.  The save system only
+needs to serialise this — it never needs to know about StatModifier or
+Stat_UMFOSS.  This is the boundary between the complex runtime system
+and the simple persistence layer.
+
+On load, the save system calls StatSheet.SetBaseValue(type, savedValue)
+or re-applies modifiers from saved equipment — the stat system does not
+care how it gets its values.
+
+---------------------------------------------------------------------------
+SECTION 9 — StatEventBus — DECOUPLED COMMUNICATION
+---------------------------------------------------------------------------
+
+  StatEventBus.Subscribe<StatChangedEvent>(e => { ... });
+  StatEventBus.Publish(new StatChangedEvent { ... });
+
+StatSheet never holds a reference to the UI, the health system, or the
+audio manager.  Instead, it publishes events.  Any system that cares can
+subscribe.  This means:
+
+  - HealthSystem subscribes to MaxHealth changes to scale CurrentHealth
+  - HUD subscribes to update stat bars
+  - AudioManager subscribes to play buff/debuff sounds
+  - None of them need to know each other exists
+
+The self-contained StatEventBus is type-safe: Subscribe<T> and Publish<T>
+only connect handlers to events of the same type.  If a framework-wide
+EventBus is added to Core later, swapping is a one-line change in StatSheet.
+
+---------------------------------------------------------------------------
+SUMMARY — WHAT THIS SYSTEM TEACHES
+---------------------------------------------------------------------------
+
+1. Modifier stacking order — why flat before percentage is the industry
+   standard and the arithmetic proof of why it matters.
+
+2. Dirty flag / cache pattern — how to make a frequently-read value
+   cheap to read while keeping calculation accurate after changes.
+
+3. Source-based removal — why object reference identity is cleaner than
+   storing modifier references outside the stat system.
+
+4. Plain C# class vs MonoBehaviour — Stat_UMFOSS has no Unity lifecycle
+   because it does not need one. Stat_UMFOSS is data + logic, owned by
+   StatSheet_UMFOSS which IS a MonoBehaviour.
+
+5. TimerUtility delegation — how to get coroutine-like timing in a
+   plain C# class without coupling to a specific MonoBehaviour.
+
+6. Separation of concerns — GetSnapshot() shows how a complex runtime
+   system exposes a clean, serializable boundary to external systems.
+
+===========================================================================

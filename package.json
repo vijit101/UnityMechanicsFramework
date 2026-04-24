@@ -1,0 +1,38 @@
+{
+  "name": "com.vijit101.unitymechanicsframework",
+  "version": "1.0.0",
+  "displayName": "Unity Mechanics Framework",
+  "description": "Modular open-source gameplay mechanics framework for Unity. Plug-and-play systems for movement, dialogue, stat management, and more.",
+  "unity": "2021.3",
+  "unityRelease": "0a0",
+  "keywords": [
+    "mechanics",
+    "gameplay",
+    "rpg",
+    "stats",
+    "modifiers",
+    "dialogue",
+    "singleton",
+    "framework",
+    "umfoss"
+  ],
+  "author": {
+    "name": "Shubham B",
+    "url": "https://github.com/vijit101/UnityMechanicsFramework"
+  },
+  "dependencies": {
+    "com.unity.textmeshpro": "3.0.6"
+  },
+  "samples": [
+    {
+      "displayName": "Dialogue System Sample",
+      "description": "A self-contained demo scene showing the Generic & Scalable Dialogue System with branching conversations driven by ScriptableObjects.",
+      "path": "Samples~/DialogueSample"
+    },
+    {
+      "displayName": "Stat System Sample",
+      "description": "Interactive demo for the Stat System with Modifiers — shows flat/percentage/multiply stacking, timed debuffs, and source-based removal live with UI buttons.",
+      "path": "Samples~/StatSystem"
+    }
+  ]
+}
