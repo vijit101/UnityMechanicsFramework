@@ -9,7 +9,7 @@
 /[Bb]uilds/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
-
+.DS_Store
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
 /[Mm]emoryCaptures/
@@ -72,5 +72,10 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # Additional junk files
+<<<<<<< HEAD
 .DS_Store
 *.ini
+=======
+*.ini
+.DS_Store
+>>>>>>> 8ddf7ea (Add stat system with modifiers sample)

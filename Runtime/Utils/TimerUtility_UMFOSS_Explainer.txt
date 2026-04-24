@@ -1,0 +1,38 @@
+Script: Runtime/Utils/TimerUtility_UMFOSS.cs
+Namespace: GameplayMechanicsUMFOSS.Utils
+
+Code    : public class TimerUtility_UMFOSS
+Explain : Provides a reusable timer object that plain gameplay classes can use without writing their own MonoBehaviour coroutines.
+
+Code    : private readonly float _duration;
+Explain : Stores how long the timer should wait before it tries to fire the completion callback.
+
+Code    : private readonly Action _onComplete;
+Explain : Stores the callback that should run once the delay finishes successfully.
+
+Code    : private TimerUtility_UMFOSS(float duration, Action onComplete)
+Explain : Keeps construction internal so callers always create timers through the explicit factory method.
+
+Code    : public static TimerUtility_UMFOSS Create(float duration, Action onComplete)
+Explain : Creates a new timer instance without exposing the private constructor to external systems.
+
+Code    : public void Start()
+Explain : Starts the countdown by asking the hidden runner MonoBehaviour to execute the timer coroutine.
+
+Code    : public void Cancel()
+Explain : Stops the running coroutine and prevents the completion callback from firing if the owning system ends the timer early.
+
+Code    : private IEnumerator CountdownRoutine()
+Explain : Waits for the requested duration and then invokes the callback only if the timer has not been cancelled.
+
+Code    : private class TimerRunner : MonoBehaviour
+Explain : Owns the actual Unity coroutine because plain C# classes like the stat system cannot start coroutines directly.
+
+Code    : internal static TimerRunner Instance
+Explain : Lazily creates one hidden persistent runner object the first time any timer is started.
+
+Code    : DontDestroyOnLoad(go);
+Explain : Keeps the runner alive across scene changes so timers can finish even when the active scene changes.
+
+Code    : internal Coroutine Run(IEnumerator routine)
+Explain : Wraps StartCoroutine behind a small helper so the outer timer class never exposes the runner implementation.

@@ -1,0 +1,53 @@
+Script: Samples~/StatSystem/Assets/Scripts/StatDemoController.cs
+Namespace: GameplayMechanicsUMFOSS.Samples.StatSystem
+
+Code    : public class StatDemoController : MonoBehaviour
+Explain : Drives the sample scene by wiring UI buttons to stat-system actions and reflecting the live results on screen.
+
+Code    : [SerializeField] private StatSheet_UMFOSS playerStatSheet;
+Explain : Points the sample controller at the stat sheet component whose values are being demonstrated in play mode.
+
+Code    : [SerializeField] private TMP_Text labelFinalDamage;
+Explain : Holds a UI text reference so the sample can show the resolved damage value after modifiers are applied.
+
+Code    : [SerializeField] private Button btnAddFlatDamage;
+Explain : Exposes the demo button that applies the sword's flat damage modifier when clicked.
+
+Code    : private readonly object _swordSource = new object();
+Explain : Creates a stable source token for all sword modifiers so one later removal call can clean up everything the sword added.
+
+Code    : private const float SWORD_FLAT_BONUS = 15f;
+Explain : Defines the exact bonus used in the demo so the shown values match the walkthrough and README expectations.
+
+Code    : private void Awake()
+Explain : Subscribes to stat events early so the sample can log value changes and timed-expiry events during play mode.
+
+Code    : private void Start()
+Explain : Wires every UI button to its handler once the scene has finished loading and then refreshes the initial labels.
+
+Code    : private void Update()
+Explain : Refreshes the visible values every frame and keeps the debuff countdown label in sync with time remaining.
+
+Code    : private void OnAddFlatDamage()
+Explain : Adds a +15 flat damage modifier only once and blocks repeated button presses from stacking the same sword twice.
+
+Code    : private void OnAddPercentDamage()
+Explain : Applies the additive percentage damage bonus so the demo can prove flat-first-then-percent stacking.
+
+Code    : private void OnAddMultiplyDamage()
+Explain : Applies the multiplicative relic bonus to demonstrate the final multiplier layer separately from additive percentages.
+
+Code    : private void OnRemoveSword()
+Explain : Removes every modifier tied to the sword source in one call to demonstrate the source-based cleanup feature.
+
+Code    : private void OnApplySpeedDebuff()
+Explain : Applies a timed negative move-speed modifier and stores the expected end time so the UI can show a visible countdown.
+
+Code    : private void OnResetAll()
+Explain : Clears all active modifiers and local sample flags so the scene returns to the exact starting state.
+
+Code    : private string BuildModifierList(StatType_UMFOSS type, List<StatModifier_UMFOSS> mods)
+Explain : Converts the live modifier list into readable UI text so the sample shows which stacking layers are currently active.
+
+Code    : private void OnStatChanged(StatChangedEvent e)
+Explain : Logs each stat transition to the console to make the sample easier to verify while testing.

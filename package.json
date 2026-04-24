@@ -8,6 +8,14 @@
     "name": "Shubham B"
   },
   "dependencies": {
+    "com.unity.inputsystem": "1.7.0",
     "com.unity.textmeshpro": "3.0.6"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "Stat System Sample",
+      "description": "Interactive demo for the Stat System with Modifiers.",
+      "path": "Samples~/StatSystem"
+    }
+  ]
 }

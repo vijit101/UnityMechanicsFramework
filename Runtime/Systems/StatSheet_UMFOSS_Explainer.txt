@@ -1,0 +1,47 @@
+Script: Runtime/Systems/StatSheet_UMFOSS.cs
+Namespace: GameplayMechanicsUMFOSS.Systems
+
+Code    : public class StatSheet_UMFOSS : MonoBehaviour
+Explain : Wraps the plain stat objects in a Unity component so one GameObject can own and expose a complete stat sheet.
+
+Code    : [SerializeField] private float baseDamage = 10f;
+Explain : Stores an inspector-editable starting value that gets copied into the runtime stat dictionary during initialization.
+
+Code    : private Dictionary<StatType_UMFOSS, Stat_UMFOSS> _stats;
+Explain : Maps each enum key to its live stat object so lookups stay cheap and consistent across the system.
+
+Code    : private void Awake()
+Explain : Initializes the stat sheet before any other gameplay script starts reading values from it.
+
+Code    : private void InitialiseStats()
+Explain : Builds every runtime stat object from the serialized base values so the component starts with a complete data set.
+
+Code    : public Stat_UMFOSS GetStat(StatType_UMFOSS type)
+Explain : Returns the raw stat object when another system needs access to both the base value and modifier list.
+
+Code    : public float GetValue(StatType_UMFOSS type)
+Explain : Provides the most common shortcut for gameplay code that only cares about the current final value.
+
+Code    : public void AddModifier(StatType_UMFOSS type, StatModifier_UMFOSS modifier)
+Explain : Adds a modifier to a chosen stat, captures the old and new values, and emits events so listeners can refresh immediately.
+
+Code    : StatEventBus.Publish(new ModifierAddedEvent { StatType = type, Modifier = modifier, Sheet = this });
+Explain : Announces the exact modifier change separately from the value change so external systems can react at different levels of detail.
+
+Code    : public void RemoveModifier(StatType_UMFOSS type, StatModifier_UMFOSS modifier)
+Explain : Removes one specific modifier by reference, which is useful for timed effects and systems that keep a handle to the modifier they created.
+
+Code    : public void RemoveAllModifiersFromSource(object source)
+Explain : Loops across every stat and strips any modifier created by the same source object, which is the main cleanup path for equipment systems.
+
+Code    : public void ResetToBase()
+Explain : Clears all modifiers from all tracked stats while preserving the inspector-defined base values.
+
+Code    : public void AddTimedModifier(StatType_UMFOSS type, StatModifier_UMFOSS modifier, float duration)
+Explain : Adds a modifier immediately and schedules its automatic removal through TimerUtility_UMFOSS after the requested duration.
+
+Code    : RemoveModifier(type, modifier);
+Explain : Removes exactly the modifier instance that was scheduled, which avoids deleting unrelated effects on the same stat.
+
+Code    : public Dictionary<StatType_UMFOSS, float> GetSnapshot()
+Explain : Exposes a plain serializable view of the resolved stat values so save systems can read the state without depending on internal classes.
