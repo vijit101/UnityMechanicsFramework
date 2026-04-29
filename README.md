@@ -183,9 +183,12 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 
 | # | Mechanic | Author | Category | Video |
 |---|---|---|---|---|
-| 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
+| 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | (https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch]
+| 3 | [Modular Jump System](#3-modular-jump-system) | [Ankur Kalita](https://github.com/ankur-kalita) | Movement | [▶ Watch](./Samples~/JumpSystemSample/Video/ModularJumpImpl.mp4.zip) |
 | 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
+
+| 6 | [Screen Shake System](#6-screen-shake-system) | [Paramjeet Kaur](https://github.com/kauxp) | Systems | [▶ Watch](Samples~/ScreenShakeExample/Video/ScreenShakeTutorial.mp4) |
 (https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
 | 3 | [Modular Interaction System](#3-modular-interaction-system) | [Shivam Tiwari](https://github.com/shivam1234100), [Pranav Aggarwal](https://github.com/pranav-1100) | Interaction | [▶ Watch](https://drive.google.com/file/d/14Vbwd34_-NEBNbNXI_ZbUPgDlrW5ub_7/view?usp=sharing)  
 Also in Samples~/InteractionSystem/Video |
@@ -277,6 +280,62 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 - Scales to large narrative systems without architectural changes
 
 ---
+
+---
+
+### 6. Screen Shake System
+
+| | |
+|---|---|
+| **Author** | [Paramjeet Kaur](https://github.com/kauxp) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
+| **Location** | `Runtime/Systems/ScreenShake/ScreenShakeSystem_UMFOSS.cs` |
+| **Category** | Systems |
+| **Demo Scene** | `Samples~/ScreenShakeExample/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](Samples~/ScreenShakeExample/Video/ScreenShakeTutorial.mp4) |
+
+**What it does**
+
+A trauma-based camera shake system for Unity. Adds smooth positional and rotational shake for impacts, explosions, or heavy actions. Can be triggered via buttons or programmatically. Works in both 2D and 3D games. Handles multiple triggers, ensures smooth decay, and returns the camera to its original position with zero drift.
+
+**How to use it**
+
+1. Attach `ScreenShakeSystem_UMFOSS` to any GameObject (e.g., a background object).  
+2. Set shake parameters in the Inspector:  
+   - **ShakeDecay** — how fast shake fades  
+   - **TraumaMultiplier** — intensity scaling  
+   - **PositionMagnitude** — positional shake strength  
+   - **RotationMagnitude** — rotational shake strength  
+3. Add `ShakeDemoButtons` script to a Canvas UI Button and set `magnitude` and `duration`.  
+
+```csharp
+using UnityEngine;
+using GameplayMechanicsUMFOSS.Systems;
+
+namespace GameplayMechanicsUMFOSS.Samples.ScreenShake
+{
+    public class ShakeDemoButtons : MonoBehaviour
+    {
+        [SerializeField] public float magnitude;
+        [SerializeField] public float duration;
+
+        public void Trigger()
+        {
+            ScreenShakeSystem_UMFOSS.Instance.TriggerShake(magnitude, duration);
+        }
+    }
+}
+```
+
+4. In the Button’s `OnClick()`, assign the `Trigger()` method of `ShakeDemoButtons`.  
+
+
+
+#### Highlights
+
+- Trauma-based design — smooth shake intensity that decays naturally; multiple hits stack
+- Uses Perlin noise instead of random to generate smooth, jitter-free camera motion
+- Singleton architecture — any script can trigger shake in one line (Instance.TriggerShake)
 
 ### 64 . Utils
 

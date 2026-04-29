@@ -1,0 +1,87 @@
+====================================================
+SCRIPT: LoadingScreen_UMFOSS.cs
+AUTHOR: Nymish
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+====================================================
+
+PURPOSE:
+An optional drop-in loading screen UI. Listens to SceneLoadProgressEvent on
+the EventBus and pushes the value onto a Slider. Shows a randomized "tip"
+string. Has zero direct knowledge of SceneManager_UMFOSS — it only listens
+to the event channel.
+
+If you don't need a loading bar (most fade-only transitions don't), simply
+don't add this component to your scene. Everything else still works.
+
+----------------------------------------------------
+KEY DESIGN DECISIONS
+----------------------------------------------------
+
+1. EVENT-BASED, NOT POLLED
+   The loading screen never holds a reference to SceneManager_UMFOSS.
+   It subscribes to SceneLoadProgressEvent and reacts. This means the
+   manager and the screen ship independently — you can rip out the
+   loading screen and the manager doesn't know or care.
+
+2. NULL-SAFE INSPECTOR REFS
+   Every UI reference (panel, slider, tip text) is null-checked before
+   use. If a contributor wires up only the slider and ignores the tips,
+   the script keeps working instead of throwing NullReferenceException.
+
+3. SUBSCRIBE IN OnEnable / UNSUBSCRIBE IN OnDisable
+   Standard MonoBehaviour pattern for static event sources. If we
+   subscribed in Awake and unsubscribed in OnDestroy we would still
+   receive events while the GameObject was disabled, which is wasteful
+   and occasionally surprising.
+
+----------------------------------------------------
+WALKTHROUGH
+----------------------------------------------------
+
+Code    : [SerializeField] private GameObject panel;
+          [SerializeField] private Slider progressBar;
+          [SerializeField] private TextMeshProUGUI tipText;
+Explain : All references are private + [SerializeField] so they can be
+          wired up in the inspector without leaking the API. Using
+          TextMeshProUGUI rather than the legacy Text component because
+          it's the modern Unity default and renders much better.
+
+Code    : private void OnEnable()
+              => EventBus.Subscribe<SceneLoadProgressEvent>(OnProgress);
+          private void OnDisable()
+              => EventBus.Unsubscribe<SceneLoadProgressEvent>(OnProgress);
+Explain : Hook to the progress channel exactly while the GameObject is
+          active. Subscribe/Unsubscribe symmetry is what prevents the
+          classic "ghost listener on a destroyed object" bug.
+
+Code    : public void Show()
+Explain : Called by SceneManager_UMFOSS when a transition's
+          showLoadingScreen flag is true. Activates the panel, picks a
+          random tip, and resets the bar to zero so we don't visibly
+          jump backwards from a previous load.
+
+Code    : tipText.text = loadingTips[Random.Range(0, loadingTips.Length)];
+Explain : Cheap polish — a single string from an array of authored tips.
+          Fills the loading screen with something to read instead of a
+          dead progress bar. Total cost: one line.
+
+Code    : public void Hide()
+Explain : Called once the new scene is active and the fade-in has begun.
+          Turning off the panel is faster than animating it because the
+          fade overlay is already on top.
+
+Code    : private void OnProgress(SceneLoadProgressEvent e)
+              => progressBar.value = e.progress;
+Explain : The whole reason this script exists. Pipe the manager's
+          normalized 0..1 progress value into the slider, every frame.
+
+----------------------------------------------------
+SETUP
+----------------------------------------------------
+
+1. Build a UI canvas with a panel, a Slider, and a TMP text element.
+2. Add LoadingScreen_UMFOSS to the panel. Wire up the three SerializeFields.
+3. Drag the panel onto the SceneManager_UMFOSS "Loading Screen" inspector slot.
+4. On any SceneTransition asset where you want the loading bar, tick
+   "showLoadingScreen" and (optionally) set a minimumLoadTime so the bar
+   has time to be visible on fast hardware.
