@@ -1,0 +1,15 @@
+# CheckpointEvents - Script Explainer
+**Author:** [Tamanna Mohan](https://github.com/tamanna1809)
+
+## Overview
+Contains the data structures for all events used by the Checkpoint and Respawn system.
+
+## Event List
+1. **OnCheckpointActivated**: Fired when a checkpoint becomes active. Contains the checkpoint and the activator.
+2. **OnCheckpointDeactivated**: Fired when a checkpoint is no longer the active one.
+3. **OnRespawnStarted**: Fired at the beginning of the death-to-respawn transition.
+4. **OnRespawnComplete**: Fired after the player has been moved and health restored.
+5. **AllCheckpointsClearedEvent**: Fired when all checkpoints are reset (e.g., new game).
+
+## Design Pattern
+By using events, the system remains decoupled. The `HealthSystem` doesn't need to know about the `CheckpointManager`, and the `CheckpointManager` doesn't need to know about the Camera or UI systems.

@@ -1,0 +1,13 @@
+# CheckpointSceneBuilder - Script Explainer
+**Author:** [Tamanna Mohan](https://github.com/tamanna1809)
+
+## Overview
+An Editor utility tool that allows for rapid testing and scene setup. It automates the creation of a functional checkpoint demo environment.
+
+## Key Responsibilities
+1. **Scene Generation**: Programmatically creates platforms, player, and checkpoints.
+2. **One-Click Setup**: Accessible via `Tools → UMFOSS → Build Checkpoint Demo Scene`.
+3. **Automated Wiring**: Correctly links the `CheckpointManager`, `HealthSystem`, and `Checkpoint` objects so they work immediately upon Play.
+
+## Design Goal
+This tool is intended to lower the barrier for other developers to test the mechanic. It demonstrates how to use the `UnityEditor` namespace to create custom tools that improve the development workflow.
