@@ -191,7 +191,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 | 6 | [Screen Shake System](#6-screen-shake-system) | [Paramjeet Kaur](https://github.com/kauxp) | Systems | [▶ Watch](Samples~/ScreenShakeExample/Video/ScreenShakeTutorial.mp4) |
 (https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
 | 3 | [Scene Manager System](#3-scene-manager-system) | [Nymish](https://github.com/nymishkash) | Systems | [▶ Watch](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
-|
+| 7 | [Modular Dash System](#7-modular-dash-system) | [Nayanshi](https://github.com/nayanshi) | Movement | [▶ Watch](Samples~/DashSystemSample/Video/DashSystemTutorial.mp4) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -510,6 +510,62 @@ Also add a row to the Quick Navigation table above:
 
 ================================================================
 -->
+
+### 7. Modular Dash System
+
+| | |
+|---|---|
+| **Author** | [Nayanshi](https://github.com/nayanshi) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Movement` / `GameplayMechanicsUMFOSS.Physics` |
+| **Location** | `Runtime/Mechanic/DashSystem/Scripts/DashSystem_UMFOSS.cs` |
+| **Script Explainers** | `Runtime/Mechanic/DashSystem/Script_Explainers/` |
+| **Category** | Movement |
+| **Demo Scene** | `Samples~/DashSystemSample/Assets/Scenes/DemoScene2D.unity` / `DemoScene3D.unity` |
+| **Video** | [▶ Watch Walkthrough](Samples~/DashSystemSample/Video/DashSystemTutorial.mp4) |
+
+**What it does**
+
+A fully modular, configurable dash system supporting both 2D and 3D physics via the adapter pattern. Drop it onto any GameObject, pick a dimension mode, and get dash charges, cooldowns, invincibility frames, directional control, and EventBus-driven communication — all from the Inspector. Works with any player controller without tight coupling.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Movement;
+using GameplayMechanicsUMFOSS.Core;
+
+// Step 1: Add DashSystem_UMFOSS component to your player
+// Step 2: Select DimensionMode (Mode2D or Mode3D) in Inspector
+// Step 3: Assign a Dash InputActionReference, or call methods directly:
+
+DashSystem_UMFOSS dashSystem = GetComponent<DashSystem_UMFOSS>();
+
+// Feed movement direction every frame from your movement controller
+dashSystem.SetMoveDirection(myMoveDirection);
+
+// Manual trigger (when not using InputActionReference)
+dashSystem.OnDashPressed();
+
+// Read state for other systems
+bool dashing = dashSystem.IsDashing;
+int charges = dashSystem.DashesRemaining;
+
+// Listen to events (C# events)
+dashSystem.OnDashStart += () => Debug.Log("Dash started!");
+dashSystem.OnDashEnd += () => Debug.Log("Dash ended!");
+dashSystem.OnDashReady += () => Debug.Log("Dash ready!");
+dashSystem.OnDashCountChanged += (remaining) => Debug.Log($"Charges: {remaining}");
+
+// Listen via EventBus (decoupled — no direct reference needed)
+EventBus.Subscribe<DashStartEvent>(e => PlayDashVFX(e.direction));
+EventBus.Subscribe<DashIframeStartEvent>(e => DisableHurtbox());
+EventBus.Subscribe<DashIframeEndEvent>(e => EnableHurtbox());
+```
+
+**Highlights**
+
+- **Adapter pattern** — `IPhysicsAdapter` with `Physics2DAdapter` and `Physics3DAdapter`. Zero duplicated logic between 2D and 3D modes.
+- **Charge + cooldown system** — configurable N-charges, cooldown timer, ground resets, kill resets, iframe windows, and two directional modes — all from the Inspector
+- **Demonstrates event-driven architecture** — EventBus eliminates coupling between dash, hurtbox, VFX, and audio systems. The dash system never references any other game system directly.
 
 ---
 
