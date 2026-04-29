@@ -1,0 +1,11 @@
+SCRIPT: GamePausedEvent.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+
+Line 1: namespace GameplayMechanicsUMFOSS.Systems
+Explanation: Groups event under Systems feature namespace.
+
+Line 3: public struct GamePausedEvent
+Explanation: Lightweight event payload for pause notifications.
+
+Line 5: public float previousTimeScale;
+Explanation: Carries the pre-pause time scale so listeners can react contextually.

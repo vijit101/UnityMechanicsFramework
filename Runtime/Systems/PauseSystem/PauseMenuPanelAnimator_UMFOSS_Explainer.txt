@@ -1,0 +1,26 @@
+SCRIPT: PauseMenuPanelAnimator_UMFOSS.cs
+NAMESPACE: Global (Sample script)
+
+Line 4: public class PauseMenuPanelAnimator_UMFOSS : MonoBehaviour
+Explanation: Demo UI animation component for pause panel visibility.
+
+Line 6-9: [SerializeField] panel/hidden/visible/moveSpeed
+Explanation: Inspector controls for the panel target and animation tuning.
+
+Line 13: private void Awake()
+Explanation: Initializes panel reference and places it at hidden position at startup.
+
+Line 26: private void OnEnable()
+Explanation: Subscribes to pause/resume events.
+
+Line 32: private void OnDisable()
+Explanation: Unsubscribes to keep event lifecycle safe.
+
+Line 38: private void Update()
+Explanation: Animates panel toward target every frame.
+
+Line 46: panel.anchoredPosition = Vector2.Lerp(... Time.unscaledDeltaTime);
+Explanation: Uses unscaled time so panel animation keeps running while game is paused.
+
+Line 49/54: private void OnPaused/OnResumed(...)
+Explanation: Toggles the desired visibility state from events.

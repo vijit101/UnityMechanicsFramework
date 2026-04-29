@@ -1,41 +1,89 @@
-PauseSystem_UMFOSS.cs — Script Explainer
-Namespace: GameplayMechanicsUMFOSS.Systems
+SCRIPT: PauseSystem_UMFOSS.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
 
-Overview
-- This script provides a centralized pause manager with a small public API: Pause(), Resume(), TogglePause(), IsPaused, and GetPausedTimeScale().
-- It preserves existing time manipulation (for example, slow motion) by storing Time.timeScale before pausing and restoring that exact value on resume.
-- It optionally pauses all audio globally with AudioListener.pause.
-- It publishes events through EventBus so other systems can react without direct references.
+Line 1: using GameplayMechanicsUMFOSS.Core;
+Explanation: Imports shared core utilities, including the framework EventBus and singleton base.
 
-Stored timeScale pattern
-- On Pause(), the script stores the current Time.timeScale into storedTimeScale, then sets Time.timeScale to 0f.
-- On Resume(), it restores Time.timeScale from storedTimeScale (never hardcodes 1.0f).
-- This makes pause compatible with bullet time and any other custom time system.
+Line 2: using UnityEngine;
+Explanation: Imports Unity runtime types such as MonoBehaviour, Time, AudioListener, and KeyCode.
 
-Audio behavior
-- If pauseAudio is true, Pause() sets AudioListener.pause = true and Resume() sets it back to false.
-- If pauseAudio is false, audio is left untouched while gameplay is paused.
+Line 4: namespace GameplayMechanicsUMFOSS.Systems
+Explanation: Places this mechanic in the Systems namespace to avoid naming collisions.
 
-Events and decoupling
-- On pause, GamePausedEvent { previousTimeScale } is published.
-- On resume, GameResumedEvent { restoredTimeScale } is published.
-- On focus loss, ApplicationFocusLostEvent is published.
-- On focus gain, ApplicationFocusGainedEvent is published.
-- The pause system does not know player, AI, UI, or timer classes; those systems subscribe to these events themselves.
+Line 6: public class PauseSystem_UMFOSS : MonoSingletonGeneric<PauseSystem_UMFOSS>
+Explanation: Declares a single global pause manager instance available from anywhere.
 
-Focus loss handling
-- If toggleOnFocusLoss is true and the app loses focus, the script publishes ApplicationFocusLostEvent and pauses (if not already paused).
-- On focus return, it only publishes ApplicationFocusGainedEvent.
-- It never auto-resumes on focus return. Resume remains a user action.
+Line 9: [SerializeField] private KeyCode pauseKey = KeyCode.Escape;
+Explanation: Exposes the key binding for toggling pause in the Inspector.
 
-Unscaled time contract for UI during pause
-- Pause only controls scaled game time (Time.timeScale).
-- UI that must animate while paused must use Time.unscaledDeltaTime (or equivalent unscaled-time APIs).
-- Example:
-  - Frozen while paused: position += speed * Time.deltaTime
-  - Continues while paused: position += speed * Time.unscaledDeltaTime
+Line 10: [SerializeField] private bool toggleOnFocusLoss = true;
+Explanation: Lets the app auto-pause when window focus is lost.
 
-Guard clauses and state integrity
-- Pause() exits immediately if already paused.
-- Resume() exits immediately if not paused.
-- This prevents duplicate state transitions and duplicate event firing.
+Line 13: [SerializeField] private bool pauseAudio = true;
+Explanation: Controls whether pause also pauses all audio globally.
+
+Line 16: [SerializeField] private bool logStateChanges = false;
+Explanation: Optional debug logging for pause/resume transitions.
+
+Line 18: private float storedTimeScale = 1f;
+Explanation: Stores the pre-pause time scale so resume restores the exact previous value.
+
+Line 19: private bool isPaused;
+Explanation: Tracks current pause state to guard duplicate transitions.
+
+Line 21: public bool IsPaused => isPaused;
+Explanation: Read-only status API for other systems.
+
+Line 23: public void Pause()
+Explanation: Public entry point to pause gameplay safely.
+
+Line 25: if (isPaused) { return; }
+Explanation: Guard clause prevents duplicate pause events and state corruption.
+
+Line 30: storedTimeScale = Time.timeScale;
+Explanation: Captures active time scale (including slow motion values like 0.2).
+
+Line 31: Time.timeScale = 0f;
+Explanation: Freezes all scaled-time gameplay updates.
+
+Line 34: if (pauseAudio) { AudioListener.pause = true; }
+Explanation: Pauses all scene audio globally while preserving playback position.
+
+Line 44: EventBus.Publish(new GamePausedEvent { previousTimeScale = storedTimeScale });
+Explanation: Broadcasts pause event so other systems react without direct references.
+
+Line 47: public void Resume()
+Explanation: Public entry point to restore game flow from paused state.
+
+Line 49: if (!isPaused) { return; }
+Explanation: Guard clause prevents invalid resume calls.
+
+Line 54: Time.timeScale = storedTimeScale;
+Explanation: Restores the exact previous scale instead of hardcoding 1.0.
+
+Line 57: if (pauseAudio) { AudioListener.pause = false; }
+Explanation: Resumes global audio when audio pause is enabled.
+
+Line 67: EventBus.Publish(new GameResumedEvent { restoredTimeScale = storedTimeScale });
+Explanation: Notifies all listeners that gameplay resumed and includes restored scale.
+
+Line 70: public void TogglePause()
+Explanation: Input-friendly API that switches between Pause and Resume.
+
+Line 81: public float GetPausedTimeScale()
+Explanation: Exposes last stored scale for debug UI and dependent systems.
+
+Line 86: private void Update()
+Explanation: Polls keyboard input every frame for pause key press.
+
+Line 94: private void OnApplicationFocus(bool hasFocus)
+Explanation: Handles desktop focus transitions to support safe auto-pause behavior.
+
+Line 96: if (!toggleOnFocusLoss) { return; }
+Explanation: Opt-out path when focus-based pausing is disabled.
+
+Line 101: if (!hasFocus) { EventBus.Publish(new ApplicationFocusLostEvent()); ... }
+Explanation: Publishes focus-lost event and pauses once when the app is backgrounded.
+
+Line 111: EventBus.Publish(new ApplicationFocusGainedEvent());
+Explanation: Publishes focus-gained event but intentionally does not auto-resume gameplay.

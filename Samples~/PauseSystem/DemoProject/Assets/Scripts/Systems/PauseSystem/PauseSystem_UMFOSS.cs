@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace GameplayMechanicsUMFOSS.Systems
 {
-    public class PauseSystem_UMFOSS : MonoSingletonGeneric<PauseSystem_UMFOSS>
+    public class PauseSystem_UMFOSS : MonoSingletongeneric<PauseSystem_UMFOSS>
     {
         [Header("Pause Settings")]
         [SerializeField] private KeyCode pauseKey = KeyCode.Escape;

@@ -1,0 +1,8 @@
+SCRIPT: ApplicationFocusLostEvent.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+
+Line 1: namespace GameplayMechanicsUMFOSS.Systems
+Explanation: Places focus event in the same module as pause logic.
+
+Line 3: public struct ApplicationFocusLostEvent { }
+Explanation: Marker event with no payload, used to signal app focus loss.

@@ -1,0 +1,35 @@
+SCRIPT: PauseSystemDemoController_UMFOSS.cs
+NAMESPACE: Global (Sample script)
+
+Line 1: using GameplayMechanicsUMFOSS.Systems;
+Explanation: Imports pause system types and event structs.
+
+Line 5: public class PauseSystemDemoController_UMFOSS : MonoBehaviour
+Explanation: Demo-only UI/controller wrapper for showcasing pause behavior in scene.
+
+Line 8-12: [SerializeField] private Text ...
+Explanation: Optional UI references that display live runtime state in the demo.
+
+Line 14: private void OnEnable()
+Explanation: Subscribes to pause and focus events when component becomes active.
+
+Line 22: private void OnDisable()
+Explanation: Unsubscribes from all events to avoid duplicate callbacks and leaks.
+
+Line 35: public void ActivateSlowMo()
+Explanation: Sets `Time.timeScale` to 0.2 to demonstrate bullet-time + pause compatibility.
+
+Line 46: public void PauseFromButton()
+Explanation: UI button hook that triggers PauseSystem pause.
+
+Line 56: public void ResumeFromButton()
+Explanation: UI button hook that triggers PauseSystem resume.
+
+Line 66/71/76/81: private void OnGamePaused/OnGameResumed/OnFocusLost/OnFocusGained(...)
+Explanation: Writes the latest event name + payload to UI for visual verification.
+
+Line 86: private void RefreshUi()
+Explanation: Updates all status labels each frame so reviewers can see live values.
+
+Line 112: private void SetLastEvent(string value)
+Explanation: Central helper for last-event UI text updates.

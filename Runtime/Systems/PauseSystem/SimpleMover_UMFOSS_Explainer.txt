@@ -1,0 +1,20 @@
+SCRIPT: SimpleMover_UMFOSS.cs
+NAMESPACE: Global (Sample script)
+
+Line 3: public class SimpleMover_UMFOSS : MonoBehaviour
+Explanation: Demo actor movement script used to prove scaled-time freezing on pause.
+
+Line 5-7: pointA/pointB/speed serialized fields
+Explanation: Defines movement endpoints and speed configurable from Inspector.
+
+Line 9: private bool movingToB = true;
+Explanation: Tracks current direction target.
+
+Line 11: private void Update()
+Explanation: Moves the object every frame using scaled time.
+
+Line 14: transform.position = Vector3.MoveTowards(... speed * Time.deltaTime);
+Explanation: Uses `Time.deltaTime`, so movement stops when `Time.timeScale` becomes 0.
+
+Line 16-19: if (Vector3.Distance(...) <= 0.01f) { movingToB = !movingToB; }
+Explanation: Flips direction after reaching either endpoint.

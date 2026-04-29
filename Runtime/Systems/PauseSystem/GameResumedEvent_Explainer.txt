@@ -1,0 +1,11 @@
+SCRIPT: GameResumedEvent.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+
+Line 1: namespace GameplayMechanicsUMFOSS.Systems
+Explanation: Keeps event type scoped inside Systems namespace.
+
+Line 3: public struct GameResumedEvent
+Explanation: Lightweight event payload for resume notifications.
+
+Line 5: public float restoredTimeScale;
+Explanation: Tells listeners exactly which time scale is active after resume.

@@ -62,4 +62,20 @@ Record one continuous video showing:
 - Pause panel animating while paused
 - Event/status text changing live
 
-After upload, add the final video URL to the root `README.md` Pause System entry.
+## 6) Demo project package
+
+For reviewers who want a full Unity project package, this sample now includes:
+
+- `Samples~/PauseSystem/DemoProject/Assets`
+- `Samples~/PauseSystem/DemoProject/ProjectSettings`
+- `Samples~/PauseSystem/DemoProject/Packages`
+- `Samples~/PauseSystem/PauseSystem_DemoProject.zip`
+
+## 7) Video placement
+
+Keep both walkthroughs under:
+
+- `Samples~/PauseSystem/Video/PauseSystem_BeginnerWalkthrough.mp4`
+- `Samples~/PauseSystem/Video/PauseSystem_AdvancedWalkthrough.mp4` (or link externally if too large)
+
+The README Pause System card should always include both beginner and advanced references.

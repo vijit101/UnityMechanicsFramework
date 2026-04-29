@@ -1,0 +1,14 @@
+SCRIPT: SimpleRotator_UMFOSS.cs
+NAMESPACE: Global (Sample script)
+
+Line 3: public class SimpleRotator_UMFOSS : MonoBehaviour
+Explanation: Demo rotation script used to show scaled-time pause impact clearly.
+
+Line 5-6: rotationAxis/speed serialized fields
+Explanation: Inspector settings for axis and rotation speed.
+
+Line 8: private void Update()
+Explanation: Rotates object every frame during gameplay.
+
+Line 10: transform.Rotate(rotationAxis, speed * Time.deltaTime, Space.Self);
+Explanation: Uses scaled delta time, so rotation freezes automatically during pause.

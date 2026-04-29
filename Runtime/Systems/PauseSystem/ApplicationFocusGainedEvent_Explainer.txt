@@ -1,0 +1,8 @@
+SCRIPT: ApplicationFocusGainedEvent.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+
+Line 1: namespace GameplayMechanicsUMFOSS.Systems
+Explanation: Keeps focus-gained event grouped with pause/focus system events.
+
+Line 3: public struct ApplicationFocusGainedEvent { }
+Explanation: Marker event used to notify listeners when app focus returns.
