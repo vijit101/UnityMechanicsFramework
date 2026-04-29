@@ -190,8 +190,8 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 
 | 6 | [Screen Shake System](#6-screen-shake-system) | [Paramjeet Kaur](https://github.com/kauxp) | Systems | [▶ Watch](Samples~/ScreenShakeExample/Video/ScreenShakeTutorial.mp4) |
 (https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Scene Manager System](#3-scene-manager-system) | [Nymish](https://github.com/nymishkash) | Systems | [▶ Watch](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
-|
+| 3 | [Modular Interaction System](#3-modular-interaction-system) | [Pranav Aggarwal](https://github.com/pranav-1100), [Shivam Tiwari](https://github.com/shivam1234100) | Interaction | [▶ Watch](https://drive.google.com/file/d/14Vbwd34_-NEBNbNXI_ZbUPgDlrW5ub_7/view?usp=sharing)  
+Also in Samples~/InteractionSystemSample/Video |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -381,90 +381,95 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 
 ---
 
-### 3. Scene Manager System
+### 64 . Utils
 
 | | |
 |---|---|
-| **Author** | [Nymish](https://github.com/nymishkash) |
-| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
-| **Location** | `Runtime/Systems/1. SceneManagerSystem/Scripts/` |
-| **Script Explainers** | `Runtime/Systems/1. SceneManagerSystem/Script_Explainers/` (one per script) |
-| **Category** | Systems |
-| **Sample Project** | `Samples~/SceneManagerSample/SceneManagerSystemCompleteProject.zip` (extract & open in Unity) |
-| **Video** | [▶ Watch Walkthrough](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
+| **Author** | [Shubham](https://github.com/vijit101) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Core` 
+| **Location** | [`RuntimeMechanics/Dialogue/2. GenericAndScalableDialogueSystem/`](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem) |
+| **Category** | Dialogue / Narrative |
+| **Demo Scene** | `Samples~/DialogueExample/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Tutorial](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/dailogueSample/Video) |
 
 **What it does**
 
-A centralized async scene management system that solves four real-world problems with Unity's built-in `SceneManager`: main-thread blocking on load, singleton destruction across scene changes, missing fade transitions, and zero support for additive overlay scenes (pause menus, inventory, settings). Ships with a persistent-scene pattern that keeps your singletons alive across every load, fade transitions as ScriptableObject assets, an auto-created fade canvas (zero manual UI setup), a stack-based push/pop API for overlays, and a full EventBus integration so any other system can react to scene transitions without holding a direct reference.
-### 3. Modular Jump System
-
-| | |
-|---|---|
-| **Author** | [Ankur Kalita](https://github.com/ankur-kalita) |
-| **Namespace** | `GameplayMechanicsUMFOSS.Movement` / `GameplayMechanicsUMFOSS.Physics` |
-| **Location** | `Runtime/Mechanic/ModularJumpSystem/Scripts/` |
-| **Script Explainers** | `Runtime/Mechanic/ModularJumpSystem/Script_Explainers/` |
-| **Category** | Movement |
-| **Demo Scene** | Included in `Samples~/JumpSystemSample/JumpSystemProjectZip.zip` |
-| **Video** | [▶ Watch Walkthrough](./Samples~/JumpSystemSample/Video/ModularJumpImpl.mp4.zip) |
-
-**What it does**
-
-A fully modular, configurable jump system supporting both 2D and 3D physics via the adapter pattern. Drop it onto any GameObject, pick a dimension mode, and get multi-jump, coyote time, jump buffering, variable jump height, and tunable gravity — all from the Inspector.
+A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data, not code.
 
 **How to use it**
-
+ Note to maintainer: need to fix the part for how to use the dialogue system later / for the one using it find the video and watch it  
 ```csharp
-using GameplayMechanicsUMFOSS.Systems;
-using GameplayMechanicsUMFOSS.Core;
+using GameplayMechanicsUMFOSS.Dialogue;
 
-// Step 1: Drop SceneManager_UMFOSS + PersistentScene_UMFOSS onto a bootstrap
-//         GameObject in your persistent scene. Set persistentSceneName + a default
-//         SceneTransition asset in the inspector. The fade canvas is created
-//         automatically on Awake — no manual UI wiring needed.
+// Step 1: Create DialogueNode ScriptableObjects in the Inspector
+// Step 2: Link them into a DialogueDatabase asset
+// Step 3: Reference the database from your DialogueSystem component
 
-// Step 2: Load a scene with a fade transition
-SceneManager_UMFOSS.Instance.LoadScene("Level_01", fadeBlack);
+[SerializeField] private DialogueSystem dialogueSystem;
+[SerializeField] private DialogueDatabase npcDatabase;
 
-// Step 3: Push an overlay (pause menu, inventory, settings)
-SceneManager_UMFOSS.Instance.Push("PauseMenu");
-SceneManager_UMFOSS.Instance.Pop(); // close it
-
-// Step 4: React to scene events from anywhere via the EventBus
-EventBus.Subscribe<SceneLoadCompleteEvent>(e => Debug.Log($"Loaded {e.sceneName}"));
-EventBus.Subscribe<SceneLoadProgressEvent>(e => loadingBar.fillAmount = e.progress);
-using GameplayMechanicsUMFOSS.Movement;
-
-// Step 1: Add ModularJumpSystem_UMFOSS component to your player
-// Step 2: Select DimensionMode (Mode2D or Mode3D) in Inspector
-// Step 3: Assign a Jump InputActionReference, or call methods directly:
-
-ModularJumpSystem_UMFOSS jumpSystem = GetComponent<ModularJumpSystem_UMFOSS>();
-
-// Manual input (when not using InputActionReference)
-jumpSystem.OnJumpPressed();
-jumpSystem.OnJumpReleased();
-
-// Read state for other systems
-bool grounded = jumpSystem.IsGrounded;
-float airControl = jumpSystem.AirControlMultiplier;
-
-// Listen to events
-jumpSystem.OnJumpStart += () => Debug.Log("Jumped!");
-jumpSystem.OnJumpEnd += () => Debug.Log("Landed!");
+// Step 4: Start a conversation
+dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
+{
+    Debug.Log("Conversation finished.");
+});
 ```
 
 **Highlights**
 
-- **Async-first** — `LoadSceneMode.Additive` + `allowSceneActivation = false` until 90% means no main-thread freeze and no half-loaded flashes
-- **Persistent scene pattern** — your `AudioManager`, `SaveSystem`, and HUD singletons survive every transition without scattered `DontDestroyOnLoad` calls
-- **Auto-created fade canvas** — drop the prefab in any scene, call `LoadScene`, fades just work; zero inspector wiring required
-- **Push / Pop scene stacking** — pause menus, inventory, settings overlays additively load on top of gameplay without unloading the world beneath
-- **Seven EventBus events fire across the load lifecycle** — `SceneLoadStart`, `SceneLoadProgress`, `SceneLoadComplete`, `ScenePushed`, `ScenePopped`, `SceneReloaded`, `InputLock` — every other mechanic can hook in without coupling
-- **Ships with a full SLITHER snake game demo** — three levels, pause/stats overlays, game-over and victory screens — proving every API surface in a real game flow
-- **Adapter pattern** — `IPhysicsAdapter` with `Physics2DAdapter` and `Physics3DAdapter`. Zero duplicated logic between 2D and 3D modes.
-- **Platformer-ready** — coyote time, jump buffering, variable jump height, N-jumps, gravity multipliers, and terminal velocity — all configurable from the Inspector
-- **Demonstrates the Strategy pattern** — swappable physics backends via interface abstraction, teaching clean dependency inversion in Unity
+- Fully data-driven — all dialogue lives in ScriptableObject assets, not in code
+- Supports branching and multi-path dialogue trees
+- Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
+- Add new conversations without touching any existing scripts
+- Scales to large narrative systems without architectural changes
+
+---
+
+### 3. Modular Interaction System
+
+| | |
+|---|---|
+| **Author** | [Pranav Aggarwal](https://github.com/pranav-1100), [Shivam Tiwari](https://github.com/shivam1234100)|
+| **Namespace** | `GameplayMechanicsUMFOSS.Interaction` |
+| **Location** | `Runtime/Mechanic/InteractionSystem/Scripts/InteractionController_UMFOSS.cs` |
+| **Category** | Interaction |
+| **Demo Scene** | `Samples~/InteractionSystemSample/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](https://drive.google.com/file/d/14Vbwd34_-NEBNbNXI_ZbUPgDlrW5ub_7/view?usp=sharing)  
+Also in Samples~/InteractionSystemSample/Video |
+
+**What it does**
+
+A reusable, modular interaction system that lets any entity — player or AI — interact with any object through one clean interface. Instead of copy-pasting `OnTriggerEnter + tag check + input check` into every interactable, the player gets one controller and every object simply implements `IInteractable_UMFOSS` to decide what happens. Supports instant press and hold-to-interact, three detection modes, and fully decoupled EventBus-driven UI.
+
+**How to use it**
+
+```csharp
+using UnityEngine;
+using GameplayMechanicsUMFOSS.Interaction;
+
+// Step 1: Implement IInteractable_UMFOSS on any object
+public class TreasureChest : MonoBehaviour, IInteractable_UMFOSS
+{
+    private bool isOpen = false;
+    public int Priority => 0;
+
+    public void Interact(GameObject interactor)       { isOpen = true; /* open animation */ }
+    public void OnFocused(GameObject interactor)      { /* highlight */ }
+    public void OnUnfocused(GameObject interactor)    { /* remove highlight */ }
+    public string GetInteractionPrompt()              => "Press E to open";
+    public bool CanInteract(GameObject interactor)    => !isOpen;
+}
+
+// Step 2: Add InteractionController_UMFOSS to your player
+// Step 3: Set the interactable's layer to your Interactable LayerMask
+// Done — zero changes to the controller for any new interaction type
+```
+
+**Highlights**
+
+- Interface-driven architecture — the controller never knows what it interacts with, making the system infinitely extensible with zero core changes
+- Three detection modes (Trigger, OverlapCircle, Raycast) and two selection modes (Nearest, HighestPriority) configurable from the Inspector
+- Demonstrates the Observer pattern via EventBus — all UI communication is fully decoupled from gameplay logic
 
 ---
 
@@ -525,6 +530,7 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 | `GameplayMechanicsUMFOSS.Dialogue` | DialogueSystem, nodes, database | ✅ Active |
 | `GameplayMechanicsUMFOSS.Input` | InputAdapter | ✅ Active |
 | `GameplayMechanicsUMFOSS.Utils` | TimerUtility, helpers | ✅ Active |
+| `GameplayMechanicsUMFOSS.Interaction` | InteractionController, IInteractable, InteractionPrompt | ✅ Active |
 | `GameplayMechanicsUMFOSS.Inventory` | Item systems, loot, equipment | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.Combat` | Hitboxes, damage, status effects | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.UI` | HUD, menus, tooltips | 🔓 Open for contribution |
