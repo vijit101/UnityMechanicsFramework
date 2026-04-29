@@ -190,8 +190,8 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 
 | 6 | [Screen Shake System](#6-screen-shake-system) | [Paramjeet Kaur](https://github.com/kauxp) | Systems | [▶ Watch](Samples~/ScreenShakeExample/Video/ScreenShakeTutorial.mp4) |
 (https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Modular Interaction System](#3-modular-interaction-system) | [Shivam Tiwari](https://github.com/shivam1234100), [Pranav Aggarwal](https://github.com/pranav-1100) | Interaction | [▶ Watch](https://drive.google.com/file/d/14Vbwd34_-NEBNbNXI_ZbUPgDlrW5ub_7/view?usp=sharing)  
-Also in Samples~/InteractionSystem/Video |
+| 3 | [Modular Interaction System](#3-modular-interaction-system) | [Pranav Aggarwal](https://github.com/pranav-1100), [Shivam Tiwari](https://github.com/shivam1234100) | Interaction | [▶ Watch](https://drive.google.com/file/d/14Vbwd34_-NEBNbNXI_ZbUPgDlrW5ub_7/view?usp=sharing)  
+Also in Samples~/InteractionSystemSample/Video |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -429,13 +429,13 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 
 | | |
 |---|---|
-| **Author** | [Shivam Tiwari](https://github.com/shivam1234100), [Pranav Aggarwal](https://github.com/pranav-1100)|
+| **Author** | [Pranav Aggarwal](https://github.com/pranav-1100), [Shivam Tiwari](https://github.com/shivam1234100)|
 | **Namespace** | `GameplayMechanicsUMFOSS.Interaction` |
-| **Location** | `Runtime/Interaction/InteractionController_UMFOSS.cs` |
+| **Location** | `Runtime/Mechanic/InteractionSystem/Scripts/InteractionController_UMFOSS.cs` |
 | **Category** | Interaction |
-| **Demo Scene** | `Samples~/InteractionSystem/Assets/Scenes/DemoScene.unity` |
+| **Demo Scene** | `Samples~/InteractionSystemSample/Assets/Scenes/DemoScene.unity` |
 | **Video** | [▶ Watch Walkthrough](https://drive.google.com/file/d/14Vbwd34_-NEBNbNXI_ZbUPgDlrW5ub_7/view?usp=sharing)  
-Also in Samples~/InteractionSystem/Video |
+Also in Samples~/InteractionSystemSample/Video |
 
 **What it does**
 
