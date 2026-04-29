@@ -1,0 +1,88 @@
+====================================================
+SCRIPT: SceneTransition_UMFOSS.cs
+AUTHOR: Nymish
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+====================================================
+
+PURPOSE:
+A ScriptableObject that bundles every parameter of a single transition
+style — fade colour, durations, easing curves, and loading-screen behaviour
+— into one drag-and-drop asset. The Scene Manager accepts these assets as
+arguments to LoadScene / Push / Pop / ReloadScene.
+
+----------------------------------------------------
+WHY A SCRIPTABLEOBJECT
+----------------------------------------------------
+
+We could have made transitions a struct or a [Serializable] inspector
+class on the SceneManager. We chose ScriptableObject for three reasons:
+
+1. REUSE
+   "FadeBlack 0.3s" is the same answer for menu-to-game, level-to-level,
+   and pause-to-quit. Defining it once as an asset means changing the
+   timing in one place updates every transition.
+
+2. DESIGNER-FRIENDLY
+   ScriptableObjects appear in the Project view with the standard Unity
+   asset workflow. Designers can author new transitions, tweak curves,
+   and preview colours without ever opening a script.
+
+3. ZERO CODE FOR NEW STYLES
+   "We need a red flash transition for damage scenes" — right-click,
+   Create / UMFOSS / Scene / SceneTransition, set colour to red. Done.
+   No new C# class, no new enum value, no recompile.
+
+----------------------------------------------------
+THE FIELDS
+----------------------------------------------------
+
+Code    : public Color fadeColour = Color.black;
+Explain : The colour the screen fades to between scenes. Black is the
+          conventional default; white works well for "purification" or
+          "death" feels; vibrant colours are great for cutscene punctuation.
+
+Code    : public float fadeOutDuration = 0.3f;
+          public float fadeInDuration  = 0.3f;
+Explain : Independent durations because they communicate different things.
+          Fade-out signals the player is leaving; fade-in signals arrival.
+          Asymmetric timings (e.g. slow fade-out, fast fade-in) often feel
+          better than symmetric ones.
+
+Code    : public AnimationCurve fadeOutCurve = AnimationCurve.EaseInOut(0,0,1,1);
+          public AnimationCurve fadeInCurve  = AnimationCurve.EaseInOut(0,0,1,1);
+Explain : Easing applied to the alpha channel during the fade. A linear
+          fade looks robotic; ease-in-out is the cheap default that feels
+          natural. Designers can tweak the curve handles directly in the
+          inspector for non-standard pacing.
+
+Code    : public bool showLoadingScreen = false;
+          public float minimumLoadTime  = 0f;
+Explain : Two related toggles. Set showLoadingScreen = true and assign a
+          LoadingScreen_UMFOSS to the manager and the bar appears during
+          the load. minimumLoadTime forces the screen to stay up for a
+          minimum number of seconds even if the load finishes earlier —
+          stops jarring sub-100ms loading flashes on fast hardware.
+
+----------------------------------------------------
+THE CREATE-MENU ATTRIBUTE
+----------------------------------------------------
+
+Code    : [CreateAssetMenu(fileName = "NewTransition",
+                          menuName = "UMFOSS/Scene/SceneTransition")]
+Explain : Adds the asset to Unity's Assets / Create context menu under
+          "UMFOSS / Scene / SceneTransition". Without this attribute the
+          asset can only be created from script, which is too much
+          friction for a designer-facing data asset.
+
+----------------------------------------------------
+RECOMMENDED ASSETS TO SHIP
+----------------------------------------------------
+
+Three transitions cover ~95% of real games:
+
+- Instant     : durations 0, no fade. Used for instant level resets.
+- FadeBlack   : durations 0.3, colour black. Default for "real" scene changes.
+- FadeWhite   : durations 0.3, colour white. Cutscenes, dream sequences.
+
+Drop these into a SceneTransitions/ folder next to your manager prefab and
+your project never has to author another transition.
