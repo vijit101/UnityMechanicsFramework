@@ -1,0 +1,47 @@
+Script: Runtime/Systems/StatSystem_UMFOSS.cs
+Namespace: GameplayMechanicsUMFOSS.Systems
+
+Code    : public enum StatType_UMFOSS
+Explain : Lists every supported stat key in one place so the rest of the system can address stats through a shared enum instead of scattered float fields.
+
+Code    : public enum ModifierType_UMFOSS
+Explain : Defines the three stacking layers used by the stat engine: flat values, additive percentages, and multiplicative percentages.
+
+Code    : public class StatModifier_UMFOSS
+Explain : Wraps one modifier into a reusable object that stores its value, stacking type, optional order, and source owner for later cleanup.
+
+Code    : public readonly object Source;
+Explain : Stores whichever system created the modifier so the same source reference can later remove all of its modifiers in one call.
+
+Code    : public class Stat_UMFOSS
+Explain : Represents one runtime stat instance with its own base value, modifier list, dirty flag, and cached final result.
+
+Code    : private bool _isDirty = true;
+Explain : Marks the cached stat value as outdated so recalculation only happens after the modifier list changes.
+
+Code    : public float FinalValue
+Explain : Exposes the stat's resolved value and recalculates only when the dirty flag says the cache is stale.
+
+Code    : public void AddModifier(StatModifier_UMFOSS modifier)
+Explain : Pushes a new modifier into the stat and invalidates the cached total so the next read returns an updated result.
+
+Code    : public bool RemoveAllModifiersFromSource(object source)
+Explain : Removes every modifier created by a specific source reference, which is what makes item unequip and effect expiry cleanup simple.
+
+Code    : private float CalculateFinalValue()
+Explain : Applies the full stacking formula for the stat by grouping flats, additive percentages, and multiplicative bonuses in a deterministic order.
+
+Code    : foreach (var mod in _modifiers.OrderBy(m => m.Type).ThenBy(m => m.Order))
+Explain : Sorts modifiers first by stacking layer and then by explicit order so the calculation stays predictable even when many systems add modifiers.
+
+Code    : return (float)Math.Round(flat * (1 + percentAdd) * percentMultiply, ROUND_DIGITS);
+Explain : Resolves the final stat value using the intended RPG order: flat bonuses first, additive percentages second, and multiplicative spikes last.
+
+Code    : public struct StatChangedEvent
+Explain : Defines a payload that other systems can subscribe to when they need to react to a stat changing without tight coupling.
+
+Code    : public static class StatEventBus
+Explain : Provides a small type-safe event hub so UI, audio, combat, and save systems can observe stat changes without direct references.
+
+Code    : public static void Publish<T>(T eventData)
+Explain : Broadcasts a stat-related event to every current subscriber of that event type.
