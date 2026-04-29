@@ -1,0 +1,369 @@
+====================================================
+SCRIPT: DashSystem_UMFOSS.cs
+AUTHOR: Nayanshi
+NAMESPACE: GameplayMechanicsUMFOSS.Movement
+DEPENDENCIES: Unity Input System, IPhysicsAdapter (GameplayMechanicsUMFOSS.Physics), EventBus (GameplayMechanicsUMFOSS.Core)
+====================================================
+
+PURPOSE:
+A fully modular, configurable dash mechanic supporting both 2D and 3D physics
+via the IPhysicsAdapter pattern. The system provides dash charges, cooldowns,
+invincibility frames (iframes), directional control, and event-driven
+communication through the EventBus. It attaches to any GameObject without
+coupling to a specific player controller.
+
+The key design principle: the dash system never knows whether it is operating
+in 2D or 3D. All physics calls go through the IPhysicsAdapter interface.
+The adapter handles the translation. This is the Adapter pattern.
+
+====================================================
+SUPPORTING SCRIPTS
+====================================================
+
+SCRIPT: DashEvents_UMFOSS.cs
+PURPOSE: Contains all EventBus event structs used by the dash system.
+Keeping events in a separate file means any system can reference them
+without importing the entire DashSystem class. This is critical for
+decoupling — a VFX system only needs to know about DashStartEvent,
+not about how dashes work internally.
+
+SCRIPT: DashDemoMovement2D_UMFOSS.cs
+PURPOSE: A minimal 2D movement controller for the demo scene. Reads
+WASD/Arrow input and feeds the movement direction into the DashSystem
+via SetMoveDirection(). This demonstrates how any movement controller
+integrates with the dash system without tight coupling.
+
+SCRIPT: DashDemoMovement3D_UMFOSS.cs
+PURPOSE: A minimal 3D movement controller for the demo scene. Same
+pattern as the 2D version but moves on the XZ plane. Uses smooth
+Quaternion.RotateTowards rotation to prevent erratic player spinning.
+
+====================================================
+LINE-BY-LINE EXPLANATION — DashSystem_UMFOSS.cs
+====================================================
+
+----------------------------------------------------
+SECTION: Enums (DashState, DashDirectionMode)
+----------------------------------------------------
+
+Code    : public enum DashState { Ready, Dashing, Cooldown }
+Explain : Three states form the dash lifecycle. Ready = can dash.
+          Dashing = mid-dash, velocity is being applied. Cooldown =
+          waiting for timer to reset. This simple state machine
+          prevents invalid transitions like dashing while already
+          dashing.
+
+Code    : public enum DashDirectionMode { LastMoveDirection, FacingDirection }
+Explain : Two strategies for computing dash direction, selectable in
+          the Inspector. LastMoveDirection uses the most recent non-zero
+          movement input. FacingDirection uses the character's current
+          facing (sprite flip in 2D, transform.forward in 3D). This is
+          the Strategy pattern — the algorithm for choosing direction
+          is swappable without changing the dash logic.
+
+----------------------------------------------------
+SECTION: Constants
+----------------------------------------------------
+
+Code    : private const float MIN_DASH_DURATION = 0.01f;
+Explain : Prevents division-by-zero when computing dashSpeed. If a
+          designer accidentally sets duration to 0 in the Inspector,
+          this clamp keeps the math safe. Named constant instead of
+          a raw 0.01 in the code — no magic numbers.
+
+Code    : private const float DEFAULT_GRAVITY_SCALE = 1f;
+Explain : Fallback gravity scale when restoring after a dash that
+          suppressed gravity. If the saved value is somehow invalid
+          (zero or negative), this ensures gravity resumes.
+
+Code    : private const float DIRECTION_DEADZONE = 0.01f;
+Explain : Input magnitudes below this are treated as zero. This
+          prevents stick drift on gamepads from triggering an
+          unintended dash direction. Without this, a tiny analog
+          stick offset could cause the player to dash in a random
+          direction.
+
+Code    : private const int UNLIMITED_DASHES = -1;
+Explain : Sentinel value for maxDashCount. When set to -1, the
+          charge system is bypassed entirely — the player can dash
+          as often as they want (limited only by cooldown).
+
+----------------------------------------------------
+SECTION: Inspector Fields
+----------------------------------------------------
+
+Code    : [SerializeField] private DimensionMode dimensionMode = DimensionMode.Mode2D;
+Explain : Dropdown in the Inspector to select 2D or 3D physics.
+          This single field determines which physics adapter is
+          auto-added. The rest of the script never checks this
+          value again — all physics goes through the adapter.
+
+Code    : [SerializeField] private float dashDistance = 5f;
+Explain : How far the player moves during a dash, in world units.
+          Combined with dashDuration to compute speed. Designers
+          think in "how far" not "how fast", so distance is the
+          primary tuning knob.
+
+Code    : [SerializeField] private float dashDuration = 0.2f;
+Explain : How long the dash lasts in seconds. Shorter = snappier.
+          Combined with dashDistance to compute speed. A 0.2s dash
+          covering 5 units = 25 units/second.
+
+Code    : [SerializeField] private DashDirectionMode dashDirectionMode
+Explain : Selects the direction strategy. The actual direction
+          computation happens in ResolveDashDirection() which
+          switches on this enum. This is configured once in the
+          Inspector and never changed at runtime (though it could be).
+
+Code    : [SerializeField] private float cooldownDuration = 1f;
+Explain : Time in seconds after the last dash before charges refill.
+          Set to 0 for no cooldown (charges refill instantly after
+          each dash ends). The cooldown timer starts when a dash
+          ends, not when it begins.
+
+Code    : [SerializeField] private int maxDashCount = 2;
+Explain : Maximum dash charges. Set to 1 for a single dash, 2 for
+          double-dash, etc. Set to -1 for unlimited. When all
+          charges are consumed, the player must wait for cooldown.
+
+Code    : [SerializeField] private bool ignoreGravityDuringDash = true;
+Explain : When true, sets GravityScale to 0 during the dash. This
+          prevents the player from arcing downward during a
+          horizontal dash in a platformer. The original gravity
+          scale is saved and restored when the dash ends.
+
+Code    : [SerializeField] private bool maintainDashVelocity = true;
+Explain : When true, velocity is held constant throughout the dash.
+          When false, velocity eases out (lerps to zero) over the
+          duration for a decelerating feel. The ease-out uses the
+          ratio of remaining time to total time as the lerp factor.
+
+Code    : [SerializeField] private bool enableIframes = false;
+Explain : Enables the invincibility frame window. When active, the
+          system publishes DashIframeStartEvent on the EventBus.
+          Hurtbox systems subscribe to this and disable the player's
+          hurtbox — the dash system never touches the hurtbox
+          directly. This is event-driven architecture in action.
+
+Code    : [SerializeField] private bool resetCountOnGround = true;
+Explain : When the player lands on the ground, all dash charges
+          are restored. This is standard platformer behavior —
+          you get your dashes back when you touch the floor.
+
+Code    : [SerializeField] private bool resetCooldownOnKill = false;
+Explain : When enabled, the system subscribes to PlayerKillEvent
+          on the EventBus. If the player kills an enemy while in
+          cooldown, the cooldown is immediately reset. This rewards
+          aggressive play and is common in action games.
+
+Code    : [SerializeField] private InputActionReference dashInputAction;
+Explain : Unity Input System action reference for the dash button.
+          Configured in the Inspector — no KeyCode.Space anywhere.
+          The action can be bound to any key, button, or trigger.
+          Wrapped in #if ENABLE_INPUT_SYSTEM so the script compiles
+          even in projects using the old Input Manager.
+
+----------------------------------------------------
+SECTION: Physics Initialization (Awake)
+----------------------------------------------------
+
+Code    : physicsAdapter = GetComponent<IPhysicsAdapter>();
+Explain : The ONLY GetComponent call in this entire script, and it
+          runs once in Awake. This finds an existing adapter if one
+          is already attached (e.g., shared with the JumpSystem).
+          If not found, the switch block auto-adds the correct one.
+          This is why the script never calls GetComponent in Update.
+
+Code    : dashSpeed = dashDistance / Mathf.Max(dashDuration, MIN_DASH_DURATION);
+Explain : Speed is derived, not configured directly. Designers set
+          distance and duration (intuitive), and speed is calculated.
+          The Max guard prevents division by zero.
+
+----------------------------------------------------
+SECTION: Input Handling
+----------------------------------------------------
+
+Code    : dashInputAction.action.WasPressedThisFrame()
+Explain : Only fires on the frame the button is pressed, not while
+          held. This prevents one button press from triggering
+          multiple dashes. The Input System handles debouncing.
+
+----------------------------------------------------
+SECTION: State Logic — TryStartDash
+----------------------------------------------------
+
+Code    : if (currentDashState == DashState.Dashing) return false;
+Explain : The most important guard. You cannot dash while already
+          dashing. Without this, spam-pressing would interrupt the
+          current dash and create erratic movement.
+
+Code    : if (maxDashCount == UNLIMITED_DASHES) return true;
+Explain : Unlimited mode bypasses the charge check entirely.
+          The player can dash as often as they want. Cooldown
+          still applies between dashes though.
+
+Code    : currentDashDirection = ResolveDashDirection();
+Explain : Direction is resolved at the moment of dash, not
+          continuously. This snapshot approach means the dash
+          always goes in one straight line — it doesn't curve
+          if the player turns mid-dash.
+
+----------------------------------------------------
+SECTION: State Logic — StartDash
+----------------------------------------------------
+
+Code    : dashesRemaining--;
+Explain : Charge consumed. The event is fired immediately after
+          so UI can update. In unlimited mode this line is skipped.
+
+Code    : savedGravityScale = physicsAdapter.GravityScale;
+Code    : physicsAdapter.GravityScale = 0f;
+Explain : Gravity suppression. We save the current scale so we can
+          restore it exactly. This is important because the
+          JumpSystem may have set a custom gravity scale (e.g.,
+          fall multiplier). We don't want to blindly set it to 1.
+
+Code    : vel.y = 0f; physicsAdapter.Velocity = vel;
+Explain : Zeroing vertical velocity before the dash. Without this,
+          if the player was falling, they would continue falling
+          during the dash even with gravity disabled (because
+          existing velocity persists). This gives a clean,
+          horizontal dash trajectory.
+
+Code    : OrientPlayer(currentDashDirection);
+Explain : Faces the player toward the dash direction immediately.
+          In 2D, this flips the sprite via localScale.x. In 3D,
+          this snaps rotation to face the dash direction using
+          Quaternion.LookRotation. This prevents the player from
+          dashing backward while facing forward, which looks broken.
+
+----------------------------------------------------
+SECTION: Physics Logic — ApplyDashVelocity
+----------------------------------------------------
+
+Code    : physicsAdapter.Velocity = currentDashDirection * dashSpeed;
+Explain : Called in FixedUpdate while dashing. Setting velocity
+          directly (not AddForce) gives precise control over speed.
+          This runs in FixedUpdate for physics consistency — velocity
+          changes in Update would produce frame-rate-dependent results.
+
+Code    : float progress = 1f - (dashTimer / Mathf.Max(dashDuration, MIN_DASH_DURATION));
+Explain : Ease-out calculation. Progress goes from 0 (dash start) to
+          1 (dash end). Lerping speed from initial to zero using this
+          progress creates a smooth deceleration curve.
+
+----------------------------------------------------
+SECTION: Physics Logic — OrientPlayer
+----------------------------------------------------
+
+Code    : scale.x = Mathf.Abs(scale.x) * Mathf.Sign(direction.x);
+Explain : 2D sprite flipping. Abs ensures we don't compound negative
+          scales on repeated flips. Sign gives us -1 or +1 based on
+          direction. This is the standard Unity 2D convention.
+
+Code    : Quaternion targetRotation = Quaternion.LookRotation(flatDirection, Vector3.up);
+Code    : transform.rotation = targetRotation;
+Explain : 3D orientation. LookRotation creates a rotation facing the
+          given direction. We use flatDirection (Y zeroed) to prevent
+          the player from tilting up/down. During a dash, we snap
+          instantly (no lerp) for responsiveness. The demo movement
+          controller uses smooth rotation for normal movement.
+
+----------------------------------------------------
+SECTION: Iframe Logic
+----------------------------------------------------
+
+Code    : iframeTimer = Mathf.Min(iframeDuration, dashDuration);
+Explain : Iframes cannot outlast the dash. If a designer sets iframe
+          duration to 5 seconds but dash duration to 0.2, iframes
+          last 0.2 seconds. This prevents accidental god-mode.
+
+Code    : EventBus.Publish(new DashIframeStartEvent());
+Explain : The dash system does NOT disable any hurtbox. It publishes
+          an event. A separate hurtbox system subscribes to this
+          event and handles disabling itself. This is why the dash
+          system has zero references to any combat or hurtbox class.
+          Maximum decoupling.
+
+----------------------------------------------------
+SECTION: Ground Detection
+----------------------------------------------------
+
+Code    : isGrounded = physicsAdapter.CheckGrounded(checkOrigin, groundCheckDistance, groundLayer);
+Explain : Ground check goes through the adapter. In 2D this uses
+          Physics2D.Raycast. In 3D this uses Physics.SphereCast.
+          The dash system doesn't know or care which one runs.
+
+Code    : if (isGrounded && !wasGrounded && resetCountOnGround)
+Explain : Landing detection. wasGrounded tracks the previous frame.
+          When both conditions are true, the player just landed.
+          Charges are restored and cooldown is reset.
+
+----------------------------------------------------
+SECTION: EventBus Handlers
+----------------------------------------------------
+
+Code    : EventBus.Subscribe<PlayerKillEvent>(OnPlayerKill);
+Explain : Subscribed in OnEnable, unsubscribed in OnDisable. This
+          is the correct Unity pattern — subscriptions follow the
+          component's active lifecycle. If the component is disabled,
+          it stops listening to kill events automatically.
+
+Code    : if (currentDashState == DashState.Cooldown) { TransitionToReady(); }
+Explain : On enemy kill, if we're in cooldown, immediately reset.
+          If we're already Ready or Dashing, this is a no-op.
+          Simple and safe.
+
+----------------------------------------------------
+SECTION: Editor Utilities
+----------------------------------------------------
+
+Code    : Gizmos.DrawLine(origin, origin + Vector3.down * groundCheckDistance);
+Explain : Visualizes the ground check ray in the Scene view when the
+          object is selected. Green when grounded, red when airborne.
+          This is invaluable for debugging ground detection issues.
+
+Code    : Gizmos.DrawRay(transform.position, lastMoveDirection * 2f);
+Explain : Shows the current dash direction as a cyan ray. Helps
+          verify that SetMoveDirection is being called correctly
+          by the movement controller.
+
+====================================================
+ARCHITECTURE SUMMARY
+====================================================
+
+1. ADAPTER PATTERN: IPhysicsAdapter decouples physics from game logic.
+   The dash system calls physicsAdapter.Velocity and physicsAdapter.AddForce.
+   Whether that routes to Rigidbody2D or Rigidbody is the adapter's problem.
+
+2. STRATEGY PATTERN: DashDirectionMode selects the direction algorithm.
+   New direction modes can be added by extending the enum and adding a
+   case to ResolveDashDirection() — no other code changes needed.
+
+3. EVENT-DRIVEN ARCHITECTURE: The EventBus eliminates coupling.
+   DashSystem publishes events. Hurtbox, VFX, audio, and UI systems
+   subscribe independently. None of them hold references to each other.
+
+4. STATE MACHINE: DashState (Ready → Dashing → Cooldown → Ready)
+   prevents invalid transitions and makes the system predictable.
+
+5. CHARGE + COOLDOWN: A common game design pattern. N charges can be
+   used rapidly, then a cooldown period before all charges refill.
+   This is the same pattern used in Overwatch abilities, Celeste dashes,
+   and Hollow Knight shadow dash.
+
+====================================================
+HOW TO INTEGRATE IN YOUR OWN PROJECT
+====================================================
+
+1. Attach DashSystem_UMFOSS to your player GameObject
+2. Select DimensionMode (2D or 3D)
+3. Ensure a physics adapter (Physics2DAdapter or Physics3DAdapter) is
+   on the same GameObject — if not, it will be auto-added
+4. Create an Input Actions asset with a "Dash" action bound to your
+   preferred button (Space, Shift, gamepad trigger, etc.)
+5. Assign the Dash action reference in the Inspector
+6. From your movement controller, call:
+   dashSystem.SetMoveDirection(myMoveDirection);
+   every frame so the dash system knows the current movement direction
+7. That's it. No code changes needed in the dash system.
