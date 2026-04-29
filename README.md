@@ -185,9 +185,9 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Health & Stamina System](#3-health--stamina-system) | [Manjari Rathore](https://github.com/ManjariRathore) | Systems | [▶ Watch](https://drive.google.com/file/d/19F7Ud_fGdOp3P6JsQq0R_UBZEUhcwLhf/view?usp=drive_link) |
+| 3 | [Health & Stamina System](#3-health--stamina-system) | [Manjari Rathore](https://github.com/ManjariRathore) | Systems | [Demo & Tutorial](./Samples~/HealthAndStamina/HealthAndStamina_Videos.zip) |
 
-| **Sample Project** | [Download ZIP](https://drive.google.com/file/d/1uUEr1EsdUJ8nQi5Gv1IHUrX20VLdCuuc/view?usp=sharingv) |
+| **Sample Project** | [Download](./Samples~/HealthAndStamina/HealthAndStamina_Sample.zip) |
 
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
@@ -285,10 +285,11 @@ CONTRIBUTOR ENTRY TEMPLATE
 |---|---|
 | **Author** | [Manjari Rathore](https://github.com/ManjariRathore) |
 | **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
-| **Location** | `Runtime/Systems/HealthSystem.cs`, `Runtime/Systems/StaminaSystem.cs` |
+| **Location** | `Runtime/Systems/HealthAndStamina/Scripts/` |
 | **Category** | Systems / Core |
-| **Demo Scene** | `Samples~/HealthStaminaSample/` |
-| **Video** | [▶ Watch Walkthrough](#) *(To be added)* |
+| **Demo Scene** | `Samples~/HealthAndStamina/` |
+| **Video** | [📺 Demo & Tutorial](./Samples~/HealthAndStamina/HealthAndStamina_Videos.zip) |
+| **Sample Project** | [📦 Download ZIP](./Samples~/HealthAndStamina/HealthAndStamina_Sample.zip) |
 
 **What it does**
 

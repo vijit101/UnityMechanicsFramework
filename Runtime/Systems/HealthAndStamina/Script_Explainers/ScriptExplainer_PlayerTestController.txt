@@ -1,0 +1,575 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                                                                    ║
+║          SCRIPT EXPLAINER - PlayerTestController.cs                ║
+║         Demo Script for Testing Health & Stamina Systems           ║
+║                                                                    ║
+╚════════════════════════════════════════════════════════════════════╝
+
+📚 WHAT THIS SCRIPT DOES (In Simple Words)
+═══════════════════════════════════════════════════════════════════
+
+This is a DEMO/TEST script that shows how to use the HealthSystem
+and StaminaSystem components. It's NOT for production games - it's
+a learning example that demonstrates:
+
+1. How to reference the Health and Stamina systems
+2. How to subscribe to their events
+3. How to call their methods (TakeDamage, Heal, ConsumeStamina)
+4. How to display values on screen using TextMeshPro
+5. How to use Unity's NEW Input System
+
+Think of it as an interactive tutorial:
+- Press D → Take damage
+- Press H → Heal
+- Press SPACE → Use stamina
+- Press R → Reset the scene
+- Watch the text update in real-time
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 HOW IT WORKS (Step by Step)
+═══════════════════════════════════════════════════════════════════
+
+STEP 1: SETUP (Start method)
+- Finds HealthSystem and StaminaSystem components
+- Subscribes to their events (OnHealthChanged, OnStaminaChanged, OnDeath)
+- Initializes UI text to show current values
+- Displays keyboard controls on screen
+
+STEP 2: INPUT DETECTION (Update method)
+- Checks for keyboard input every frame
+- D key → applies damage
+- H key → applies healing
+- SPACE key → consumes stamina
+- R key → reloads the scene
+
+STEP 3: EVENT HANDLING
+When health or stamina changes:
+- UpdateHealthUI() is called automatically
+- UpdateStaminaUI() is called automatically
+- Text changes color based on percentage
+- No need to check values every frame!
+
+STEP 4: DEATH HANDLING
+When player dies:
+- OnPlayerDeath() is triggered
+- Displays "DEAD" message
+- Tells player how to restart
+
+═══════════════════════════════════════════════════════════════════
+
+📝 LINE-BY-LINE EXPLANATION
+═══════════════════════════════════════════════════════════════════
+
+LINES 1-3: Importing Libraries
+───────────────────────────────────────────────────────────────────
+using UnityEngine;
+using UnityEngine.InputSystem;
+using TMPro;
+
+→ UnityEngine: Core Unity functionality
+→ UnityEngine.InputSystem: NEW Input System (not legacy Input)
+→ TMPro: TextMeshPro for better-looking UI text
+
+WHY NEW INPUT SYSTEM?
+- Modern Unity standard (2019+)
+- Better for multiple input types (keyboard, gamepad, touch)
+- More flexible and performant
+
+WHY TEXTMESHPRO?
+- Sharper text rendering than standard UI Text
+- Better performance
+- More features (gradients, outlines, etc.)
+
+───────────────────────────────────────────────────────────────────
+
+LINE 5: Namespace
+───────────────────────────────────────────────────────────────────
+namespace GameplayMechanicsUMFOSS.Systems
+
+→ Same namespace as HealthSystem and StaminaSystem
+→ All related scripts in same namespace
+→ Helps with organization
+
+───────────────────────────────────────────────────────────────────
+
+LINES 7-12: Documentation Comment
+───────────────────────────────────────────────────────────────────
+/// <summary>
+/// Demo controller for testing HealthSystem and StaminaSystem.
+/// Handles keyboard input and displays current values on screen.
+/// This script is for demonstration purposes only - not intended for production use.
+/// Uses the new Unity Input System.
+/// </summary>
+
+→ Clearly states this is a DEMO script
+→ Not for real games (just for testing/learning)
+→ Mentions new Input System (important!)
+
+───────────────────────────────────────────────────────────────────
+
+LINE 13: Class Declaration
+───────────────────────────────────────────────────────────────────
+public class PlayerTestController : MonoBehaviour
+
+→ Standard MonoBehaviour component
+→ Can be attached to GameObjects
+
+───────────────────────────────────────────────────────────────────
+
+LINES 15-17: Component References Section
+───────────────────────────────────────────────────────────────────
+[Header("Component References")]
+[SerializeField] private HealthSystem healthSystem;
+[SerializeField] private StaminaSystem staminaSystem;
+
+→ References to the systems we want to test
+→ Can be auto-found or manually assigned in Inspector
+→ Private + SerializeField = safe but Inspector-accessible
+
+───────────────────────────────────────────────────────────────────
+
+LINES 19-22: UI References Section
+───────────────────────────────────────────────────────────────────
+[Header("UI References")]
+[SerializeField] private TextMeshProUGUI healthText;
+[SerializeField] private TextMeshProUGUI staminaText;
+[SerializeField] private TextMeshProUGUI instructionsText;
+
+→ TextMeshProUGUI: TMP component for UI Canvas
+→ healthText: displays current health
+→ staminaText: displays current stamina
+→ instructionsText: shows keyboard controls
+
+NOTE: These must be dragged in Inspector or will be null!
+
+───────────────────────────────────────────────────────────────────
+
+LINES 24-27: Test Values Section
+───────────────────────────────────────────────────────────────────
+[Header("Test Values")]
+[SerializeField] private float damageAmount = 20f;
+[SerializeField] private float healAmount = 15f;
+[SerializeField] private float staminaCost = 25f;
+
+→ Configurable test values in Inspector
+→ damageAmount: how much damage D key applies
+→ healAmount: how much health H key restores
+→ staminaCost: how much stamina SPACE uses
+
+WHY CONFIGURABLE?
+- Easy to test different values without changing code
+- Game designers can tweak without coding knowledge
+- Best practice for tuneable values
+
+───────────────────────────────────────────────────────────────────
+
+LINES 29-62: Start Method (Initialization)
+───────────────────────────────────────────────────────────────────
+void Start()
+{
+    // Auto-find components if not assigned
+    if (healthSystem == null)
+        healthSystem = GetComponent<HealthSystem>();
+    if (staminaSystem == null)
+        staminaSystem = GetComponent<StaminaSystem>();
+    
+    // Subscribe to events
+    if (healthSystem != null)
+    {
+        healthSystem.OnHealthChanged.AddListener(UpdateHealthUI);
+        healthSystem.OnDeath.AddListener(OnPlayerDeath);
+    }
+    
+    if (staminaSystem != null)
+    {
+        staminaSystem.OnStaminaChanged.AddListener(UpdateStaminaUI);
+    }
+    
+    // Initial UI update
+    UpdateHealthUI(healthSystem.CurrentHealth, healthSystem.MaxHealth);
+    UpdateStaminaUI(staminaSystem.CurrentStamina, staminaSystem.MaxStamina);
+    
+    // Display instructions
+    if (instructionsText != null)
+    {
+        instructionsText.text = "CONTROLS:\n" +
+            "D - Take Damage (20)\n" +
+            "H - Heal (15)\n" +
+            "SPACE - Use Stamina (25)\n" +
+            "R - Reset Scene";
+    }
+}
+
+LINES 32-35: Auto-Find Components
+→ Checks if references are null (not assigned in Inspector)
+→ If null, tries to find component on same GameObject
+→ Convenience feature (don't have to manually drag)
+→ GetComponent<T>(): Unity method to find components
+
+LINES 38-47: Subscribe to Events
+→ AddListener(): subscribes to UnityEvents
+→ When health changes → UpdateHealthUI is called
+→ When player dies → OnPlayerDeath is called
+→ When stamina changes → UpdateStaminaUI is called
+→ Null checks prevent crashes if components missing
+
+LINES 50-51: Initial UI Update
+→ Manually call UI update methods once
+→ Shows starting values immediately
+→ Without this, UI would be blank until first change
+
+LINES 54-61: Display Instructions
+→ Sets the instructions text to show controls
+→ \n = newline character (creates line breaks)
+→ Shows player what keys to press
+→ Professional UX practice
+
+───────────────────────────────────────────────────────────────────
+
+LINES 64-104: Update Method (Input Handling)
+───────────────────────────────────────────────────────────────────
+void Update()
+{
+    // Check if Keyboard is available (new Input System)
+    if (Keyboard.current == null) return;
+    
+    // Damage input
+    if (Keyboard.current.dKey.wasPressedThisFrame)
+    {
+        healthSystem?.TakeDamage(damageAmount);
+        Debug.Log($"Took {damageAmount} damage!");
+    }
+    
+    // Heal input
+    if (Keyboard.current.hKey.wasPressedThisFrame)
+    {
+        healthSystem?.Heal(healAmount);
+        Debug.Log($"Healed {healAmount} health!");
+    }
+    
+    // Consume stamina input
+    if (Keyboard.current.spaceKey.wasPressedThisFrame)
+    {
+        if (staminaSystem != null && staminaSystem.CurrentStamina >= staminaCost)
+        {
+            staminaSystem.ConsumeStamina(staminaCost);
+            Debug.Log($"Consumed {staminaCost} stamina!");
+        }
+        else
+        {
+            Debug.Log("Not enough stamina!");
+        }
+    }
+    
+    // Reset scene
+    if (Keyboard.current.rKey.wasPressedThisFrame)
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene(
+            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
+        );
+    }
+}
+
+LINE 67: Keyboard Availability Check
+if (Keyboard.current == null) return;
+→ New Input System requires this check
+→ Keyboard.current = currently active keyboard
+→ Returns null if no keyboard connected
+→ Prevents crashes on mobile/console
+
+LINE 70: New Input System Syntax
+Keyboard.current.dKey.wasPressedThisFrame
+→ Keyboard.current = the keyboard device
+→ .dKey = the D key specifically
+→ .wasPressedThisFrame = true only on frame key was pressed
+→ Different from legacy Input.GetKeyDown()
+
+LINE 72: Null-Safe Method Call
+healthSystem?.TakeDamage(damageAmount);
+→ ?. = null-conditional operator
+→ Only calls TakeDamage if healthSystem exists
+→ Prevents NullReferenceException
+→ Modern C# feature
+
+LINE 73: Debug Logging
+Debug.Log($"Took {damageAmount} damage!");
+→ $"..." = string interpolation (modern C#)
+→ {damageAmount} inserts variable value
+→ Logs to Unity Console for debugging
+
+LINES 84-93: Stamina Check Before Consumption
+→ Checks if enough stamina BEFORE consuming
+→ Prevents negative stamina
+→ Shows "Not enough stamina!" message if insufficient
+→ Good UX: tells player WHY action failed
+
+LINES 98-101: Scene Reload
+UnityEngine.SceneManagement.SceneManager.LoadScene(...)
+→ Reloads current scene (resets health/stamina)
+→ GetActiveScene().name = gets current scene name
+→ Useful for quick testing
+
+───────────────────────────────────────────────────────────────────
+
+LINES 106-121: UpdateHealthUI Method
+───────────────────────────────────────────────────────────────────
+void UpdateHealthUI(float current, float max)
+{
+    if (healthText != null)
+    {
+        float percentage = (current / max) * 100f;
+        healthText.text = $"HEALTH: {current:F0} / {max:F0} ({percentage:F0}%)";
+        
+        // Color based on health percentage
+        if (percentage > 50f)
+            healthText.color = Color.green;
+        else if (percentage > 25f)
+            healthText.color = Color.yellow;
+        else
+            healthText.color = Color.red;
+    }
+}
+
+→ Called automatically when health changes (event listener)
+→ Receives current and max health as parameters
+
+LINE 110: Calculate Percentage
+float percentage = (current / max) * 100f;
+→ Example: (75 / 100) * 100 = 75%
+→ Used for display and color logic
+
+LINE 111: Format Text
+healthText.text = $"HEALTH: {current:F0} / {max:F0} ({percentage:F0}%)";
+→ :F0 = format as float with 0 decimal places
+→ Example output: "HEALTH: 75 / 100 (75%)"
+→ Professional-looking display
+
+LINES 114-119: Color Coding
+→ Green: > 50% health (healthy)
+→ Yellow: 25-50% health (warning)
+→ Red: < 25% health (critical)
+→ Visual feedback helps player understand status
+→ Common game design pattern
+
+───────────────────────────────────────────────────────────────────
+
+LINES 123-138: UpdateStaminaUI Method
+───────────────────────────────────────────────────────────────────
+void UpdateStaminaUI(float current, float max)
+{
+    if (staminaText != null)
+    {
+        float percentage = (current / max) * 100f;
+        staminaText.text = $"STAMINA: {current:F0} / {max:F0} ({percentage:F0}%)";
+        
+        // Color based on stamina percentage
+        if (percentage > 50f)
+            staminaText.color = Color.cyan;
+        else if (percentage > 25f)
+            staminaText.color = Color.yellow;
+        else
+            staminaText.color = Color.red;
+    }
+}
+
+→ Same pattern as UpdateHealthUI
+→ Called automatically when stamina changes
+→ Uses cyan instead of green (visual distinction)
+→ Helps player distinguish stamina from health
+
+───────────────────────────────────────────────────────────────────
+
+LINES 140-149: OnPlayerDeath Method
+───────────────────────────────────────────────────────────────────
+void OnPlayerDeath()
+{
+    Debug.Log("Player died! Press R to restart.");
+    if (healthText != null)
+    {
+        healthText.text = "DEAD - Press R to Restart";
+        healthText.color = Color.red;
+    }
+}
+
+→ Called automatically when health reaches 0
+→ Triggered by HealthSystem.OnDeath event
+
+LINE 142: Console Message
+Debug.Log("Player died! Press R to restart.");
+→ Logs to Console window
+→ Useful for debugging
+
+LINES 143-147: UI Update
+→ Changes health text to "DEAD"
+→ Reminds player how to restart
+→ Sets color to red for emphasis
+→ Clear, actionable feedback
+
+───────────────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 HOW TO USE THIS SCRIPT (In Unity)
+═══════════════════════════════════════════════════════════════════
+
+SETUP INSTRUCTIONS:
+
+1. CREATE A TEST SCENE
+   - Create new scene or use existing
+   - Add Canvas (right-click Hierarchy → UI → Canvas)
+
+2. CREATE PLAYER OBJECT
+   - Create Empty GameObject, name it "Player"
+   - Add Component → Health System
+   - Add Component → Stamina System
+   - Add Component → Player Test Controller
+
+3. CREATE UI TEXT ELEMENTS
+   - In Canvas, create 3 TextMeshPro - Text objects:
+     * HealthText (position: top-left)
+     * StaminaText (position: below HealthText)
+     * InstructionsText (position: center)
+
+4. WIRE REFERENCES IN INSPECTOR
+   - Select Player GameObject
+   - In Player Test Controller component:
+     * Drag Player into "Health System" slot (or leave null for auto-find)
+     * Drag Player into "Stamina System" slot (or leave null for auto-find)
+     * Drag HealthText into "Health Text" slot
+     * Drag StaminaText into "Stamina Text" slot
+     * Drag InstructionsText into "Instructions Text" slot
+
+5. TEST IT
+   - Press Play
+   - Press D → Take damage (health decreases)
+   - Press H → Heal (health increases)
+   - Press SPACE → Use stamina (stamina decreases, auto-regens)
+   - Press R → Reset scene
+   - Watch text update and change colors!
+
+═══════════════════════════════════════════════════════════════════
+
+💡 KEY CONCEPTS DEMONSTRATED
+═══════════════════════════════════════════════════════════════════
+
+1. EVENT-DRIVEN UI UPDATES
+   - UI subscribes to system events
+   - Only updates when values actually change
+   - No polling every frame (efficient!)
+   - Decoupled architecture
+
+2. NEW UNITY INPUT SYSTEM
+   - Keyboard.current.key.wasPressedThisFrame
+   - More modern than Input.GetKeyDown()
+   - Better for cross-platform games
+   - Industry standard for new projects
+
+3. NULL-SAFE PROGRAMMING
+   - ?. operator prevents crashes
+   - if (thing != null) checks
+   - GetComponent with null handling
+   - Professional defensive coding
+
+4. TEXTMESHPRO FOR UI
+   - Better text rendering
+   - TMP_Text vs legacy Text
+   - Modern Unity UI standard
+
+5. STRING INTERPOLATION
+   - $"Value: {variable}" syntax
+   - :F0 formatting (0 decimals)
+   - Cleaner than string concatenation
+
+6. VISUAL FEEDBACK
+   - Color coding (green, yellow, red)
+   - Percentage display
+   - Clear instructions
+   - Professional UX
+
+═══════════════════════════════════════════════════════════════════
+
+🐛 COMMON ISSUES & SOLUTIONS
+═══════════════════════════════════════════════════════════════════
+
+Q: "Keyboard.current is null" error!
+A:
+   ✓ Install New Input System package (Window → Package Manager)
+   ✓ Or change to legacy Input.GetKeyDown() if using old system
+
+Q: Text doesn't update!
+A: Check:
+   ✓ UI Text references are assigned in Inspector
+   ✓ Events are subscribed in Start()
+   ✓ No errors in Console
+
+Q: NullReferenceException errors!
+A:
+   ✓ Make sure HealthSystem and StaminaSystem are on GameObject
+   ✓ Check all UI references are assigned
+   ✓ Look at which line number has the error
+
+Q: Controls don't work!
+A:
+   ✓ Make sure you're in Play Mode
+   ✓ Click on Game View (not Scene View)
+   ✓ Check if Keyboard.current is not null
+
+Q: Scene doesn't reset when pressing R!
+A:
+   ✓ Make sure scene is saved
+   ✓ Make sure scene is in Build Settings
+   ✓ Check Console for errors
+
+Q: Want to use this for real game?
+A:
+   ✓ DON'T! This is a test script
+   ✓ Use the concepts but write proper input handling
+   ✓ Separate UI logic into dedicated scripts
+   ✓ Use proper game architecture patterns
+
+═══════════════════════════════════════════════════════════════════
+
+🎓 LEARNING RESOURCES
+═══════════════════════════════════════════════════════════════════
+
+To understand this script better, study:
+- Unity New Input System documentation
+- TextMeshPro (TMP) basics
+- UnityEvents and AddListener/RemoveListener
+- String interpolation in C#
+- Null-conditional operators (?. and ??)
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 EXTENDING THIS DEMO
+═══════════════════════════════════════════════════════════════════
+
+Try These Exercises:
+✓ Add sound effects when taking damage/healing
+✓ Add particle effects for visual feedback
+✓ Add more keys for different damage amounts
+✓ Add a "god mode" toggle (invincibility)
+✓ Add UI slider bars instead of just text
+✓ Add gamepad support using new Input System
+✓ Display stamina regeneration rate on screen
+
+For Production Games:
+✓ Separate input handling from UI updates
+✓ Use ScriptableObject for input bindings
+✓ Create proper UI manager class
+✓ Add proper state management
+✓ Implement save/load system
+✓ Add proper game loop and menu system
+
+═══════════════════════════════════════════════════════════════════
+
+Made with ❤️ for UnityMechanicsFramework
+Part of the Health & Stamina System - Demo/Test Script
+Namespace: GameplayMechanicsUMFOSS.Systems
+Author: Manjari Rathore
+
+NOTE: This is a DEMONSTRATION script for testing purposes only.
+Not recommended for production games without significant refactoring.
+
+═══════════════════════════════════════════════════════════════════

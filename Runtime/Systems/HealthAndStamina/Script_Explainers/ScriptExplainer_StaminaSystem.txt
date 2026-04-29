@@ -1,0 +1,589 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                                                                    ║
+║              SCRIPT EXPLAINER - StaminaSystem.cs                   ║
+║        Stamina Management with Auto-Regeneration System            ║
+║                                                                    ║
+╚════════════════════════════════════════════════════════════════════╝
+
+📚 WHAT THIS SCRIPT DOES (In Simple Words)
+═══════════════════════════════════════════════════════════════════
+
+This script adds stamina to any game object - typically the player.
+Stamina is a resource used for special actions like:
+- Sprinting / Running fast
+- Dashing / Dodging
+- Jumping / Double jumping
+- Special attacks
+- Any action that should be limited
+
+Think of it like an energy bar that:
+- Depletes when you perform special actions
+- Automatically refills after a short delay
+- Can't be used when empty
+
+The key difference from health:
+- Health doesn't auto-regenerate by default
+- Stamina DOES auto-regenerate after a delay
+- Stamina is for temporary actions, not permanent damage
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 HOW IT WORKS (Step by Step)
+═══════════════════════════════════════════════════════════════════
+
+STEP 1: INITIALIZATION
+When the game starts (Awake method):
+- Sets current stamina to maximum
+- Prepares regeneration timer
+
+STEP 2: STAMINA CONSUMPTION
+When you perform an action (ConsumeStamina):
+- Reduces current stamina
+- Resets the regeneration delay timer
+- Notifies UI to update the bar
+
+STEP 3: REGENERATION DELAY
+After consuming stamina:
+- Timer starts counting up
+- Regeneration is blocked during delay period
+- This prevents instant refill (feels more balanced)
+
+STEP 4: AUTO-REGENERATION
+After delay expires (Update method):
+- Stamina regenerates smoothly every frame
+- Regenerates at configurable rate (default: 20 per second)
+- Stops when reaching maximum
+
+STEP 5: EVENT BROADCASTING
+When stamina changes:
+- Notifies all listeners (UI bars, sound effects, etc.)
+- UI updates automatically
+- No need to check stamina every frame!
+
+═══════════════════════════════════════════════════════════════════
+
+📝 LINE-BY-LINE EXPLANATION
+═══════════════════════════════════════════════════════════════════
+
+LINES 1-2: Importing Unity Libraries
+───────────────────────────────────────────────────────────────────
+using UnityEngine;
+using UnityEngine.Events;
+
+→ UnityEngine: Core Unity (MonoBehaviour, Mathf, Time, etc.)
+→ UnityEngine.Events: UnityEvent system for event-driven design
+
+───────────────────────────────────────────────────────────────────
+
+LINE 4: Namespace
+───────────────────────────────────────────────────────────────────
+namespace GameplayMechanicsUMFOSS.Systems
+
+→ Part of the Systems category
+→ Same namespace as HealthSystem
+→ Keeps code organized and prevents conflicts
+
+───────────────────────────────────────────────────────────────────
+
+LINES 6-10: Documentation Comment
+───────────────────────────────────────────────────────────────────
+/// <summary>
+/// Independent stamina management component for any entity that needs stamina.
+/// Handles stamina consumption and automatic regeneration with configurable delay.
+/// Useful for dash, jump, special attacks, or any stamina-based mechanics.
+/// </summary>
+
+→ XML documentation for IDE auto-complete
+→ Explains what the component does
+→ Helps other developers understand purpose
+
+───────────────────────────────────────────────────────────────────
+
+LINE 11: Class Declaration
+───────────────────────────────────────────────────────────────────
+public class StaminaSystem : MonoBehaviour
+
+→ Creates a component called "StaminaSystem"
+→ Inherits from MonoBehaviour (can attach to GameObjects)
+→ Public = accessible from other scripts
+
+───────────────────────────────────────────────────────────────────
+
+LINES 13-16: Configuration Variables
+───────────────────────────────────────────────────────────────────
+[Header("Stamina Configuration")]
+[SerializeField] private float maxStamina = 100f;
+[SerializeField] private float regenRate = 20f;
+[SerializeField] private float regenDelay = 1f;
+
+→ [Header] creates a section in Inspector
+→ [SerializeField] makes private variables visible in Inspector
+→ maxStamina: maximum stamina capacity (default 100)
+→ regenRate: how much stamina regenerates per second (default 20)
+→ regenDelay: seconds to wait before regen starts (default 1)
+
+WHY THESE DEFAULTS?
+- 100 max stamina: easy to calculate percentages
+- 20 per second: refills in 5 seconds (100/20 = 5)
+- 1 second delay: feels responsive but not instant
+- All tweakable in Inspector for game balance!
+
+───────────────────────────────────────────────────────────────────
+
+LINES 18-19: Private Runtime Variables
+───────────────────────────────────────────────────────────────────
+private float currentStamina;
+private float timeSinceLastConsume;
+
+→ currentStamina: tracks current stamina value
+→ timeSinceLastConsume: tracks time since last usage
+→ Not SerializeField = values reset when you stop playing
+→ These change during gameplay
+
+───────────────────────────────────────────────────────────────────
+
+LINES 21-22: Events Section
+───────────────────────────────────────────────────────────────────
+[Header("Events")]
+public UnityEvent<float, float> OnStaminaChanged; // (current, max)
+
+→ UnityEvent: Unity's event system
+→ <float, float> passes current and max stamina values
+→ Public: other scripts can subscribe to changes
+→ Used for UI updates, sound effects, visual feedback, etc.
+
+EVENT-DRIVEN BENEFITS:
+- UI doesn't check stamina every frame
+- Decoupled: StaminaSystem doesn't know about UI
+- Easy to extend: add new listeners without modifying code
+
+───────────────────────────────────────────────────────────────────
+
+LINES 24-28: Awake Method (Initialization)
+───────────────────────────────────────────────────────────────────
+void Awake()
+{
+    currentStamina = maxStamina;
+    timeSinceLastConsume = regenDelay;
+}
+
+→ Awake runs once when GameObject spawns
+→ Sets stamina to full (100% at start)
+→ Sets timer to regenDelay (ready to regen immediately)
+
+WHY SET TIMER TO REGEN DELAY?
+- Allows regeneration to start right away on first Update
+- Player doesn't have to wait 1 second for regen to start
+- Stamina bar fills immediately when game starts
+
+───────────────────────────────────────────────────────────────────
+
+LINES 30-42: Update Method (Auto-Regeneration)
+───────────────────────────────────────────────────────────────────
+void Update()
+{
+    if (currentStamina < maxStamina)
+    {
+        timeSinceLastConsume += Time.deltaTime;
+        
+        if (timeSinceLastConsume >= regenDelay)
+        {
+            RegenerateStamina();
+        }
+    }
+}
+
+→ Update() runs every frame (60+ times per second)
+→ Only runs regeneration logic if stamina is not full
+
+LINE 33: Check if Regen is Needed
+if (currentStamina < maxStamina)
+→ Skip if already at full stamina
+→ Saves performance (no unnecessary calculations)
+
+LINE 35: Increment Timer
+timeSinceLastConsume += Time.deltaTime;
+→ Time.deltaTime = time since last frame (e.g., 0.016s at 60fps)
+→ Accumulates time: 0.016 + 0.016 + 0.016... = counts seconds
+→ Frame-rate independent (works same on all PCs)
+
+LINE 37: Check if Delay Expired
+if (timeSinceLastConsume >= regenDelay)
+→ Only regenerate after delay period passed
+→ Example: if delay is 1 second, waits 1 second before regen
+→ Prevents instant stamina refill (game balance)
+
+LINE 39: Trigger Regeneration
+RegenerateStamina();
+→ Calls the regeneration method
+→ Adds stamina back gradually
+
+───────────────────────────────────────────────────────────────────
+
+LINES 44-54: ConsumeStamina Method
+───────────────────────────────────────────────────────────────────
+/// <summary>
+/// Consumes the specified amount of stamina.
+/// Clamps to 0 and resets regeneration delay timer.
+/// </summary>
+/// <param name="amount">Amount of stamina to consume</param>
+public void ConsumeStamina(float amount)
+{
+    currentStamina = Mathf.Max(0, currentStamina - amount);
+    timeSinceLastConsume = 0f;
+    OnStaminaChanged?.Invoke(currentStamina, maxStamina);
+}
+
+→ PUBLIC METHOD: called from other scripts (player controller, etc.)
+→ Takes parameter: how much stamina to use
+
+LINE 51: Apply Consumption with Clamping
+currentStamina = Mathf.Max(0, currentStamina - amount);
+→ Subtracts amount from current stamina
+→ Mathf.Max(0, ...) prevents negative values
+→ Example: Mathf.Max(0, 10 - 20) = 0 (not -10)
+
+LINE 52: Reset Regeneration Timer
+timeSinceLastConsume = 0f;
+→ Resets timer back to 0
+→ Forces player to wait full delay before regen starts
+→ Prevents "regen spam" while using stamina
+
+LINE 53: Notify Listeners
+OnStaminaChanged?.Invoke(currentStamina, maxStamina);
+→ ?. = null-safe (only invokes if listeners exist)
+→ Sends current and max values to subscribers
+→ UI bars update automatically
+
+───────────────────────────────────────────────────────────────────
+
+LINES 56-65: RegenerateStamina Method
+───────────────────────────────────────────────────────────────────
+/// <summary>
+/// Regenerates stamina over time based on regenRate.
+/// Called automatically in Update() after regenDelay.
+/// Can also be called manually for instant regeneration effects.
+/// </summary>
+public void RegenerateStamina()
+{
+    currentStamina = Mathf.Min(maxStamina, currentStamina + regenRate * Time.deltaTime);
+    OnStaminaChanged?.Invoke(currentStamina, maxStamina);
+}
+
+→ PUBLIC METHOD: can be called automatically or manually
+→ No parameters: uses configured regenRate
+
+LINE 63: Apply Regeneration
+currentStamina = Mathf.Min(maxStamina, currentStamina + regenRate * Time.deltaTime);
+
+Let's break this down:
+→ regenRate * Time.deltaTime = stamina per frame
+  Example: 20 stamina/sec * 0.016 sec = 0.32 stamina per frame
+→ currentStamina + ... = adds regenerated amount
+→ Mathf.Min(maxStamina, ...) = caps at maximum
+  Example: Mathf.Min(100, 98 + 5) = 100 (not 103)
+
+WHY Time.deltaTime?
+- Ensures consistent regen speed regardless of frame rate
+- 60 FPS and 30 FPS both regenerate at same rate
+- Essential for smooth gameplay
+
+LINE 64: Notify Listeners
+OnStaminaChanged?.Invoke(currentStamina, maxStamina);
+→ Updates UI bar smoothly as stamina regenerates
+→ Can trigger visual effects (glow, particles, etc.)
+
+───────────────────────────────────────────────────────────────────
+
+LINES 67-70: CurrentStamina Property
+───────────────────────────────────────────────────────────────────
+/// <summary>
+/// Returns the current stamina value (read-only).
+/// </summary>
+public float CurrentStamina => currentStamina;
+
+→ PUBLIC PROPERTY: other scripts can read stamina
+→ => (expression-bodied member): modern C# syntax
+→ READ-ONLY: cannot be modified directly
+→ Must use ConsumeStamina() to change value
+
+USAGE EXAMPLE:
+if (staminaSystem.CurrentStamina >= 25f)
+    PerformDash();
+
+───────────────────────────────────────────────────────────────────
+
+LINES 72-75: MaxStamina Property
+───────────────────────────────────────────────────────────────────
+/// <summary>
+/// Returns the maximum stamina value (read-only).
+/// </summary>
+public float MaxStamina => maxStamina;
+
+→ PUBLIC PROPERTY: other scripts can read max stamina
+→ Used for percentage calculations
+→ Used by UI to know the full bar range
+
+USAGE EXAMPLE:
+float percentage = currentStamina / maxStamina;
+// 75 / 100 = 0.75 = 75%
+
+───────────────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 HOW TO USE THIS SCRIPT (In Unity)
+═══════════════════════════════════════════════════════════════════
+
+BASIC SETUP:
+1. Select Player GameObject
+2. Add Component → Stamina System
+3. Configure in Inspector:
+   - Max Stamina: 100 (default)
+   - Regen Rate: 20 (regenerates in 5 seconds)
+   - Regen Delay: 1 (waits 1 second before regen)
+4. Done! Player now has stamina system
+
+USING STAMINA FOR SPRINTING:
+```csharp
+using GameplayMechanicsUMFOSS.Systems;
+
+public class PlayerMovement : MonoBehaviour
+{
+    private StaminaSystem stamina;
+    public float sprintStaminaCost = 30f; // Per second
+
+    void Start()
+    {
+        stamina = GetComponent<StaminaSystem>();
+    }
+
+    void Update()
+    {
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            // Try to sprint
+            if (stamina.CurrentStamina > 0)
+            {
+                stamina.ConsumeStamina(sprintStaminaCost * Time.deltaTime);
+                ApplySprintSpeed();
+            }
+            else
+            {
+                Debug.Log("Out of stamina!");
+            }
+        }
+    }
+}
+```
+
+USING STAMINA FOR DASH:
+```csharp
+public class DashAbility : MonoBehaviour
+{
+    private StaminaSystem stamina;
+    public float dashCost = 25f;
+
+    void Start()
+    {
+        stamina = GetComponent<StaminaSystem>();
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            // Check if enough stamina for dash
+            if (stamina.CurrentStamina >= dashCost)
+            {
+                stamina.ConsumeStamina(dashCost);
+                PerformDash();
+            }
+            else
+            {
+                Debug.Log("Not enough stamina to dash!");
+            }
+        }
+    }
+
+    void PerformDash()
+    {
+        // Apply dash force, play animation, etc.
+        Debug.Log("Dashing!");
+    }
+}
+```
+
+SUBSCRIBING TO STAMINA EVENTS:
+```csharp
+public class StaminaDisplay : MonoBehaviour
+{
+    private StaminaSystem stamina;
+
+    void Start()
+    {
+        stamina = GetComponent<StaminaSystem>();
+        
+        // Subscribe to stamina changes
+        stamina.OnStaminaChanged.AddListener(HandleStaminaChanged);
+    }
+
+    void HandleStaminaChanged(float current, float max)
+    {
+        float percentage = (current / max) * 100f;
+        Debug.Log($"Stamina: {percentage:F0}%");
+        
+        // Update UI bar, change color, play sound, etc.
+    }
+
+    void OnDestroy()
+    {
+        // Always unsubscribe to prevent memory leaks!
+        stamina.OnStaminaChanged.RemoveListener(HandleStaminaChanged);
+    }
+}
+```
+
+MANUALLY TRIGGERING REGENERATION (Power-up):
+```csharp
+public class StaminaPotion : MonoBehaviour
+{
+    void OnTriggerEnter(Collider other)
+    {
+        StaminaSystem stamina = other.GetComponent<StaminaSystem>();
+        if (stamina != null)
+        {
+            // Instantly regenerate some stamina
+            stamina.RegenerateStamina();
+            // Or call it multiple times for instant refill
+            Destroy(gameObject);
+        }
+    }
+}
+```
+
+═══════════════════════════════════════════════════════════════════
+
+💡 KEY CONCEPTS USED
+═══════════════════════════════════════════════════════════════════
+
+1. AUTO-REGENERATION WITH DELAY
+   - Stamina doesn't refill instantly
+   - Delay prevents abuse (spam dashing)
+   - Creates strategic decision-making
+   - Common in modern games (Dark Souls, etc.)
+
+2. FRAME-RATE INDEPENDENT CALCULATIONS
+   - Time.deltaTime ensures consistent behavior
+   - Works same on 30fps, 60fps, 144fps
+   - Professional game development practice
+
+3. CLAMPING VALUES
+   - Mathf.Max prevents negative stamina
+   - Mathf.Min prevents exceeding maximum
+   - Keeps values in valid ranges
+   - Prevents exploits and bugs
+
+4. EVENT-DRIVEN UPDATES
+   - UI only updates when stamina changes
+   - More efficient than checking every frame
+   - Decoupled architecture
+   - Easy to extend
+
+5. PUBLIC METHODS, PRIVATE STATE
+   - Other scripts can use stamina via methods
+   - Cannot directly modify internal values
+   - Prevents accidental bugs
+   - Encapsulation principle
+
+═══════════════════════════════════════════════════════════════════
+
+🐛 COMMON ISSUES & SOLUTIONS
+═══════════════════════════════════════════════════════════════════
+
+Q: Stamina doesn't regenerate!
+A: Check:
+   ✓ Current stamina is below max
+   ✓ Regen delay has passed (wait 1 second after consumption)
+   ✓ Regen rate is > 0 in Inspector
+   ✓ GameObject is active and Update() is running
+
+Q: Stamina regenerates too fast/slow!
+A:
+   ✓ Adjust "Regen Rate" in Inspector
+   ✓ Higher = faster regeneration
+   ✓ Formula: seconds to refill = maxStamina / regenRate
+   ✓ Example: 100 / 20 = 5 seconds to full
+
+Q: Stamina keeps depleting even when I stop pressing sprint!
+A:
+   ✓ Make sure you only call ConsumeStamina when action is active
+   ✓ Use GetKey (continuous) not GetKeyDown (one-time)
+   ✓ Check your input logic
+
+Q: Can use abilities even with 0 stamina!
+A:
+   ✓ Add a check before consuming:
+     if (stamina.CurrentStamina >= cost)
+         stamina.ConsumeStamina(cost);
+
+Q: Want instant stamina refill (no regen delay)?
+A:
+   ✓ Set "Regen Delay" to 0 in Inspector
+   ✓ Stamina will start regenerating immediately
+
+Q: Want to disable regeneration temporarily?
+A:
+   ✓ Add a bool flag: public bool canRegenerate = true;
+   ✓ Check it in Update() before calling RegenerateStamina()
+
+Q: Want different regeneration rates (combat vs exploration)?
+A:
+   ✓ Add: public void SetRegenRate(float newRate) { regenRate = newRate; }
+   ✓ Call it when entering/exiting combat
+
+═══════════════════════════════════════════════════════════════════
+
+🎓 LEARNING RESOURCES
+═══════════════════════════════════════════════════════════════════
+
+To understand this script better, learn about:
+- Time.deltaTime and frame-rate independence
+- UnityEvents and event-driven programming
+- Mathf functions (Clamp, Min, Max, Lerp)
+- MonoBehaviour lifecycle (Awake, Update)
+- Properties vs Fields in C#
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 EXTENDING THIS SYSTEM
+═══════════════════════════════════════════════════════════════════
+
+Easy Additions:
+✓ Add different stamina costs per action (dash=25, jump=10)
+✓ Add stamina multipliers (perks, equipment)
+✓ Add visual/audio feedback when depleted
+✓ Add slow-down effect when stamina is low
+✓ Add stamina potions/pickups
+
+Advanced Features:
+✓ Different regen rates in combat vs out of combat
+✓ Temporary stamina boosts (buff items)
+✓ Stamina drain over time (environmental effects)
+✓ Multi-tier stamina (yellow, red zones with different effects)
+✓ Stamina cooldown before next use (prevent spam)
+
+Game Design Considerations:
+✓ Balance: How fast should stamina regenerate?
+✓ Strategy: Should delay be long (tactical) or short (action)?
+✓ Feedback: How do you communicate "out of stamina" to player?
+✓ Progression: Does max stamina increase with levels/upgrades?
+
+═══════════════════════════════════════════════════════════════════
+
+Made with ❤️ for UnityMechanicsFramework
+Part of the Health & Stamina System
+Namespace: GameplayMechanicsUMFOSS.Systems
+Author: Manjari Rathore
+
+═══════════════════════════════════════════════════════════════════

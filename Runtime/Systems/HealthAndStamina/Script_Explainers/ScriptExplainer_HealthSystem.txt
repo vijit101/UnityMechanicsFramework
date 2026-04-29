@@ -1,0 +1,487 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                                                                    ║
+║              SCRIPT EXPLAINER - HealthSystem.cs                    ║
+║           Core Health Management Component for Any Entity          ║
+║                                                                    ║
+╚════════════════════════════════════════════════════════════════════╝
+
+📚 WHAT THIS SCRIPT DOES (In Simple Words)
+═══════════════════════════════════════════════════════════════════
+
+This script adds health to any game object - player, enemy, boss, or 
+destructible object. It handles:
+- Taking damage (reducing health)
+- Healing (restoring health)
+- Death detection (when health reaches 0)
+- Notifying other systems when health changes
+
+Think of it like a health tracker:
+- You start with maximum health (default: 100)
+- When hit, you lose health
+- When healed, you gain health back (up to maximum)
+- When health hits 0, you die (and everyone gets notified)
+
+This is a COMPONENT-BASED system - it works independently on any 
+GameObject without needing to modify other code.
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 HOW IT WORKS (Step by Step)
+═══════════════════════════════════════════════════════════════════
+
+STEP 1: INITIALIZATION
+When the GameObject spawns (Awake method):
+- Sets current health to maximum health
+- Ready to receive damage/healing
+
+STEP 2: DAMAGE HANDLING
+When TakeDamage() is called:
+- Reduces current health by damage amount
+- Clamps to 0 (can't go negative)
+- Triggers OnHealthChanged event (for UI updates)
+- If health reaches 0, triggers OnDeath event
+
+STEP 3: HEALING
+When Heal() is called:
+- Increases current health by heal amount
+- Clamps to maximum (can't exceed max)
+- Triggers OnHealthChanged event
+- Cannot heal if already dead
+
+STEP 4: EVENT BROADCASTING
+When health changes:
+- Other scripts listening to events get notified
+- UI bars update automatically
+- Sound effects can play
+- Death logic can trigger
+- All without tight coupling!
+
+═══════════════════════════════════════════════════════════════════
+
+📝 LINE-BY-LINE EXPLANATION
+═══════════════════════════════════════════════════════════════════
+
+LINES 1-2: Importing Unity Libraries
+───────────────────────────────────────────────────────────────────
+using UnityEngine;
+using UnityEngine.Events;
+
+→ UnityEngine: Core Unity functionality (MonoBehaviour, Mathf, etc.)
+→ UnityEngine.Events: UnityEvent system for callbacks
+  
+UnityEvents let other scripts "subscribe" to notifications without
+creating tight dependencies between scripts.
+
+───────────────────────────────────────────────────────────────────
+
+LINE 4: Namespace
+───────────────────────────────────────────────────────────────────
+namespace GameplayMechanicsUMFOSS.Systems
+
+→ Organizes code into the Systems category
+→ Prevents naming conflicts with other projects
+→ Part of the UnityMechanicsFramework structure
+
+───────────────────────────────────────────────────────────────────
+
+LINES 6-10: Documentation Comment
+───────────────────────────────────────────────────────────────────
+/// <summary>
+/// Independent health management component for any entity.
+/// Handles damage, healing, and death state with event-driven architecture.
+/// Attach to any GameObject that needs health tracking.
+/// </summary>
+
+→ XML documentation for IntelliSense
+→ Shows up when you hover over the class name
+→ Explains what the component does and how to use it
+
+───────────────────────────────────────────────────────────────────
+
+LINE 11: Class Declaration
+───────────────────────────────────────────────────────────────────
+public class HealthSystem : MonoBehaviour
+
+→ Creates a component called "HealthSystem"
+→ : MonoBehaviour = can be attached to GameObjects
+→ public = accessible from other scripts
+
+───────────────────────────────────────────────────────────────────
+
+LINES 13-14: Configuration Section
+───────────────────────────────────────────────────────────────────
+[Header("Health Configuration")]
+[SerializeField] private float maxHealth = 100f;
+
+→ [Header] creates a section label in Unity Inspector
+→ [SerializeField] makes private variable visible in Inspector
+→ maxHealth: the maximum health value (default 100)
+→ private: can only be changed through Inspector, not other scripts
+
+WHY PRIVATE WITH SERIALIZEFIELD?
+- Encapsulation: prevents accidental changes from other scripts
+- Inspector access: designers can still tweak values
+- Best practice in Unity development
+
+───────────────────────────────────────────────────────────────────
+
+LINE 16: Current Health Storage
+───────────────────────────────────────────────────────────────────
+private float currentHealth;
+
+→ Tracks the current health value at runtime
+→ Not SerializeField = doesn't save between play sessions
+→ Gets initialized to maxHealth in Awake()
+→ Changes when taking damage or healing
+
+───────────────────────────────────────────────────────────────────
+
+LINES 18-20: Events Section
+───────────────────────────────────────────────────────────────────
+[Header("Events")]
+public UnityEvent<float, float> OnHealthChanged; // (current, max)
+public UnityEvent OnDeath;
+
+→ UnityEvent: Unity's event system (inspector-assignable)
+→ public: other scripts can subscribe to these events
+→ OnHealthChanged: passes current and max health values
+→ OnDeath: triggered when health reaches 0
+
+EVENT-DRIVEN ARCHITECTURE:
+Instead of UI checking health every frame, the HealthSystem
+"publishes" events when health changes. UI "subscribes" to these
+events and only updates when notified. More efficient!
+
+───────────────────────────────────────────────────────────────────
+
+LINES 22-25: Awake Method (Initialization)
+───────────────────────────────────────────────────────────────────
+void Awake()
+{
+    currentHealth = maxHealth;
+}
+
+→ Awake() runs once when the GameObject is created
+→ Sets current health to maximum on spawn
+→ Ensures entities always start at full health
+
+WHY AWAKE() NOT START()?
+- Awake runs before Start
+- Other components might need health value in their Start()
+- Guarantees health is ready before any other initialization
+
+───────────────────────────────────────────────────────────────────
+
+LINES 27-43: TakeDamage Method
+───────────────────────────────────────────────────────────────────
+/// <summary>
+/// Reduces current health by the specified amount.
+/// Clamps to 0 and triggers death event when health reaches 0.
+/// </summary>
+/// <param name="amount">Amount of damage to apply</param>
+public void TakeDamage(float amount)
+{
+    if (currentHealth <= 0) return; // Already dead, ignore damage
+    
+    currentHealth = Mathf.Max(0, currentHealth - amount);
+    OnHealthChanged?.Invoke(currentHealth, maxHealth);
+    
+    if (currentHealth <= 0)
+    {
+        OnDeath?.Invoke();
+    }
+}
+
+→ PUBLIC METHOD: can be called from other scripts
+→ Takes a parameter: amount of damage to apply
+
+LINE 34: Early Exit for Dead Entities
+if (currentHealth <= 0) return;
+→ If already dead, don't process more damage
+→ Prevents negative health or multiple death triggers
+
+LINE 36: Apply Damage with Clamping
+currentHealth = Mathf.Max(0, currentHealth - amount);
+→ Subtracts damage from current health
+→ Mathf.Max(0, ...) ensures it never goes below 0
+→ Example: Mathf.Max(0, 20 - 30) = 0 (not -10)
+
+LINE 37: Notify Listeners
+OnHealthChanged?.Invoke(currentHealth, maxHealth);
+→ ?. = null-safe operator (only invokes if event has listeners)
+→ Passes current and max values to all subscribers
+→ UI bars update automatically from this
+
+LINES 39-42: Death Detection
+if (currentHealth <= 0)
+    OnDeath?.Invoke();
+→ Check if damage killed the entity
+→ Trigger death event (animations, respawn, game over, etc.)
+
+───────────────────────────────────────────────────────────────────
+
+LINES 45-56: Heal Method
+───────────────────────────────────────────────────────────────────
+/// <summary>
+/// Increases current health by the specified amount.
+/// Clamps to maxHealth. Cannot heal when dead.
+/// </summary>
+/// <param name="amount">Amount of health to restore</param>
+public void Heal(float amount)
+{
+    if (currentHealth <= 0) return; // Cannot heal when dead
+    
+    currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+    OnHealthChanged?.Invoke(currentHealth, maxHealth);
+}
+
+→ PUBLIC METHOD: restores health
+
+LINE 52: Prevent Healing Dead Entities
+if (currentHealth <= 0) return;
+→ Dead entities can't be healed (use Revive for that)
+→ Prevents resurrection bugs
+
+LINE 54: Apply Healing with Clamping
+currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+→ Adds heal amount to current health
+→ Mathf.Min(..., maxHealth) prevents exceeding maximum
+→ Example: Mathf.Min(100, 90 + 20) = 100 (not 110)
+
+LINE 55: Notify Listeners
+OnHealthChanged?.Invoke(currentHealth, maxHealth);
+→ UI updates to show restored health
+→ Healing effects can trigger via events
+
+───────────────────────────────────────────────────────────────────
+
+LINES 58-61: CurrentHealth Property
+───────────────────────────────────────────────────────────────────
+/// <summary>
+/// Returns the current health value (read-only).
+/// </summary>
+public float CurrentHealth => currentHealth;
+
+→ PUBLIC PROPERTY: allows reading health from other scripts
+→ => (expression-bodied member): shorthand syntax
+→ READ-ONLY: other scripts can read but not modify directly
+→ Modification must go through TakeDamage() or Heal()
+
+WHY READ-ONLY?
+- Prevents accidental modifications
+- Forces using proper methods (TakeDamage/Heal)
+- Ensures events always fire when health changes
+
+───────────────────────────────────────────────────────────────────
+
+LINES 63-66: MaxHealth Property
+───────────────────────────────────────────────────────────────────
+/// <summary>
+/// Returns the maximum health value (read-only).
+/// </summary>
+public float MaxHealth => maxHealth;
+
+→ PUBLIC PROPERTY: allows reading max health
+→ Used for calculating percentages (current / max)
+→ Used by UI bars to know the full range
+
+───────────────────────────────────────────────────────────────════
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 HOW TO USE THIS SCRIPT (In Unity)
+═══════════════════════════════════════════════════════════════════
+
+BASIC SETUP:
+1. Select any GameObject (Player, Enemy, etc.)
+2. Add Component → Health System
+3. Configure max health in Inspector (default: 100)
+4. Done! The GameObject now has health tracking
+
+APPLYING DAMAGE (From Another Script):
+```csharp
+using GameplayMechanicsUMFOSS.Systems;
+
+public class Weapon : MonoBehaviour
+{
+    void OnTriggerEnter(Collider other)
+    {
+        HealthSystem health = other.GetComponent<HealthSystem>();
+        if (health != null)
+        {
+            health.TakeDamage(25f); // Deal 25 damage
+        }
+    }
+}
+```
+
+HEALING (From Pickup):
+```csharp
+public class HealthPickup : MonoBehaviour
+{
+    void OnTriggerEnter(Collider other)
+    {
+        HealthSystem health = other.GetComponent<HealthSystem>();
+        if (health != null)
+        {
+            health.Heal(30f); // Restore 30 health
+            Destroy(gameObject); // Remove pickup
+        }
+    }
+}
+```
+
+SUBSCRIBING TO EVENTS (For UI or Audio):
+```csharp
+public class PlayerController : MonoBehaviour
+{
+    private HealthSystem healthSystem;
+    
+    void Start()
+    {
+        healthSystem = GetComponent<HealthSystem>();
+        
+        // Listen for health changes
+        healthSystem.OnHealthChanged.AddListener(HandleHealthChanged);
+        
+        // Listen for death
+        healthSystem.OnDeath.AddListener(HandleDeath);
+    }
+    
+    void HandleHealthChanged(float current, float max)
+    {
+        Debug.Log($"Health: {current}/{max}");
+        // Update UI, play hurt sound, etc.
+    }
+    
+    void HandleDeath()
+    {
+        Debug.Log("Player died!");
+        // Play death animation, show game over, etc.
+    }
+    
+    void OnDestroy()
+    {
+        // Always unsubscribe to prevent memory leaks!
+        healthSystem.OnHealthChanged.RemoveListener(HandleHealthChanged);
+        healthSystem.OnDeath.RemoveListener(HandleDeath);
+    }
+}
+```
+
+═══════════════════════════════════════════════════════════════════
+
+💡 KEY CONCEPTS USED
+═══════════════════════════════════════════════════════════════════
+
+1. COMPONENT-BASED ARCHITECTURE
+   - Health is a reusable component
+   - Works on ANY GameObject
+   - No inheritance required
+   - Mix and match with other components
+
+2. EVENT-DRIVEN DESIGN
+   - HealthSystem doesn't know about UI
+   - UI doesn't poll health every frame
+   - Clean separation of concerns
+   - Easy to extend without modifying core code
+
+3. ENCAPSULATION
+   - Health can only change through proper methods
+   - Properties are read-only from outside
+   - Prevents bugs from direct modification
+
+4. NULL-SAFE OPERATORS (?.)
+   - Prevents crashes when no listeners exist
+   - Clean, modern C# syntax
+   - No need for null checks
+
+5. CLAMPING (Mathf.Max/Min)
+   - Ensures values stay in valid ranges
+   - Prevents negative health
+   - Prevents over-healing
+   - Essential for game balance
+
+═══════════════════════════════════════════════════════════════════
+
+🐛 COMMON ISSUES & SOLUTIONS
+═══════════════════════════════════════════════════════════════════
+
+Q: Health doesn't decrease when taking damage!
+A: Check:
+   ✓ HealthSystem component is attached
+   ✓ You're calling TakeDamage() not setting health directly
+   ✓ Amount parameter is positive
+
+Q: Events aren't firing!
+A:
+   ✓ Subscribe using AddListener in Start() or OnEnable()
+   ✓ Unsubscribe in OnDestroy() or OnDisable()
+   ✓ Check for null reference errors in Console
+
+Q: Can damage myself when already dead!
+A:
+   ✓ That's intentional - this script allows it
+   ✓ Add "if (currentHealth <= 0) return;" in your damage code
+   ✓ Or check IsDead before applying damage
+
+Q: Want to know if entity is dead?
+A: 
+   ✓ Add this property to the script:
+     public bool IsDead => currentHealth <= 0;
+   ✓ Or check: if (healthSystem.CurrentHealth <= 0)
+
+Q: Need health to regenerate over time?
+A:
+   ✓ Create a separate HealthRegeneration component
+   ✓ Have it call Heal() periodically
+   ✓ Keeps concerns separated
+
+Q: Want maximum health to change (level up, buffs)?
+A:
+   ✓ Make maxHealth public or add a SetMaxHealth() method
+   ✓ Decide if current health scales (maintain percentage?)
+   ✓ Trigger OnHealthChanged event after modification
+
+═══════════════════════════════════════════════════════════════════
+
+🎓 LEARNING RESOURCES
+═══════════════════════════════════════════════════════════════════
+
+To understand this script better, learn about:
+- Component-based design in Unity
+- UnityEvents vs C# events
+- Properties (get/set accessors)
+- Expression-bodied members (=>)
+- Null-safe operators (?.)
+- Mathf.Clamp, Max, Min functions
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 EXTENDING THIS SYSTEM
+═══════════════════════════════════════════════════════════════════
+
+Easy Additions:
+✓ Add armor/defense calculation in TakeDamage()
+✓ Add critical hit multipliers
+✓ Add damage types (physical, magical, fire, etc.)
+✓ Add temporary invulnerability after damage
+✓ Add health regeneration over time
+
+Advanced Features:
+✓ Add shields (absorb damage before health)
+✓ Add damage over time (poison, burning)
+✓ Add death with revive timer
+✓ Add health scaling by level
+✓ Add temporary max health boosts
+
+All can be added without breaking existing code!
+
+═══════════════════════════════════════════════════════════════════
+
+Made with ❤️ for UnityMechanicsFramework
+Part of the Health & Stamina System
+Namespace: GameplayMechanicsUMFOSS.Systems
+Author: Manjari Rathore
+
+═══════════════════════════════════════════════════════════════════
