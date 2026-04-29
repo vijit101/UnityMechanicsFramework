@@ -1,0 +1,32 @@
+====================================================
+SCRIPT: ShakeDemoButtons.cs
+AUTHOR: Paramjeet Kaur
+NAMESPACE: GameplayMechanicsUMFOSS.Samples.ScreenShake
+====================================================
+
+PURPOSE:
+A sample component used exclusively to demonstrate triggering screen shake via Unity UI Buttons in a demo scene.
+
+Line 1: using UnityEngine;
+Explanation: Includes basic Unity functionality for defining MonoBehaviours and handling serialization.
+
+Line 2: using GameplayMechanicsUMFOSS.Systems;
+Explanation: References the Systems namespace so the demo script can call the screen shake singleton.
+
+Line 4: namespace GameplayMechanicsUMFOSS.Samples.ScreenShake
+Explanation: Places the sample demo logic under the framework's strictly segregated Samples namespace.
+
+Line 6: public class ShakeDemoButtons : MonoBehaviour
+Explanation: Defines the demo button component, inheriting from MonoBehaviour so it can be added to UI buttons.
+
+Line 8: [SerializeField] public float magnitude;
+Explanation: Inspector-exposed field allowing developers to customize how strong the shake caused by this button is.
+
+Line 9: [SerializeField] public float duration;
+Explanation: Inspector-exposed field so developers can tune the length of time the targeted shake should last.
+
+Line 11: public void Trigger()
+Explanation: A simple public proxy method designed to be connected to an OnClick Event within a Unity UI Button.
+
+Line 13: ScreenShakeSystem_UMFOSS.Instance.TriggerShake(magnitude, duration);
+Explanation: Calls the singleton Instance of the screen shake system, passing in the configured magnitude and duration variables.

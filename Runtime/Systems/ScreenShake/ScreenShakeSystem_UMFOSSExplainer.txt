@@ -1,0 +1,137 @@
+====================================================
+SCRIPT: ScreenShakeSystem_UMFOSS.cs
+AUTHOR: Paramjeet Kaur
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+====================================================
+
+PURPOSE:
+A generic singleton-based camera shake system that uses trauma and Perlin noise to produce smooth, procedural screen shake for both position and rotation.
+
+Line 1: using UnityEngine;
+Explanation: Imports core Unity functionality needed for MonoBehaviour, Camera, Vector3, and Mathis.
+
+Line 3: namespace GameplayMechanicsUMFOSS.Systems
+Explanation: Groups the script logically into the framework's Systems category.
+
+Line 5: public class ScreenShakeSystem_UMFOSS : MonoSingletongeneric<ScreenShakeSystem_UMFOSS>
+Explanation: Inherits from the framework's singleton base class so any script can call TriggerShake() without needing a direct reference.
+
+Line 7: [Header("Shake Settings")]
+Explanation: Organizes the variables in the Unity Inspector for easier tuning.
+
+Line 8: [SerializeField] private float ShakeDecay = 1.3f;
+Explanation: Controls how quickly shake fades.
+
+Line 9: [SerializeField] private float TraumaMultiplier = 16f;
+Explanation: Scales the overall intensity of the camera shake dynamically.
+
+Line 10: [SerializeField] private float PositionMagnitude = 0.8f;
+Explanation: Specifies the maximum positional shake effect for the camera.
+
+Line 11: [SerializeField] private float RotationMagnitude = 10f;
+Explanation: Specifies the maximum rotational shake effect for the camera.
+
+Line 13: private const float RETURN_SPEED = 5f;
+Explanation: Hardcoded constant determining how fast the camera returns to its original position after shaking.
+
+Line 14: private const float TRAUMA_THRESHOLD = 0.3f;
+Explanation: Constant offsets applied during traversal of trauma to ensure the shake dies out smoothly.
+
+Line 15: private const float TRAUMA_POW = 0.5f;
+Explanation: Used to dynamically adjust the progression of time based on how severe the trauma is.
+
+Line 17: private Camera cam;
+Explanation: Holds the reference to the main camera.
+
+Line 18: private Vector3 originalPosition;
+Explanation: Caches the original local position of the camera to return to post-shake.
+
+Line 19: private Quaternion originalRotation;
+Explanation: Caches the original local rotation of the camera to return to post-shake.
+
+Line 21: private float trauma = 0f;
+Explanation: The active shake magnitude, which decays over time.
+
+Line 22: private float traumaTimeRemaining = 0f;
+Explanation: The time remaining for the active shake effect.
+
+Line 24: private float timeCounter;
+Explanation: The time accumulator used to sample the Perlin noise uniquely.
+
+Line 26: protected override void Awake()
+Explanation: Method called on script instantiation. Using protected override to inject setup logic into the inherited singleton Awake method.
+
+Line 28: base.Awake();
+Explanation: Executes the Singleton initialization logic defined in MonoSingletongeneric.
+
+Line 30: cam = Camera.main;
+Explanation: Finds and stores the main camera.
+
+Line 32: if (cam == null)
+Explanation: Safety check to confirm the camera exists in the scene.
+
+Line 38: originalPosition = cam.transform.localPosition;
+Explanation: Records the camera's original local position before any trauma shifts it.
+
+Line 39: originalRotation = cam.transform.localRotation;
+Explanation: Records the camera's original local rotation to serve as the baseline.
+
+Line 47: public void TriggerShake(float magnitude, float duration)
+Explanation: Public method allowing other components to add active trauma to the camera shake system.
+
+Line 49: trauma = Mathf.Clamp01(trauma + magnitude);
+Explanation: Adds the requested magnitude to the current trauma, clamping between 0 and 1.
+
+Line 50: traumaTimeRemaining = duration;
+Explanation: Sets how long the shake should actively tick for.
+
+Line 53: float GetFloat(float seed)
+Explanation: Helper method that returns a Perlin noise sample mapped roughly between -1 and 1.
+
+Line 55: return (Mathf.PerlinNoise(seed, timeCounter) - 0.5f) * 2f;
+Explanation: Computes 1D noise from the seed and timeframe, recentering from 0..1 to -1..1.
+
+Line 58: Vector3 GetVec3()
+Explanation: Provides a randomized 3D noise vector based on Perlin calculations for positioning.
+
+Line 60: return new Vector3(
+Explanation: Constructs the vector for x, y offset. The z is 0 so the camera only shakes along its 2D screen plane.
+
+Line 67: void Update()
+Explanation: Unity lifecycle method executing once per frame. Handles decreasing trauma and moving the camera.
+
+Line 69: if (traumaTimeRemaining > 0f && trauma > 0f)
+Explanation: Proceed with shaking mechanics only if trauma exists and time remains.
+
+Line 71: traumaTimeRemaining -= Time.deltaTime;
+Explanation: Decreases shake duration over time.
+
+Line 74: timeCounter += Time.deltaTime * Mathf.Pow(trauma, TRAUMA_POW) * TraumaMultiplier * TRAUMA_THRESHOLD;
+Explanation: Advances the internal Perlin noise sample time based on the active trauma intensity.
+
+Line 76: float smoothTrauma = trauma * trauma;
+Explanation: Squares the trauma value (ranging 0 to 1) for a non-linear scaling effect, producing stronger high-end shakes and cleaner low-end fades.
+
+Line 77: Vector3 offset = GetVec3() * PositionMagnitude * smoothTrauma;
+Explanation: Computes the positional offset based on the generated Perlin noise, magnitude caps, and current non-linear trauma.
+
+Line 79: cam.transform.localPosition = originalPosition + offset;
+Explanation: Applies the positional shake offset relative to the original position.
+
+Line 80: cam.transform.localRotation = Quaternion.Euler(offset * RotationMagnitude);
+Explanation: Rotates the camera proportionally based on the noise offset and multiplier.
+
+Line 83: trauma -= Time.deltaTime * ShakeDecay * (trauma + TRAUMA_THRESHOLD);
+Explanation: Ensures the shake magnitude decays steadily over time so it gracefully fades out.
+
+Line 84: trauma = Mathf.Clamp01(trauma);
+Explanation: Clamps trauma to guarantee it doesn't accidentally dip below 0 or above 1.
+
+Line 89: cam.transform.localPosition = Vector3.Lerp(cam.transform.localPosition, originalPosition, Time.deltaTime * RETURN_SPEED);
+Explanation: Smoothly interpolates the camera back to its original position across frames when trauma reaches zero. Prevents snapping.
+
+Line 92: cam.transform.localRotation = Quaternion.Lerp(cam.transform.localRotation, originalRotation, Time.deltaTime * RETURN_SPEED);
+Explanation: Smoothly rotates the camera back to its original alignment.
+
+Line 95: trauma = 0f;
+Explanation: Resets trauma back to 0 perfectly once interpolation begins.

@@ -1,0 +1,96 @@
+====================================================
+SCRIPT: EventBus.cs
+AUTHOR: Nymish
+NAMESPACE: GameplayMechanicsUMFOSS.Core
+====================================================
+
+PURPOSE:
+A minimal, dependency-free static publish/subscribe bus. Mechanics emit and
+receive events through type-keyed channels without ever holding direct
+references to each other.
+
+This is the spine of the Scene Manager System. SceneManager_UMFOSS publishes
+SceneLoadStartEvent / SceneLoadProgressEvent / SceneLoadCompleteEvent /
+ScenePushedEvent / ScenePoppedEvent / SceneReloadedEvent / InputLockEvent;
+the loading screen, HUD, input lock, and any game-side listeners subscribe.
+The manager never knows who is listening, and listeners never know who is
+publishing — that is exactly the decoupling we want.
+
+----------------------------------------------------
+KEY DESIGN DECISIONS
+----------------------------------------------------
+
+1. STATIC, NOT A SINGLETON
+   No GameObject, no DontDestroyOnLoad, no scene placement. Pure static
+   class. This makes it usable from any layer (MonoBehaviour, plain C#,
+   ScriptableObject, editor scripts) with zero setup.
+
+2. KEYED BY TYPE
+   The dictionary key is `typeof(T)`. Each event type is its own channel,
+   and every subscriber receives a strongly-typed payload — no boxing,
+   no string keys, no magic numbers.
+
+3. Delegate.Combine / Delegate.Remove
+   Multiple subscribers per event are stored as a single multicast delegate.
+   Combine appends, Remove peels off. Storing a `Delegate` (instead of a
+   List<Action<T>>) keeps subscribe/unsubscribe O(1) and dispatch a single
+   invocation.
+
+----------------------------------------------------
+WALKTHROUGH
+----------------------------------------------------
+
+Code    : private static readonly Dictionary<Type, Delegate> subscribers
+              = new Dictionary<Type, Delegate>();
+Explain : One bucket per event type. The value is a multicast delegate of
+          all the Action<T> subscribers for that type, fused into a single
+          callable.
+
+Code    : public static void Subscribe<T>(Action<T> handler)
+Explain : Adds a handler to the channel for T. If the channel already has
+          subscribers, Delegate.Combine fuses the new handler onto the
+          existing multicast delegate; otherwise it becomes the first.
+
+Code    : public static void Unsubscribe<T>(Action<T> handler)
+Explain : Removes the handler. If the resulting delegate is null (last
+          subscriber gone), we drop the entry from the dictionary so we
+          don't keep empty buckets around forever.
+
+Code    : public static void Publish<T>(T evt)
+          {
+              if (subscribers.TryGetValue(typeof(T), out var del))
+                  (del as Action<T>)?.Invoke(evt);
+          }
+Explain : Cast the stored delegate back to Action<T> and invoke it. The
+          null-conditional handles the (rare) race where the only subscriber
+          unsubscribed between the dictionary lookup and the invocation.
+          Publishing an event that has no listeners is a no-op — by design.
+
+Code    : public static void ClearAll() => subscribers.Clear();
+Explain : Reset hatch for unit tests and full-game resets. In normal
+          gameplay you almost never need this.
+
+----------------------------------------------------
+USAGE EXAMPLES
+----------------------------------------------------
+
+// Subscribe in OnEnable, unsubscribe in OnDisable so we never leak
+// references to a destroyed MonoBehaviour.
+void OnEnable()  => EventBus.Subscribe<SceneLoadCompleteEvent>(OnLoaded);
+void OnDisable() => EventBus.Unsubscribe<SceneLoadCompleteEvent>(OnLoaded);
+
+void OnLoaded(SceneLoadCompleteEvent e) => Debug.Log($"Loaded {e.sceneName}");
+
+// Anywhere in your code:
+EventBus.Publish(new LoadSceneRequest { sceneName = "MainMenu" });
+
+----------------------------------------------------
+GOTCHAS
+----------------------------------------------------
+
+- Always Unsubscribe what you Subscribe. A subscriber on a destroyed
+  MonoBehaviour will throw on the next Publish.
+- Static state survives Domain Reload OFF in the editor. If you toggle
+  that off, call EventBus.ClearAll() on application start.
+- Events are dispatched synchronously on the publisher's thread. If a
+  handler throws, sibling handlers for the same event will not run.
