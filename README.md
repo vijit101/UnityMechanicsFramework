@@ -328,7 +328,7 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 | **Location** | [`Runtime/Inventory/`](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Runtime/Inventory) |
 | **Category** | Inventory |
 | **Demo Scene** | `Samples~/InventorySystem/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Tutorial](https://drive.google.com/file/d/1IZ9bSqIQozgqhEHWHphhEMAkeiYdhWut/view?usp=sharing) |
+
 
 **What it does**
 
