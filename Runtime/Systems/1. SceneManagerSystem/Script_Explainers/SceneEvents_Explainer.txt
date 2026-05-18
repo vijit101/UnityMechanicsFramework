@@ -1,0 +1,85 @@
+====================================================
+SCRIPT: SceneEvents.cs
+AUTHOR: Nymish
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+====================================================
+
+PURPOSE:
+The contract between SceneManager_UMFOSS and the rest of the game. Every
+notification the manager fires goes through one of these struct types on
+the EventBus. Any system anywhere in the project can subscribe to them
+without ever importing or referencing SceneManager_UMFOSS.
+
+----------------------------------------------------
+KEY DESIGN DECISIONS
+----------------------------------------------------
+
+1. STRUCTS, NOT CLASSES
+   Each event is a value type. They are short-lived, allocated on the
+   stack, and copied by value into subscribers. Zero garbage, zero GC
+   pressure on what may be hundreds of progress events per load.
+
+2. ONE STRUCT PER MEANING
+   We do not pack everything into a single SceneEvent with an enum tag.
+   Each kind of notification is its own type, so subscribers can opt in
+   to exactly what they need and the compiler enforces the payload shape.
+
+3. PLAIN PUBLIC FIELDS
+   No properties, no methods, no constructors. These are pure data
+   carriers. The simplicity is the point — easy to read, easy to publish.
+
+----------------------------------------------------
+THE EVENTS
+----------------------------------------------------
+
+SceneLoadStartEvent      { fromScene, toScene }
+  Fired the moment a scene load sequence begins, before the fade starts.
+  Use it to disable input, save state, or kick off a transition tween.
+
+SceneLoadProgressEvent   { progress }    // 0..1
+  Fired every frame during the async load. The manager normalizes Unity's
+  0..0.9 progress range to 0..1 so subscribers don't have to. Hook a
+  loading bar UI to this and you're done.
+
+SceneLoadCompleteEvent   { sceneName }
+  Fired once the new scene is fully active and the fade-in has finished.
+  This is the safe moment to enable gameplay input and run on-load logic.
+
+ScenePushedEvent         { sceneName }
+  Fired after an additive scene has been pushed onto the stack — typically
+  a pause menu, inventory overlay, or modal dialog.
+
+ScenePoppedEvent         { sceneName }
+  Fired after the top scene has been unloaded and the scene beneath it
+  has been re-promoted to active.
+
+SceneReloadedEvent       { sceneName }
+  Fired after the current scene has finished reloading. Useful for
+  HUDs that need to re-bind to whichever objects exist in the fresh copy.
+
+InputLockEvent           { locked }
+  Fired at the start of every transition (locked = true) and the end
+  (locked = false). Player controllers subscribe to this and gate their
+  input on it, which removes a whole class of "menu spam" bugs.
+
+----------------------------------------------------
+USAGE PATTERN
+----------------------------------------------------
+
+void OnEnable()
+{
+    EventBus.Subscribe<SceneLoadStartEvent>(OnStart);
+    EventBus.Subscribe<SceneLoadCompleteEvent>(OnComplete);
+}
+
+void OnDisable()
+{
+    EventBus.Unsubscribe<SceneLoadStartEvent>(OnStart);
+    EventBus.Unsubscribe<SceneLoadCompleteEvent>(OnComplete);
+}
+
+void OnStart(SceneLoadStartEvent e)
+    => Debug.Log($"Going from {e.fromScene} to {e.toScene}");
+
+void OnComplete(SceneLoadCompleteEvent e)
+    => Debug.Log($"Now in {e.sceneName}");

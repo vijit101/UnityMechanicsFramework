@@ -9,5 +9,12 @@
   },
   "dependencies": {
     "com.unity.textmeshpro": "3.0.6"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "Boomerang Weapon Demo",
+      "description": "God-of-War-style throw-and-return weapon with damage, knockback, camera shake, and one-click scene builder.",
+      "path": "Samples~/BoomerangWeapon"
+    }
+  ]
 }

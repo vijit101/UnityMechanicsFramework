@@ -1,0 +1,265 @@
+====================================================
+SCRIPT: Boomerang Weapon — DEMO SAMPLE SCRIPTS
+AUTHOR: Shrinibas Mahanta, Shreyas Garg, Sudharsan
+NAMESPACE: GameplayMechanicsUMFOSS.Samples.BoomerangWeapon
+====================================================
+
+This file explains every script in the demo SAMPLE folder.
+For runtime weapon scripts (BoomerangWeapon_UMFOSS, states, config, etc.),
+see Runtime/ScriptExplainer.txt.
+For an end-to-end execution trace of a single Throw → Catch cycle,
+see Samples~/BoomerangWeapon/ExecutionFlow.txt.
+
+
+PURPOSE OF THE SAMPLE:
+  Provides a fully wired demo scene that proves every acceptance
+  criterion: throw, embed, recall, catch, moving platforms, multi-weapon
+  switching, hit damage, and visual / audio feedback. None of these
+  behaviours live in the runtime weapon code — they are demonstrated by
+  composing the runtime API with sample-only glue scripts. This is
+  deliberate: a runtime weapon should not know about UI, particles,
+  cameras, or input.
+
+
+====================================================
+SCRIPT: BoomerangDemoController.cs
+FILE: Samples~/BoomerangWeapon/Assets/Scripts/Sample/BoomerangDemoController.cs
+====================================================
+
+Code    : public class BoomerangDemoController : MonoBehaviour
+Explain : Demo-only input router. Reads throw / recall / switch input,
+          aims, and toggles HUD state. It does NOT contain weapon logic
+          — it is the bridge between user input and the weapon's public
+          API (weapon.Throw / weapon.Recall).
+
+Code    : [SerializeField] private BoomerangWeapon_UMFOSS[] weapons;
+Explain : Array of in-scene weapons. The user has Axe and Spear by
+          default but more variants can be dropped in here.
+
+Code    : [SerializeField] private int throwMouseButton = 0;
+          [SerializeField] private KeyCode recallKey   = KeyCode.R;
+          [SerializeField] private KeyCode switchWeaponKey = KeyCode.Q;
+Explain : Inspector-configurable input bindings. The maintainer asked
+          for these so the user can rebind without editing code.
+          throwMouseButton uses the int convention 0=LMB, 1=RMB, 2=MMB
+          to match Input.GetMouseButtonDown.
+
+Code    : private void Update() { ... HandleInput() ... UpdateHUD() ... }
+Explain : Standard Unity tick. HandleInput reads the bindings and
+          calls the weapon API; UpdateHUD repaints the state label
+          and crosshair colour based on weapon.CurrentState.
+
+Code    : private bool GetThrowPressed()
+          private bool GetRecallPressed()
+          private bool GetSwitchPressed()
+Explain : Input abstraction. Each method tries the new Input System
+          first (Mouse.current / Keyboard.current) and falls back to
+          the Legacy Input Manager. The new-system path uses an
+          internal KeyCodeToKey() table to translate KeyCode →
+          UnityEngine.InputSystem.Key.
+
+Code    : private static Key KeyCodeToKey(KeyCode k)
+Explain : Hardcoded mapping table. Returns Key.None for unmapped
+          codes; callers fall back silently. Add new cases here if
+          a user picks a key that is not in the table.
+
+Code    : private Vector3 GetAimDirection()
+Explain : Performs a SphereCast from the camera centre. If a target
+          is hit within maxAimDistance, the throw direction is
+          recomputed to point at the hit position — a soft aim-assist.
+          Otherwise the throw aims at a far point along the camera ray.
+
+----------------------------------------------------
+
+====================================================
+SCRIPT: PlayerController.cs
+FILE: Samples~/BoomerangWeapon/Assets/Scripts/Sample/PlayerController.cs
+====================================================
+
+Code    : [RequireComponent(typeof(CharacterController))]
+Explain : Uses Unity's built-in CharacterController for movement
+          rather than a Rigidbody. CharacterController is preferred
+          for first-person FPS-style movement because it has its own
+          collision-and-slide logic and is easier to author with
+          fixed step-up / slope handling.
+
+Code    : private void Update()
+Explain : Reads WASD / Shift / Space and mouse delta. Computes the
+          movement vector relative to the camera's yaw. Applies
+          gravity. Calls characterController.Move(...). Does NOT
+          touch the weapon.
+
+Code    : void HandleMovingPlatform()
+Explain : Casts a short ray downward; if the hit object has an
+          ObstaclePatroller (or any moving Rigidbody), the player
+          is added to its delta position so they ride the platform.
+          This is the SAME mechanism the weapon relies on when
+          embedding — see Runtime/ScriptExplainer for the parenting
+          rationale.
+
+----------------------------------------------------
+
+====================================================
+SCRIPT: WeaponFeedbackHandler.cs
+FILE: Samples~/BoomerangWeapon/Assets/Scripts/Sample/WeaponFeedbackHandler.cs
+====================================================
+
+Code    : public class WeaponFeedbackHandler : MonoBehaviour
+Explain : Subscribes to the weapon's EventBus events and produces
+          juice — camera shake, hit-stop (brief Time.timeScale = 0).
+          Demonstrates the decoupling: this script holds zero
+          references to BoomerangWeapon_UMFOSS, yet reacts to
+          everything it does.
+
+Code    : EventBus.Subscribe<WeaponThrownEvent>(OnThrown);
+          EventBus.Subscribe<WeaponStuckEvent>(OnStuck);
+          EventBus.Subscribe<WeaponHitEvent>(OnHit);
+          EventBus.Subscribe<WeaponCaughtEvent>(OnCaught);
+Explain : All four channels are subscribed in Awake/OnEnable.
+          The weapon publishes; this handler decides what feedback
+          to play. Adding a new feedback type — say screen flash on
+          recall — only requires another subscriber, not a code
+          change in the weapon.
+
+Code    : OnDisable() { EventBus.Unsubscribe<...>(...) }
+Explain : Critical for avoiding leaks. EventBus subscriptions
+          persist across scene loads if the handler is destroyed
+          without unsubscribing. Always unsubscribe on disable.
+
+----------------------------------------------------
+
+====================================================
+SCRIPT: ImpactEffectSpawner.cs
+FILE: Samples~/BoomerangWeapon/Assets/Scripts/Sample/ImpactEffectSpawner.cs
+====================================================
+
+Code    : [SerializeField] private GameObject hitEffectPrefab;
+          [SerializeField] private GameObject stuckEffectPrefab;
+Explain : Generic prefabs (not ParticleSystem) so users can wire any
+          visual — a sprite, a decal, a ParticleSystem, or a custom
+          renderer — without modifying this script.
+
+Code    : private void OnHit(WeaponHitEvent e)
+          private void OnStuck(WeaponStuckEvent e)
+Explain : EventBus subscribers. Each spawns the matching prefab at
+          the event's contact point with a sensible up/normal
+          rotation. Lifetime of the spawned object is the prefab's
+          responsibility — usually a self-destruct script.
+
+----------------------------------------------------
+
+====================================================
+SCRIPT: TargetDummy.cs
+FILE: Samples~/BoomerangWeapon/Assets/Scripts/Sample/TargetDummy.cs
+====================================================
+
+Code    : [RequireComponent(typeof(Damageable))]
+Explain : The Damageable component (in Runtime/Combat/Damage) is
+          what actually receives damage. TargetDummy is the visual
+          and lifecycle wrapper: it owns the health bar UI, the
+          ragdoll Rigidbody, and the respawn timer.
+
+Code    : private void OnDeath()
+Explain : Subscribed to Damageable.OnDeath. Disables the collider
+          (so a dead dummy is not a hit target), enables the
+          ragdoll Rigidbody, and schedules respawn.
+
+Code    : private IEnumerator RespawnRoutine()
+Explain : Waits respawnDelay seconds. CRITICAL — before teleporting
+          the dummy back to its spawn point, it detaches any
+          children that are not part of the dummy's rig. This
+          prevents an embedded weapon from being teleported with
+          the corpse. The weapon falls under its own state machine
+          and (in our setup) auto-recalls when the target dies.
+
+----------------------------------------------------
+
+====================================================
+SCRIPT: TargetWanderer.cs
+FILE: Samples~/BoomerangWeapon/Assets/Scripts/Sample/TargetWanderer.cs
+====================================================
+
+Code    : private void Update()
+Explain : Picks a random direction every directionChangeMin to
+          directionChangeMax seconds, moves at moveSpeed, and clamps
+          position inside a bounding box around the spawn point.
+          Used to make the moving-target dummy worth hitting.
+
+Code    : private void OnDeath() / OnRespawn()
+Explain : Subscribes to TargetDummy events to pause movement on
+          death (so the ragdoll doesn't drift) and resume on
+          respawn.
+
+----------------------------------------------------
+
+====================================================
+SCRIPT: ObstaclePatroller.cs
+FILE: Samples~/BoomerangWeapon/Assets/Scripts/Sample/ObstaclePatroller.cs
+====================================================
+
+Code    : [RequireComponent(typeof(Rigidbody))]
+Explain : A kinematic Rigidbody is REQUIRED here. Moving a non-
+          rigidbody transform breaks Unity's contact-point cache
+          and the embedded weapon will look like it's vibrating.
+
+Code    : private void FixedUpdate() { rb.MovePosition(...); }
+Explain : MovePosition is the correct API for kinematic moving
+          platforms. It interpolates the body's pose for the next
+          physics step so colliders, parent constraints, and any
+          embedded weapons (parented in EmbeddedState.OnEnter)
+          follow smoothly.
+
+----------------------------------------------------
+
+====================================================
+SCRIPT: BoomerangDemoSceneBuilder.cs (Editor)
+FILE: Samples~/BoomerangWeapon/Editor/BoomerangDemoSceneBuilder.cs
+====================================================
+
+Code    : [MenuItem("UMF/Build Boomerang Demo Scene")]
+Explain : One-click scene builder. Spawns the player rig, two
+          weapons, target dummies, moving platforms, walls, and
+          all the wiring needed for the demo to work on Play.
+
+WHY IT EXISTS:
+  Unity .unity scene files are binary and very brittle in PRs —
+  small changes produce massive diffs. A code-driven scene builder
+  is reproducible, reviewable, and survives Unity version bumps.
+
+WHEN NOT TO USE IT:
+  The maintainer asked for a manual setup path — see
+  Samples~/BoomerangWeapon/AxePrefabSetup.md for step-by-step
+  instructions to build the same setup by hand. The build tool
+  is for convenience; the manual path is the canonical reference.
+
+----------------------------------------------------
+
+====================================================
+ENTRY AND EXIT POINTS
+====================================================
+
+ENTRY POINTS (where execution begins each frame):
+
+  • PlayerController.Update()           — movement input
+  • BoomerangDemoController.Update()    — weapon input + HUD
+  • WeaponFeedbackHandler (Awake)       — subscribes to EventBus
+
+  Inside the runtime, the only public entry points to the weapon
+  are:
+    BoomerangWeapon_UMFOSS.Throw(direction)
+    BoomerangWeapon_UMFOSS.Recall()
+
+EXIT POINTS:
+
+  There is no global termination. The weapon system runs for the
+  lifetime of the GameObject. Per-cycle exits are well-defined:
+
+    • A throw exits when the weapon embeds (collision OR MaxRange).
+    • A recall exits when CatchDistance is reached.
+    • A recall may exit early if the embedded target dies.
+
+  On scene unload / GameObject destroy:
+    • Each MonoBehaviour's OnDisable / OnDestroy runs.
+    • EventBus subscribers MUST unsubscribe in OnDisable to avoid
+      stale callbacks. WeaponFeedbackHandler and ImpactEffectSpawner
+      both do this.

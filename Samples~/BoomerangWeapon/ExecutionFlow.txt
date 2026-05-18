@@ -1,0 +1,249 @@
+BOOMERANG WEAPON — EXECUTION FLOW
+======================================
+
+This document traces every script the moment the demo scene starts, all the way
+through a full Throw → Embed → Recall → Catch cycle. Read this BEFORE the
+ScriptExplainer to understand which scripts call which.
+
+A separate ScriptExplainer.txt lives inside the project zip and walks through
+every individual class line-by-line. This file answers "where does control
+flow start and where does it end?" — the entry and exit points.
+
+
+────────────────────────────────────────────────
+ENTRY POINTS — WHERE CODE FIRST RUNS
+────────────────────────────────────────────────
+
+There are TWO entry points in the demo scene. Both run on Awake():
+
+  1. PlayerController                (movement + camera)
+       ↳ Reads WASD / Shift / Space / mouselook
+       ↳ Calls characterController.Move(...) every frame
+
+  2. BoomerangDemoController         (weapon input + HUD)
+       ↳ Reads throw / recall / switch keys (configurable in Inspector)
+       ↳ Calls weapon.Throw(direction) or weapon.Recall()
+
+Both controllers are MonoBehaviours sitting on the Player GameObject.
+They do NOT talk to each other — they read different inputs and drive
+different systems. This is intentional: keep input concerns separate.
+
+
+────────────────────────────────────────────────
+THE FULL FLOW — A SINGLE THROW → CATCH CYCLE
+────────────────────────────────────────────────
+
+[Frame 0]  Awake — wiring up references
+─────────────────────────────────────────
+
+  BoomerangWeapon_UMFOSS.Awake()
+    1. Validates the BoomerangConfig ScriptableObject is assigned.
+    2. Looks up an IPhysicsAdapter component. If missing and a Rigidbody
+       exists, auto-attaches Physics3DAdapter.
+    3. Constructs a BoomerangContext (shared blackboard).
+    4. Constructs a StateMachine<WeaponStateKey> with four states:
+         EquippedState, ThrownState, EmbeddedState, RecallingState.
+    5. Stores the state machine on the context so states can trigger
+       transitions on each other without going back through this script.
+
+  BoomerangWeapon_UMFOSS.Start()
+    6. Tells the state machine to enter the Equipped state.
+
+  EquippedState.OnEnter()
+    7. Reparents the weapon to context.HandSocket.
+    8. Resets local position/rotation to identity so the weapon snaps
+       cleanly into the hand.
+    9. Disables physics (kinematic, no triggers).
+   10. Stops the visual spin (WeaponVisualHandler.Stop).
+
+
+[Frame N]  User clicks Throw key
+─────────────────────────────────────────
+
+  BoomerangDemoController.Update()
+   → HandleInput()
+       → GetThrowPressed()                    ← reads Inspector input binding
+       → weapon.IsEquipped check (gates input)
+       → GetAimDirection()                    ← SphereCast aim assist
+   → weapon.Throw(direction)
+
+  BoomerangWeapon_UMFOSS.Throw(direction)
+    11. Verifies CurrentState == Equipped.
+    12. Stores ThrowDirection / ThrowOrigin on the context.
+    13. stateMachine.ChangeState(Thrown).
+
+  EquippedState.OnExit()
+    14. Unparents the weapon (SetParent(null)).
+
+  ThrownState.OnEnter()
+    15. Enables physics (kinematic = false).
+    16. Calls IPhysicsAdapter.SetVelocity(direction * throwForce).
+    17. Starts the visual spin (RotationPerSecond from config).
+    18. Publishes WeaponThrownEvent on the EventBus.
+
+  EventBus subscribers fire:
+    • WeaponFeedbackHandler  → camera shake, throw audio, motion blur
+    • Any other listener (UI, analytics, gameplay) without coupling.
+
+
+[Frames N+1 … M]  Weapon is in flight
+─────────────────────────────────────────
+
+  ThrownState.Update()
+    19. Reads current position, computes distance from ThrowOrigin.
+    20. If distance >= MaxRange:
+          a. Freezes physics (zero velocity, kinematic = true).
+          b. stateMachine.ChangeState(Embedded).  ← "stuck in air"
+    21. Otherwise the weapon keeps flying under physics velocity.
+        WeaponVisualHandler.Tick() spins the visual pivot.
+
+  ThrownState.HandleCollision(collision)         ← invoked by parent on
+                                                   OnCollisionEnter
+    22. If the hit object is on HurtboxLayer:
+          a. HitDetector resolves the IDamageable and applies damage.
+          b. Publishes WeaponHitEvent.
+          c. May embed in the target if the config allows it.
+    23. If the hit object is on StuckLayer:
+          a. Stores LastCollision on the context.
+          b. stateMachine.ChangeState(Embedded).
+
+
+[Frame M]  Weapon embeds in a surface
+─────────────────────────────────────────
+
+  ThrownState.OnExit()
+    24. Stops the visual spin.
+
+  EmbeddedState.OnEnter()
+    25. Reads context.LastCollision for the hit point and surface normal.
+    26. Sets weapon kinematic, zeros velocity.
+    27. Reorients the weapon perpendicular to the hit surface
+        (LookRotation(-normal)).
+    28. Reparents to the hit transform — moving platforms / enemies
+        will now carry the weapon for free.
+    29. Publishes WeaponStuckEvent.
+
+  EventBus subscribers fire:
+    • WeaponFeedbackHandler  → impact shake, hit-stop, dust particles
+    • ImpactEffectSpawner    → spawns environmental decals
+
+
+[Frame P]  User clicks Recall key
+─────────────────────────────────────────
+
+  BoomerangDemoController.Update()
+   → HandleInput()
+       → GetRecallPressed()
+       → !weapon.IsEquipped check (only meaningful if not Equipped)
+   → weapon.Recall()
+
+  BoomerangWeapon_UMFOSS.Recall()
+    30. Verifies state is Thrown or Embedded.
+    31. stateMachine.ChangeState(Recalling).
+
+  EmbeddedState.OnExit() (or ThrownState.OnExit() for mid-air recall)
+    32. Unparents from the embedded surface.
+
+  RecallingState.OnEnter()
+    33. Stores the start position and builds the Bezier control point
+        using BezierUtils.GetArcControlPoint().
+    34. Starts at zero return speed (will accelerate over the recall).
+    35. Re-enables the visual spin.
+    36. Publishes WeaponRecallStartedEvent.
+
+
+[Frames P+1 … Q]  Weapon arcs back
+─────────────────────────────────────────
+
+  RecallingState.Update()
+    37. Ramps currentReturnSpeed toward maxReturnSpeed via
+        Mathf.MoveTowards (the "snap" feel).
+    38. Advances the Bezier parameter t along the arc.
+    39. Sets transform.position to BezierUtils.QuadraticBezier(...).
+    40. Optionally checks for hit targets along the return path
+        (HitDetector with a HashSet to avoid re-hitting same target).
+    41. When transform is within CatchDistance of HandSocket:
+          a. stateMachine.ChangeState(Equipped).
+
+
+[Frame Q]  Weapon caught
+─────────────────────────────────────────
+
+  RecallingState.OnExit()
+    42. Stops visual spin.
+
+  EquippedState.OnEnter() (re-entry)
+    43. Reparents to HandSocket, snaps local pose.
+    44. Kinematic, no physics.
+    45. Publishes WeaponCaughtEvent.
+
+  EventBus subscribers fire:
+    • WeaponFeedbackHandler  → catch sound, brief flash
+    • UI                     → HUD reflects "ready to throw"
+
+
+────────────────────────────────────────────────
+EXIT POINTS — WHERE CODE STOPS
+────────────────────────────────────────────────
+
+There is no "main" exit point. The weapon system runs forever for the
+lifetime of the GameObject. Loops terminate at well-defined points:
+
+  • Throw    exits when the weapon embeds (collision OR MaxRange).
+  • Recall   exits when CatchDistance is reached.
+  • Recall   may also exit early if the embedded target dies — the
+             EmbeddedState subscribes to the target's death event and
+             auto-recalls.
+
+When the GameObject is destroyed:
+  • The state machine's current state OnExit() fires once.
+  • EventBus subscriptions made by feedback handlers are removed in
+    their own OnDestroy() — never in the weapon scripts themselves.
+
+
+────────────────────────────────────────────────
+WHO CALLS WHO — CALL GRAPH
+────────────────────────────────────────────────
+
+  PlayerController                   (input → CharacterController.Move)
+                                     [does not touch the weapon]
+
+  BoomerangDemoController            (input → weapon API)
+       ↓
+       weapon.Throw / weapon.Recall  ← only public entry points
+       ↓
+  BoomerangWeapon_UMFOSS             (orchestrator, no logic)
+       ↓
+       StateMachine<WeaponStateKey>  (dispatches Update / FixedUpdate)
+       ↓
+       EquippedState / ThrownState / EmbeddedState / RecallingState
+       ↓                                   ↓
+       BoomerangContext                   EventBus.Publish<...>(...)
+       (shared blackboard:
+        Transform, IPhysicsAdapter,
+        Config, HitDetector, ...)
+                                           ↓
+                                   WeaponFeedbackHandler / UI / VFX
+                                   (decoupled subscribers — never
+                                    referenced from weapon scripts)
+
+
+────────────────────────────────────────────────
+INPUT BINDINGS — RECONFIGURABLE
+────────────────────────────────────────────────
+
+BoomerangDemoController exposes three Inspector fields under the
+"Input Bindings" header:
+
+   throwMouseButton  (int)      — 0 = LMB, 1 = RMB, 2 = MMB
+   recallKey         (KeyCode)  — default R
+   switchWeaponKey   (KeyCode)  — default Q
+
+These map to BOTH the Legacy Input Manager AND the new Input System
+package. The new-input-system path uses an internal KeyCodeToKey()
+table to translate the Inspector KeyCode into the runtime Key enum.
+
+If a KeyCode lacks a mapping in the new Input System table, the demo
+falls back silently (no error, just no input). Add cases to the
+switch in BoomerangDemoController.KeyCodeToKey if you need a key
+that isn't already mapped.

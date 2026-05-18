@@ -1,0 +1,57 @@
+====================================================
+SCRIPT: PersistentScene_UMFOSS.cs
+AUTHOR: Nymish
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+====================================================
+
+PURPOSE:
+A one-line component that marks a GameObject as belonging to the persistent
+"bootstrap" scene — the scene that hosts your AudioManager, SaveSystem,
+SceneManager_UMFOSS, and any other singletons that must survive every
+scene load.
+
+----------------------------------------------------
+WHY THIS EXISTS
+----------------------------------------------------
+
+SceneManager_UMFOSS' transition logic refuses to unload the persistent
+scene. That contract is enforced by name: the manager has a
+`persistentSceneName` field, and any scene matching that name is left alone.
+
+But there is one extra failure mode we want to defend against:
+a developer accidentally drops a singleton into the wrong scene, or a
+designer drags a manager prefab into a level scene "just to test something".
+On the next LoadScene call, that singleton would be destroyed.
+
+PersistentScene_UMFOSS exists as a belt-and-braces guard. Even if the
+manager logic is bypassed entirely, every GameObject carrying this component
+calls DontDestroyOnLoad and survives.
+
+----------------------------------------------------
+THE CODE
+----------------------------------------------------
+
+Code    : public class PersistentScene_UMFOSS : MonoBehaviour
+Explain : Plain MonoBehaviour. No state, no events, no public API. Its
+          presence on a GameObject is the message.
+
+Code    : private void Awake() => DontDestroyOnLoad(gameObject);
+Explain : Unity's built-in mechanism for promoting a GameObject to the
+          internal "DontDestroyOnLoad" scene. Once promoted, the object is
+          immune to LoadSceneMode.Single calls and to any UnloadSceneAsync.
+
+----------------------------------------------------
+WHEN TO USE IT
+----------------------------------------------------
+
+- On the "_Bootstrap" GameObject in your PersistentScene.
+- Anywhere you have a singleton that you want to survive even outside
+  the SceneManager_UMFOSS flow (e.g. a third-party plugin's manager).
+
+----------------------------------------------------
+WHEN NOT TO USE IT
+----------------------------------------------------
+
+- On gameplay objects, level geometry, NPCs. They should be re-created
+  per scene. Marking everything as persistent leaks memory and corrupts
+  scene state across loads.

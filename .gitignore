@@ -72,4 +72,9 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # Additional junk files
+.DS_Store
 *.ini
+
+# Video stitching workspace (raw takes are local-only, never committed)
+**/raw-takes/
+**/concat-list.txt
