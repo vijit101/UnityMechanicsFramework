@@ -1,0 +1,88 @@
+================================================================
+  ScriptExplainer — StateHistory_UMFOSS.cs
+  Namespace: GameplayMechanicsUMFOSS.Core
+================================================================
+
+WHAT THIS SCRIPT IS
+-------------------
+A bounded ring of state-transition records. The state machine pushes
+an entry on every ChangeState and stamps duration on the previous
+entry when its state exits.
+
+Used for:
+- The Inspector overlay showing the last N transitions in real time
+- Debugging "how did the player end up in this state?"
+- Analytics / replay logging in development builds
+
+
+WHY A QUEUE WITH A CAPACITY CAP
+--------------------------------
+A state machine running for an hour generates thousands of transitions.
+Storing all of them is wasteful when the only reason to keep history
+is "what just happened, recently". A ring buffer of size 10 (default)
+is plenty for live debugging and never grows.
+
+When the queue hits capacity, the oldest entry is dequeued before the
+new one is enqueued — classic FIFO behaviour with a fixed window.
+
+
+WHY MarkCurrentExited IS SEPARATE FROM Record
+----------------------------------------------
+Each transition involves two events:
+1. The PREVIOUS state ends — we now know its duration.
+2. The NEW state begins — we know its name and start time, but its
+   duration is "still running" (zero so far).
+
+Record() handles event 2: enqueues a new entry with duration = 0.
+MarkCurrentExited() handles event 1: looks at the most recent entry
+and stamps the elapsed time before the next Record() runs.
+
+Splitting the two means the engine can call them in the right order:
+MarkCurrentExited (close out the old state) → Record (open the new).
+
+
+WHY THE COPY-MUTATE-CLEAR-ENQUEUE DANCE IN MarkCurrentExited
+-------------------------------------------------------------
+Queue<T> in C# does not let you mutate the tail entry in place. The
+implementation here:
+1. Snapshots the queue into an array
+2. Mutates the last entry's duration
+3. Clears the queue
+4. Re-enqueues all entries
+
+This is O(N) where N is capacity (10 by default) — one transition. It
+runs at most once per ChangeState, so the cost is invisible. Trying to
+optimise further would require switching to a custom ring buffer; not
+worth the complexity for a debug-time data structure.
+
+
+WHY THE ENTRY TYPE IS A STRUCT
+-------------------------------
+StateHistoryEntry holds a string and two floats. Allocating a class
+per entry would generate garbage on every transition. As a struct it
+lives on the queue's backing array — no GC pressure.
+
+The fields are public mutable because MarkCurrentExited needs to write
+duration. A read-only struct would force an extra copy.
+
+
+HOW TO USE IT (NORMALLY YOU DON'T DIRECTLY)
+--------------------------------------------
+The state machine drives the history internally. To READ the history:
+
+    var fsm = new StateMachine_UMFOSS();
+    // ... transitions happen ...
+    foreach (var entry in fsm.History.GetHistory())
+        Debug.Log($"{entry.stateName} for {entry.duration}s");
+
+
+COMMON MISTAKES
+---------------
+1. Calling GetLatest() on an empty history
+   Throws (Last() throws on an empty Queue). Caller must check first
+   or guard with GetHistory().Any().
+
+2. Treating history as a complete log
+   It is bounded. If you need a full audit trail, subscribe to
+   StateChangedEvent on the EventBus and persist the events yourself.
+================================================================

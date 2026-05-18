@@ -1,0 +1,72 @@
+================================================================
+  ScriptExplainer — ReadOnlyAttribute.cs
+  Namespace: GameplayMechanicsUMFOSS.Core
+================================================================
+
+WHAT THIS SCRIPT IS
+-------------------
+A one-line PropertyAttribute that marks a serialized field as
+display-only in the Inspector. The actual greying-out is done by
+the matching ReadOnlyDrawer in Editor/ReadOnly/ReadOnlyDrawer.cs.
+
+Used by StateMachineDebugger_UMFOSS to show live state info that the
+user must not edit by hand.
+
+
+WHY A CUSTOM ATTRIBUTE INSTEAD OF [HideInInspector]
+----------------------------------------------------
+[HideInInspector] hides the field entirely. We want the OPPOSITE: show
+the field, just do not let the user type into it. Unity has no built-in
+attribute for that, so we provide one.
+
+Marking a field [ReadOnly] is a stronger contract than a comment that
+says "do not edit". The drawer enforces it.
+
+
+WHY THE RUNTIME ATTRIBUTE IS SEPARATE FROM THE EDITOR DRAWER
+-------------------------------------------------------------
+Unity's editor code lives in a different assembly from runtime code.
+PropertyAttribute is a runtime base class — it must be in Runtime/.
+PropertyDrawer is an editor base class — it must be in Editor/.
+
+If we put both in one file, the runtime build would not compile. If
+we put both in Editor/, we could not annotate runtime fields. The
+split is required.
+
+
+HOW TO USE IT
+-------------
+    using GameplayMechanicsUMFOSS.Core;
+
+    public class HealthBar : MonoBehaviour
+    {
+        [SerializeField, ReadOnly]
+        private float currentHealth;
+    }
+
+The Inspector will show currentHealth's value live, but the field
+will be greyed out — typing has no effect.
+
+
+WHY NO SERIALIZATION OF THE ATTRIBUTE ITSELF
+---------------------------------------------
+PropertyAttribute is a class with no fields. Unity sees it as a
+marker on the target field. It carries no state — it only signals
+"use the matching drawer here".
+
+
+COMMON MISTAKES
+---------------
+1. Applying [ReadOnly] without [SerializeField]
+   Unity only renders fields it serializes. A non-serialized field
+   does not show in the Inspector regardless of attribute.
+
+2. Expecting [ReadOnly] to lock the value at runtime
+   The attribute only affects the Inspector. Code can still write
+   the field freely. To make a field truly immutable, declare it
+   `private readonly` (instance) or use a property with no setter.
+
+3. Forgetting the drawer
+   Without ReadOnlyDrawer in Editor/ReadOnly/ReadOnlyDrawer.cs the
+   attribute is a no-op. They ship together.
+================================================================

@@ -1,0 +1,130 @@
+================================================================
+  ScriptExplainer — StateMachine_UMFOSS.cs
+  Namespace: GameplayMechanicsUMFOSS.Core
+================================================================
+
+WHAT THIS SCRIPT IS
+-------------------
+The engine. Holds the current state, evaluates registered transitions
+each Tick(), routes Update / FixedUpdate calls to the active state,
+publishes lifecycle events, and records history.
+
+Plain C# class — not a MonoBehaviour. The owner MonoBehaviour calls
+Tick() from Update() and FixedTick() from FixedUpdate().
+
+
+WHY PLAIN C# AND NOT A MONOBEHAVIOUR
+-------------------------------------
+Three reasons:
+
+1. Testable without Unity Play Mode. The order test in Tests/Runtime
+   instantiates StateMachine_UMFOSS directly and asserts behaviour.
+   Cannot do that with a MonoBehaviour.
+
+2. Reusable outside GameObjects. A non-visual system (game flow,
+   matchmaking session, dialogue runner) can own an FSM without
+   needing a scene object.
+
+3. Decouples the engine from Unity's lifecycle. The owner decides
+   when Tick() runs — Update, FixedUpdate, a manual cadence. The
+   engine has no opinion.
+
+
+THE TRANSITION DICTIONARY + ANY-TRANSITIONS LIST
+-------------------------------------------------
+- transitions      : Dictionary<state, List<rule>> — per-state outgoing rules
+- anyTransitions   : List<rule>                    — global rules
+
+GetTriggeredTransition() checks anyTransitions FIRST. This is the rule
+that makes death and stun reliable: no matter what state the player
+is in, "if health <= 0 go to Dead" wins. Per-state rules only run if
+no any-transition fired.
+
+
+WHY currentTransitions IS CACHED
+---------------------------------
+On every ChangeState we look up transitions[currentState] once and
+store it in currentTransitions. Tick() then iterates this cached list
+instead of dictionary-lookup-then-iterate. Saves a hash lookup per frame.
+
+EmptyTransitions is a shared, zero-capacity sentinel so a state with
+no outgoing rules still iterates a real (empty) list — no null guards
+needed in the hot path.
+
+
+THE SELF-TRANSITION GUARD
+-------------------------
+ChangeState(currentState) returns immediately. Without this guard,
+asking the FSM to "go to Idle" while already in Idle would call
+OnExit then OnEnter on the same instance — a re-entry that breaks
+animation triggers, timers, and history.
+
+Tests/Runtime/StateMachine/StateMachineOrderTest_UMFOSS asserts this
+behaviour explicitly.
+
+
+THE EVENT TRIPLET
+-----------------
+Every successful ChangeState publishes three EventBus events:
+
+    StateExitedEvent  → fired AFTER OnExit on previous state
+    StateEnteredEvent → fired AFTER OnEnter on new state
+    StateChangedEvent → fired LAST, carries previous + new + timestamp
+
+Order matters. A debugger that wants the duration of the just-exited
+state subscribes to StateExitedEvent. A UI that wants to show the new
+state name subscribes to StateEnteredEvent. The triplet means
+listeners do not need to maintain their own state-change diff.
+
+
+THE owner FIELD
+---------------
+Used as the "who is publishing" tag on every event. The debugger
+filters events by owner == its gameObject so two FSMs on two
+different GameObjects do not show each other's transitions in the
+Inspector overlay.
+
+Constructor takes object (not GameObject) because non-Unity owners
+exist — a pure data class can run an FSM and be its own owner.
+
+
+HOW TO USE IT
+-------------
+    public class PlayerController : MonoBehaviour
+    {
+        private StateMachine_UMFOSS fsm;
+        private IdleState idle;
+        private RunState  run;
+
+        void Awake()
+        {
+            fsm  = new StateMachine_UMFOSS(this);
+            idle = new IdleState(this);
+            run  = new RunState(this);
+
+            fsm.AddTransition(idle, run, () => Mathf.Abs(input.x) > 0.01f);
+            fsm.AddTransition(run,  idle, () => Mathf.Abs(input.x) < 0.01f);
+
+            fsm.ChangeState(idle);
+        }
+
+        void Update()      => fsm.Tick();
+        void FixedUpdate() => fsm.FixedTick();
+    }
+
+
+COMMON MISTAKES
+---------------
+1. Forgetting the initial ChangeState in Awake/Start
+   currentState is null until the first ChangeState. Tick() with no
+   current state is safe (null-conditional) but nothing will run.
+
+2. Calling Tick() from FixedUpdate
+   Tick() ticks the *frame* state. FixedTick() ticks the *physics*
+   state. Mixing them either re-evaluates transitions on every fixed
+   update (wasteful) or never (broken).
+
+3. Mutating transition lists at runtime
+   The dictionary and list fields are not threadsafe. Add transitions
+   during setup, not during Tick().
+================================================================

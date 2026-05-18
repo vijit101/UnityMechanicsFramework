@@ -1,0 +1,67 @@
+================================================================
+  ScriptExplainer — IState_UMFOSS.cs
+  Namespace: GameplayMechanicsUMFOSS.Core
+================================================================
+
+WHAT THIS SCRIPT IS
+-------------------
+The contract every state in the FSM must implement. Four methods —
+OnEnter, OnTick, OnFixedTick, OnExit — that the state machine calls
+at well-defined points in the Unity update lifecycle.
+
+This is an interface, not a class. It does not run by itself; it
+defines the shape of a state so the StateMachine_UMFOSS engine can
+drive any state polymorphically.
+
+
+WHY AN INTERFACE INSTEAD OF AN ABSTRACT CLASS
+---------------------------------------------
+States rarely share implementation. They share a SHAPE: "you must
+respond to enter, tick, fixed tick, exit". An interface communicates
+that contract without locking implementers into a base class hierarchy.
+
+A concrete state can already inherit from another class (a struct of
+shared logic, a builder, etc.). Forcing them to also inherit a base
+state class would be a needless constraint.
+
+
+WHY FOUR METHODS — AND WHY THESE FOUR
+-------------------------------------
+- OnEnter      : runs once on transition in — set up timers, flags, animations
+- OnTick       : runs every Update()      — input, gameplay logic, timers
+- OnFixedTick  : runs every FixedUpdate() — Rigidbody / physics writes only
+- OnExit       : runs once on transition out — clean up flags, restore values
+
+Splitting Tick from FixedTick mirrors Unity's Update vs FixedUpdate
+distinction. Putting physics writes inside OnTick causes jitter at
+non-physics framerates; OnFixedTick keeps them on the physics clock.
+
+
+HOW TO IMPLEMENT IT
+-------------------
+    private class IdleState : IState_UMFOSS
+    {
+        public void OnEnter()      { /* play idle anim */ }
+        public void OnTick()       { /* read input, tick coyote timer */ }
+        public void OnFixedTick()  { /* nothing — idle does not move */ }
+        public void OnExit()       { /* nothing */ }
+    }
+
+Empty bodies are fine. A state that does not need OnFixedTick simply
+leaves it empty — the cost is one virtual call per fixed update.
+
+
+COMMON MISTAKES
+---------------
+1. Calling fsm.ChangeState(...) inside OnEnter
+   The machine is still mid-transition. Set a flag in OnEnter and let
+   OnTick on the next frame trigger the next transition.
+
+2. Storing config (moveSpeed, jumpForce) inside the state class
+   Stale data if the owner changes them mid-run. Store config on the
+   MonoBehaviour owner; the state reads from owner each tick.
+
+3. Forgetting OnExit cleanup
+   If OnEnter sets rb.gravityScale = 0, OnExit must restore it. Otherwise
+   the next state inherits the wrong gravity.
+================================================================

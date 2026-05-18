@@ -1,0 +1,101 @@
+================================================================
+  ScriptExplainer — StateMachineEvents_UMFOSS.cs
+  Namespace: GameplayMechanicsUMFOSS.Core
+================================================================
+
+WHAT THIS SCRIPT IS
+-------------------
+Three event payload structs that StateMachine_UMFOSS publishes through
+EventBus_UMFOSS on every transition:
+
+    StateExitedEvent  — a state just finished its OnExit
+    StateEnteredEvent — a state just finished its OnEnter
+    StateChangedEvent — the transition is complete (carries both names)
+
+Plain data structs. No methods, no logic. They exist so listeners can
+react to state changes without holding a reference to the FSM itself.
+
+
+WHY STRUCTS, NOT CLASSES
+------------------------
+- Structs avoid GC allocation when published frequently. State
+  transitions can fire dozens of times a second across many entities;
+  every alloc would feed the GC.
+- Events are immutable data snapshots. A struct's value semantics fits
+  that intent.
+- They are tiny — just a few fields. Class overhead is wasted.
+
+
+WHY THREE EVENTS INSTEAD OF ONE
+-------------------------------
+Different listeners want different moments:
+
+- A VFX system wants to KNOW the moment a state ends so it can stop
+  particles. → StateExitedEvent
+- An audio system wants to play a one-shot when the new state begins.
+  → StateEnteredEvent
+- A debug overlay or analytics ingestor wants both names plus a
+  timestamp in one payload. → StateChangedEvent
+
+A single combined event would force every listener to redundantly
+record the previous state to detect transitions. Three events let
+each listener subscribe to exactly what it cares about.
+
+
+THE owner FIELD
+---------------
+Identifies which FSM produced the event (set to the StateMachine_UMFOSS
+constructor's owner argument). Listeners filter by owner so events
+from one player's FSM do not trigger another player's UI.
+
+Typed as object (not GameObject) so non-Unity owners are supported.
+The debugger casts: `e.owner as Object` then compares to gameObject.
+
+
+WHY duration IS ON THE EXIT EVENT, NOT ENTER
+---------------------------------------------
+duration = time-spent-in-the-state. That value is only known when
+the state is exiting. Putting it on EnteredEvent would either mean
+"duration of the state I just left" (confusing) or be impossible to
+fill (the new state has zero duration). Keeping it on ExitedEvent
+makes the field's meaning unambiguous.
+
+
+WHY timestamp IS ONLY ON CHANGED, NOT ENTERED
+----------------------------------------------
+StateChangedEvent is the single "transition complete" signal — the
+authoritative moment the timestamp refers to. EnteredEvent fires at
+the same moment, but its purpose is "react to entry", not "log time".
+Splitting concerns keeps each struct minimally typed.
+
+
+HOW TO SUBSCRIBE
+----------------
+    void OnEnable()
+    {
+        EventBus_UMFOSS.Subscribe<StateChangedEvent>(OnChanged);
+    }
+
+    void OnDisable()
+    {
+        EventBus_UMFOSS.Unsubscribe<StateChangedEvent>(OnChanged);
+    }
+
+    void OnChanged(StateChangedEvent e)
+    {
+        if ((e.owner as Object) != gameObject) return;
+        Debug.Log($"{e.previousStateName} → {e.newStateName} @ {e.timestamp}");
+    }
+
+
+COMMON MISTAKES
+---------------
+1. Forgetting to unsubscribe in OnDisable
+   The bus holds a strong reference. A scene reload leaks subscribers
+   that point at destroyed components — eventually causing
+   MissingReferenceException on dispatch.
+
+2. Filtering by GetType() instead of owner
+   Two players have the same component type but different owner
+   GameObjects. Filter on owner identity, not type.
+================================================================

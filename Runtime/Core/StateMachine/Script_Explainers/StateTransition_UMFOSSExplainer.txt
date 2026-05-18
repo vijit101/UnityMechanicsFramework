@@ -1,0 +1,73 @@
+================================================================
+  ScriptExplainer — StateTransition_UMFOSS.cs
+  Namespace: GameplayMechanicsUMFOSS.Core
+================================================================
+
+WHAT THIS SCRIPT IS
+-------------------
+A single transition rule: "if this condition returns true, switch to
+that target state". Wraps a Func<bool> condition and an IState_UMFOSS
+target into one immutable object.
+
+The state machine stores lists of these — per-state and global
+(anyTransitions) — and asks each one "should you fire?" every Tick().
+
+
+WHY A SEPARATE CLASS INSTEAD OF A TUPLE OR DICTIONARY
+------------------------------------------------------
+A transition is a domain concept, not a generic pair of values. Naming
+it lets the state machine code read like the design:
+
+    foreach (var t in currentTransitions)
+        if (t.ShouldTransition()) return t;
+
+Tuples or anonymous types would force the engine to know the layout
+of the pair. The class hides that — callers only use ShouldTransition()
+and GetTargetState().
+
+
+WHY THE CONDITION IS A Func<bool>, NOT A bool FIELD
+----------------------------------------------------
+A bool field would freeze at the value it had when the transition was
+registered. A Func<bool> is evaluated fresh every frame, so the state
+machine reads the latest game state every Tick().
+
+Typical conditions look like:
+
+    fsm.AddTransition(idle, run,  () => Mathf.Abs(input.x) > 0.01f);
+    fsm.AddTransition(run,  idle, () => Mathf.Abs(input.x) < 0.01f);
+    fsm.AddAnyTransition(dead,    () => health <= 0);
+
+
+WHY THE NULL CHECKS IN THE CONSTRUCTOR
+---------------------------------------
+A null condition would NullReferenceException inside the FSM tick loop —
+far from the call site that registered it. A null targetState would
+crash inside ChangeState. Both are user errors, both are silent until
+the offending transition fires. The explicit ArgumentNullException
+fails at registration time, which is when the human is right there to
+fix it.
+
+
+HOW TO USE IT (NORMALLY YOU DON'T DIRECTLY)
+--------------------------------------------
+You almost never construct a StateTransition_UMFOSS yourself. You call
+fsm.AddTransition(...) or fsm.AddAnyTransition(...), and the state
+machine creates the transition internally.
+
+The class is public so advanced consumers (custom registries, editor
+tooling) can build transitions outside the standard API.
+
+
+COMMON MISTAKES
+---------------
+1. Putting expensive logic inside the condition lambda
+   The lambda runs every frame for every active transition. Keep it
+   to flag reads and simple comparisons. Move heavy computation into
+   the state's OnTick.
+
+2. Capturing mutable variables you forget about
+   Lambdas close over their environment. () => isHurt captures whatever
+   "isHurt" is at the call site. Be sure that the captured variable is
+   the live, current one — not a snapshot.
+================================================================

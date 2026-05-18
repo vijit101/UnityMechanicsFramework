@@ -199,6 +199,8 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 
 | 6 | [Screen Shake System](#6-screen-shake-system) | [Paramjeet Kaur](https://github.com/kauxp) | Systems | [▶ Watch](Samples~/ScreenShakeExample/Video/ScreenShakeTutorial.mp4) |
 | 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
+(https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Generic Finite State Machine](#3-generic-finite-state-machine) | [AbhinavKRN](https://github.com/AbhinavKRN) | Core | [▶ Watch](Samples~/StateMachineSample/Video/StateMachineTutorial.mp4) |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -427,6 +429,21 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 
 ---
 
+### 3. Generic Finite State Machine
+
+| | |
+|---|---|
+| **Author** | [AbhinavKRN](https://github.com/AbhinavKRN), [Archisman](https://github.com/Om-Midya), [Abhinav Jha](https://github.com/abhinavjha0239) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Core` |
+| **Location** | `Runtime/Core/StateMachine/Scripts/` |
+| **Script Explainers** | `Runtime/Core/StateMachine/Script_Explainers/` (one per script) |
+| **Category** | Core |
+| **Demo Project** | `Samples~/StateMachineSample/StateMachineSample.zip` (extract → `Assets/Scenes/DemoScene.unity`) |
+| **Video** | [▶ Watch Walkthrough](Samples~/StateMachineSample/Video/StateMachineTutorial.mp4) — also zipped at `Samples~/StateMachineSample/Video/StateMachineTutorial.zip` |
+
+**What it does**
+
+A generic, reusable Finite State Machine that any system in the framework — player controllers, enemy AI, game flow, UI — can use as its backbone without rewriting state logic from scratch. Drop it into any project that needs structured, predictable state transitions with built-in debugging, event publishing, and transition history.
 ### 3. Spawner System
 
 | | |
@@ -446,6 +463,36 @@ A modular spawner system handling three spawn patterns — wave-based, timed int
 **How to use it**
 
 ```csharp
+using GameplayMechanicsUMFOSS.Core;
+
+// Step 1: Create states implementing IState_UMFOSS
+public class IdleState : IState_UMFOSS
+{
+    public void OnEnter() { /* runs once when entering idle */ }
+    public void OnTick() { /* runs every frame while idle */ }
+    public void OnFixedTick() { /* runs every physics step while idle */ }
+    public void OnExit() { /* runs once when leaving idle */ }
+}
+
+// Step 2: Wire up the state machine
+var idle = new IdleState();
+var run = new RunState();
+var fsm = new StateMachine_UMFOSS(idle, gameObject);
+
+// Step 3: Add transitions with conditions
+fsm.AddTransition(idle, run, () => horizontalInput != 0);
+fsm.AddTransition(run, idle, () => horizontalInput == 0);
+fsm.AddAnyTransition(dead, () => health <= 0); // fires from any state
+
+// Step 4: Drive from MonoBehaviour
+void Update() => fsm.Tick();
+void FixedUpdate() => fsm.FixedTick();
+```
+
+**Highlights**
+- Plain C# class (not MonoBehaviour) — testable, reusable, zero coupling to Unity lifecycle
+- Built-in state history, debug inspector overlay, and three EventBus events on every transition
+- Demonstrates the State pattern with anyTransitions for global interrupts (death, stun) that fire from any active state
 using GameplayMechanicsUMFOSS.World;
 
 // WaveSpawner — assign waveProfiles in Inspector, then:

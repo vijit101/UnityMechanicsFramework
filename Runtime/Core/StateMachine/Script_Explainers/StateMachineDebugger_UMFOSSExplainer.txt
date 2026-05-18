@@ -1,0 +1,102 @@
+================================================================
+  ScriptExplainer — StateMachineDebugger_UMFOSS.cs
+  Namespace: GameplayMechanicsUMFOSS.Core
+================================================================
+
+WHAT THIS SCRIPT IS
+-------------------
+A MonoBehaviour you drop on the same GameObject that owns a
+StateMachine_UMFOSS. Subscribes to EventBus state events, displays
+live current/previous state name, time spent in the current state,
+and the last 5 transitions in the Inspector during Play Mode. Also
+draws the current state name above the GameObject in Scene view.
+
+
+WHY A SEPARATE COMPONENT INSTEAD OF DEBUG CODE IN THE FSM
+----------------------------------------------------------
+StateMachine_UMFOSS is a plain C# class — it has no GameObject and
+cannot show anything in the Inspector. Putting Inspector / Gizmo
+code inside it would either force it to depend on UnityEngine in a
+way that breaks pure-C# usage, or duplicate the data.
+
+Pulling the debugger into a MonoBehaviour separates concerns:
+- StateMachine_UMFOSS owns transitions and history
+- StateMachineDebugger_UMFOSS owns "show me what is happening"
+
+You can ship a build without the debugger by simply not adding the
+component — zero runtime cost.
+
+
+WHY EventBus, NOT A DIRECT FSM REFERENCE
+-----------------------------------------
+The debugger does not need to know which FSM exists or hold a
+reference to it. It listens for StateChangedEvent on the global bus
+and filters by `e.owner == gameObject`. This means:
+
+- Two FSMs on two GameObjects: each debugger sees only its own.
+- A non-MonoBehaviour FSM (e.g. game flow): no debugger attaches —
+  no problem, no extra wiring needed.
+- The debugger compiles even if the FSM owner is destroyed mid-frame.
+
+
+THE [ReadOnly] ATTRIBUTE FIELDS
+--------------------------------
+currentStateName, currentStateDuration, previousStateName,
+recentHistory are serialized so the Inspector can render them live,
+but tagged [ReadOnly] so the user cannot edit them at runtime —
+editing would do nothing useful and confuse readers.
+
+The attribute lives at Runtime/Core/StateMachine/Scripts/ReadOnlyAttribute.cs
+and the property drawer at Editor/ReadOnly/ReadOnlyDrawer.cs.
+
+
+WHY OnValidate REWIRES THE SUBSCRIPTION
+----------------------------------------
+The user can toggle enableDebug in the Inspector during Play Mode.
+OnValidate runs whenever an Inspector field changes; if Play Mode is
+active we re-subscribe or unsubscribe to match the new value. Without
+this, toggling the bool would not take effect until next Play.
+
+
+WHY recentHistory IS CAPPED AT 5
+---------------------------------
+The Inspector list grows to fit, but more than ~5 lines becomes
+visual noise on a single GameObject. The full history (default 10)
+is still available via fsm.History.GetHistory() for callers that
+want it.
+
+
+THE OnDrawGizmos LABEL
+-----------------------
+UnityEditor.Handles.Label draws the current state name in the Scene
+view above the GameObject. The whole block is inside #if UNITY_EDITOR
+so it strips out of player builds — zero runtime cost in shipping
+games.
+
+
+HOW TO USE IT
+-------------
+1. Drop StateMachineDebugger_UMFOSS onto any GameObject that owns
+   an FSM whose constructor was called with `this` as the owner.
+2. Press Play.
+3. The Inspector shows: state name, duration, previous state, last 5
+   transitions. The Scene view shows the state name above the object.
+
+That is it. No wiring, no SerializedField, no manual reference.
+
+
+COMMON MISTAKES
+---------------
+1. Forgetting to pass `this` to the FSM constructor
+   The debugger filters on `e.owner == gameObject`. If the FSM was
+   created with `new StateMachine_UMFOSS()` (no owner), no events
+   ever match and the Inspector stays blank.
+
+2. Adding the debugger to a GameObject that does not own an FSM
+   No events arrive — Inspector stays blank. Not an error, but a
+   common confusion when first wiring a scene.
+
+3. Leaving enableDebug = true in shipping builds
+   The OnDrawGizmos block is editor-only, but the EventBus subscription
+   still costs an event dispatch per transition. Disable in production.
+================================================================
