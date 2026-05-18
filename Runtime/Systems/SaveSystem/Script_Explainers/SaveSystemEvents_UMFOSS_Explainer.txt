@@ -1,0 +1,26 @@
+﻿================================================================================
+  SCRIPT: SaveSystemEvents_UMFOSS.cs
+  NAMESPACE: GameplayMechanicsUMFOSS.Systems
+================================================================================
+
+PURPOSE:
+Defines delegate types for all save system events. Kept in a separate file
+for clean organization. Follows the Observer pattern.
+
+Code    : public delegate void OnSaveAction(string slotName);
+Explain : Fired on successful save. Receives slot name.
+
+Code    : public delegate void OnLoadAction(string slotName);
+Explain : Fired on successful load. Receives slot name.
+
+Code    : public delegate void OnDeleteAction(string slotName);
+Explain : Fired when a save file is deleted.
+
+Code    : public delegate void OnFailAction(string slotName, string reason);
+Explain : Fired on failed save/load. Includes reason string for debugging.
+
+Code    : public delegate void OnNewGameAction(string slotName);
+Explain : Fired when NewGame() is called.
+
+WHY EVENTS: Any system (UI, analytics, audio) can react to save/load
+operations without SaveSystem knowing they exist. Observer pattern.

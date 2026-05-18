@@ -1,0 +1,27 @@
+﻿================================================================================
+  SCRIPT: SaveFileHandler_UMFOSS.cs
+  NAMESPACE: GameplayMechanicsUMFOSS.Systems
+================================================================================
+
+PURPOSE:
+Static utility class for all file I/O operations. Reads and writes save files
+to Application.persistentDataPath. Handles optional XOR encryption.
+
+Code    : public static class SaveFileHandler_UMFOSS
+Explain : Static class, no MonoBehaviour. Only SaveSystem should call it.
+
+Code    : SaveDirectory => Application.persistentDataPath + "/Saves/"
+Explain : persistentDataPath is the ONLY correct cross-platform save location.
+          dataPath is readonly in builds. Works on Windows, Mac, Linux, mobile.
+
+Code    : public static bool Save(SaveData_UMFOSS data, ...)
+Explain : Serialize to JSON, optionally XOR-encrypt, write to disk.
+          Returns true/false, never throws.
+
+Code    : public static SaveData_UMFOSS Load(string slotName, ...)
+Explain : Read file, optionally decrypt, deserialize. Returns null on failure.
+
+Code    : XOREncrypt / XORDecrypt
+Explain : Byte-level XOR cipher with Base64 encoding.
+          NOT cryptographically strong - anti-tamper for casual games.
+          Previous char-level version corrupted non-ASCII data.

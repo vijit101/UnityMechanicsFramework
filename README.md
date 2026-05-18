@@ -18,16 +18,28 @@ This repository centralizes production-ready, reusable mechanics — built by th
 
 ## Table of Contents
 
-1. [What Is This?](#1-what-is-this)
-2. [Who Is This For?](#2-who-is-this-for)
-3. [Getting Started](#3-getting-started)
-4. [Folder Structure](#4-folder-structure)
-5. [Core Architecture](#5-core-architecture)
-6. [Mechanics Library](#6-mechanics-library) ← **Start here to find a mechanic**
-7. [Namespace Reference](#7-namespace-reference)
-8. [Unity Version & Compatibility](#8-unity-version--compatibility)
-9. [How to Contribute](#9-how-to-contribute)
-10. [License](#10-license)
+- [UnityMechanicsFramework](#unitymechanicsframework)
+  - [Table of Contents](#table-of-contents)
+  - [1. What Is This?](#1-what-is-this)
+  - [2. Who Is This For?](#2-who-is-this-for)
+  - [3. Getting Started](#3-getting-started)
+    - [Option A — Clone the full repository](#option-a--clone-the-full-repository)
+    - [Option B — Grab a single mechanic](#option-b--grab-a-single-mechanic)
+    - [Running a demo](#running-a-demo)
+  - [4. Folder Structure](#4-folder-structure)
+  - [5. Core Architecture](#5-core-architecture)
+    - [MonoSingleton — Generic Singleton Base](#monosingleton--generic-singleton-base)
+    - [IPhysicsAdapter — Physics-Agnostic Mechanics](#iphysicsadapter--physics-agnostic-mechanics)
+    - [EventBus — Decoupled Communication](#eventbus--decoupled-communication)
+  - [6. Mechanics Library](#6-mechanics-library)
+    - [Quick Navigation](#quick-navigation)
+    - [1. MonoSingleton Generic](#1-monosingleton-generic)
+    - [2. Generic \& Scalable Dialogue System](#2-generic--scalable-dialogue-system)
+    - [3. Save & Load System](#3-save--load-system)
+  - [7. Namespace Reference](#7-namespace-reference)
+  - [8. Unity Version \& Compatibility](#8-unity-version--compatibility)
+  - [9. How to Contribute](#9-how-to-contribute)
+  - [10. License](#10-license)
 
 ---
 
@@ -188,21 +200,13 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 | 3 | [Spawner System](#3-spawner-system) | [Satish Rathod](https://github.com/satish-rathod) | World / Spawning | [▶ Watch](Sample/SpawnerSystem/SpawnerSystemVideos.zip) |
 | 4 | [Scene Manager System](#4-scene-manager-system) | [Nymish](https://github.com/nymishkash) | Systems | [▶ Watch](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
 | 5 | [Modular Jump System](#5-modular-jump-system) | [Ankur Kalita](https://github.com/ankur-kalita) | Movement | [▶ Watch](./Samples~/JumpSystemSample/Video/ModularJumpImpl.mp4.zip) |
-| 23 | [Currency System](#23-currency-system) | [Aayush Khopade](https://github.com/aayushashokkhopade) [Krishna Patidar](https://github.com/krishna-p060) | Systems / Economy | [▶ Watch](https://www.loom.com/share/01de26ff40114577a2aff1fce3f39ec2) |
-| 64 | [Utils](#64-Utils) | [Shubham](https://github.com/vijit101) | Core | [▶ Watch]() |
-| 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | (https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch]
-| 3 | [Modular Jump System](#3-modular-jump-system) | [Ankur Kalita](https://github.com/ankur-kalita) | Movement | [▶ Watch](./Samples~/JumpSystemSample/Video/ModularJumpImpl.mp4.zip) |
-| 27 | [Boomerang Weapon](#27-boomerang-weapon-system) | [Shrinibas Mahanta](https://github.com/2k4sm), [Shreyas Garg](https://github.com/shreyas-garg), [Sudharsan](https://github.com/Bug-Finderr) | Combat | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/BoomerangWeapon/BoomerangWeaponDemoVideo.zip) |
-| 24 | [Pause System](#24-pause-system) | [Souvik Kumar](https://github.com/Souvik-Cyclic) | Systems | [▶ Watch](Samples~/PauseSystemSample/Video/PauseSystemVideo.zip) |
-| 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
-
 | 6 | [Screen Shake System](#6-screen-shake-system) | [Paramjeet Kaur](https://github.com/kauxp) | Systems | [▶ Watch](Samples~/ScreenShakeExample/Video/ScreenShakeTutorial.mp4) |
-| 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
-(https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Scene Manager System](#3-scene-manager-system) | [Nymish](https://github.com/nymishkash) | Systems | [▶ Watch](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
 | 9 | [Modular 2D Movement System](#9-modular-2d-movement-system) | [Kumar Kartikay](https://github.com/KKartikay-27/) & [Amrutha CA](https://github.com/Amruthacagithub) | Movement | [▶ Watch](https://github.com/KKartikay-27/UnityMechanicsFramework/blob/feature/movement2d-system/Samples~/Modular2DMovementSystem/Modular2DMovementSystemVideo.zip) |
-|
+| 12 | [Save & Load System](#12-save--load-system) | [Jash Savaliya](https://github.com/Jash2606), [Rushabh Mistry](https://github.com/Rushhaabhhh), [Sarthak Pandey](https://github.com/SarthakPaandey) | Systems | [▶ Watch](Samples~/SaveSystem/SaveSystem_Video.zip) |
+| 23 | [Currency System](#23-currency-system) | [Aayush Khopade](https://github.com/aayushashokkhopade) [Krishna Patidar](https://github.com/krishna-p060) | Systems / Economy | [▶ Watch](https://www.loom.com/share/01de26ff40114577a2aff1fce3f39ec2) |
+| 24 | [Pause System](#24-pause-system) | [Souvik Kumar](https://github.com/Souvik-Cyclic) | Systems | [▶ Watch](Samples~/PauseSystemSample/Video/PauseSystemVideo.zip) |
+| 27 | [Boomerang Weapon](#27-boomerang-weapon-system) | [Shrinibas Mahanta](https://github.com/2k4sm), [Shreyas Garg](https://github.com/shreyas-garg), [Sudharsan](https://github.com/Bug-Finderr) | Combat | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/BoomerangWeapon/BoomerangWeaponDemoVideo.zip) |
+| 64 | [Utils](#64--utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -331,7 +335,6 @@ EventBus.Subscribe<WeaponCaughtEvent>(e => Debug.Log("Caught!"));
 - Parents to hit surfaces on impact, works with moving platforms out of the box
 
 ---
----
 
 ### 6. Screen Shake System
 
@@ -387,47 +390,66 @@ namespace GameplayMechanicsUMFOSS.Samples.ScreenShake
 - Uses Perlin noise instead of random to generate smooth, jitter-free camera motion
 - Singleton architecture — any script can trigger shake in one line (Instance.TriggerShake)
 
+---
+
 ### 64 . Utils
+
+---
+
+### 3. Save & Load System
 
 | | |
 |---|---|
-| **Author** | [Shubham](https://github.com/vijit101) |
-| **Namespace** | `GameplayMechanicsUMFOSS.Core` 
-| **Location** | [`RuntimeMechanics/Dialogue/2. GenericAndScalableDialogueSystem/`](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem) |
-| **Category** | Dialogue / Narrative |
-| **Demo Scene** | `Samples~/DialogueExample/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Tutorial](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/dailogueSample/Video) |
+| **Author** | [Jash Savaliya](https://github.com/Jash2606), [Rushabh Mistry](https://github.com/Rushhaabhhh), [Sarthak Pandey](https://github.com/SarthakPaandey) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
+| **Location** | `Runtime/Systems/SaveSystem/Scripts/` |
+| **Category** | Systems / Persistence |
+| **Demo Scene** | `Samples~/SaveSystem/SaveSystem_Demo.zip` |
+| **Video** | [▶ Watch](Samples~/SaveSystem/SaveSystem_Video.zip) |
 
 **What it does**
 
-A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data, not code.
+A generic, extensible save and load system that any mechanic can plug into without modifying the core. Scripts implement `ISaveable_UMFOSS` (three methods), register themselves, and their state is automatically saved to structured JSON files. Supports multiple save slots, version migration for surviving game updates, optional XOR encryption, and auto-save.
 
 **How to use it**
- Note to maintainer: need to fix the part for how to use the dialogue system later / for the one using it find the video and watch it  
+
 ```csharp
-using GameplayMechanicsUMFOSS.Dialogue;
+using GameplayMechanicsUMFOSS.Systems;
 
-// Step 1: Create DialogueNode ScriptableObjects in the Inspector
-// Step 2: Link them into a DialogueDatabase asset
-// Step 3: Reference the database from your DialogueSystem component
-
-[SerializeField] private DialogueSystem dialogueSystem;
-[SerializeField] private DialogueDatabase npcDatabase;
-
-// Step 4: Start a conversation
-dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
+// Step 1: Implement ISaveable_UMFOSS on your script
+public class MyMechanic : MonoBehaviour, ISaveable_UMFOSS
 {
-    Debug.Log("Conversation finished.");
-});
+  [SerializeField] private string uniqueID = "MyMechanic_Player";
+  private int score;
+
+  [System.Serializable]
+  private struct MySaveData { public int score; }
+
+  public string GetSaveID() => uniqueID;
+  public object CaptureState() => new MySaveData { score = this.score };
+  public void RestoreState(object state)
+  {
+    var data = JsonUtility.FromJson<MySaveData>(state as string);
+    this.score = data.score;
+  }
+
+  void OnEnable() => SaveSystem_UMFOSS.Instance?.Register(this);
+  void OnDisable() => SaveSystem_UMFOSS.Instance?.Deregister(this);
+}
+
+// Step 2: Save and load from anywhere
+SaveSystem_UMFOSS.Instance.Save("Slot1");
+SaveSystem_UMFOSS.Instance.Load("Slot1");
 ```
 
 **Highlights**
 
-- Fully data-driven — all dialogue lives in ScriptableObject assets, not in code
-- Supports branching and multi-path dialogue trees
-- Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
-- Add new conversations without touching any existing scripts
-- Scales to large narrative systems without architectural changes
+- Generic — any script implements three interface methods and is automatically saved
+- Version migration — old save files survive game updates without data loss
+- Multiple save slots with independent files (Slot1, Slot2, AutoSave)
+- Optional XOR encryption for anti-tamper
+- Zero external dependencies — uses Unity's JsonUtility with a custom SerializableDictionary
+- Full ScriptExplainer with line-by-line code explanation and Integration Guide
 
 ---
 
@@ -758,7 +780,7 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 
 | Unity Version | Status |
 |---|---|
-| Unity 2020.x and below | ❌ Not supported |
+| Unity 2020.x and below | âŒ Not supported |
 | Unity 2021.3 LTS | ✅ Minimum supported |
 | Unity 2022.3 LTS | ✅ Recommended |
 | Unity 6 | ✅ Supported |
@@ -813,6 +835,6 @@ Contributors retain permanent credit in the Mechanics Library for every mechanic
 <div align="center">
 
 *Built by the Unity community, for the Unity community.*  
-*Find a mechanic that saves you time. Contribute one that saves someone else's.* ⭐
+*Find a mechanic that saves you time. Contribute one that saves someone else's.* â­
 
 </div>

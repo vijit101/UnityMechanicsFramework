@@ -1,0 +1,30 @@
+﻿================================================================================
+  SCRIPT: SaveSystem_UMFOSS.cs
+  NAMESPACE: GameplayMechanicsUMFOSS.Systems
+================================================================================
+
+PURPOSE:
+Central coordinator of the Save & Load System. Manages saveable registration,
+orchestrates save/load, handles version migration, and provides auto-save.
+Inherits MonoSingletongeneric<T> for global access and persistence.
+
+Code    : public class SaveSystem_UMFOSS : MonoSingletongeneric<SaveSystem_UMFOSS>
+Explain : Singleton - persists across scenes, globally accessible via .Instance.
+
+Code    : Register() / Deregister()
+Explain : ISaveable scripts call these in OnEnable/OnDisable.
+          OnEnable/OnDisable fire during scene load/unload (Start/OnDestroy dont).
+
+Code    : Save(string slotName)
+Explain : For each registered ISaveable: CaptureState -> ToJson -> store.
+          Sets metadata (timestamp, scene, version). Fires OnGameSaved event.
+
+Code    : Load(string slotName)
+Explain : Load from disk, check version (migrate if old, block if newer),
+          check scene (load async if different), restore each saveable.
+
+Code    : MigrateSave(SaveData_UMFOSS saveData)
+Explain : Switch on old version, apply cumulative upgrades with goto fallthrough.
+
+Code    : pendingLoadData
+Explain : Caches save data during cross-scene loads. Saveables restore on register.

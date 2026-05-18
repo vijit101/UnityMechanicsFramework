@@ -1,0 +1,29 @@
+﻿================================================================================
+  SCRIPT: SaveData_UMFOSS.cs
+  NAMESPACE: GameplayMechanicsUMFOSS.Systems
+================================================================================
+
+PURPOSE:
+Defines the complete save file structure as it exists in memory. A single
+instance of SaveData_UMFOSS = one save file on disk. Also contains the
+SerializableDictionary class that works around Unity's JsonUtility limitation.
+
+Code    : public int saveVersion;
+Explain : Version of the save format. Used for migration when games update.
+
+Code    : public string saveSlotName;
+Explain : Which slot this save belongs to (e.g., "Slot1", "AutoSave").
+
+Code    : public string lastSavedTimestamp;
+Explain : ISO 8601 timestamp for UI display.
+
+Code    : public string sceneNameOnSave;
+Explain : Active scene when saved. Load must know which scene to load first.
+
+Code    : public SerializableDictionary savedObjects;
+Explain : Key = SaveID, Value = JSON string. Each saveable is independent.
+
+Code    : public class SerializableDictionary : ISerializationCallbackReceiver
+Explain : Unity's JsonUtility cannot serialize Dictionary<TKey,TValue>.
+          This uses OnBeforeSerialize/OnAfterDeserialize to convert between
+          Dictionary and parallel Lists (keys[] + values[]).

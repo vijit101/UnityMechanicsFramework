@@ -37,7 +37,6 @@ Build it clean. Build it reusable. Build it for someone else.
 19. [Unity Version & Compatibility](#19-unity-version--compatibility)
 20. [License Agreement](#20-license-agreement)
 21. [Contact & Questions](#21-contact--questions)
-22. [TLDR](#22-TLDR)
 
 ---
 
@@ -98,7 +97,6 @@ This prevents wasted effort if the mechanic is out of scope or already in progre
 ### 3.3 Read the existing mechanics
 
 Before writing code, study at least one existing mechanic in the repository — ideally one closest to what you plan to build. Understanding the patterns already in use (MonoSingleton, IPhysicsAdapter, ScriptableObject data) will help you write code that fits naturally into the framework.
-If you are into vidoes then this is a video guide for Contributing (but would make more sense once you read this doc)- https://drive.google.com/file/d/113GKIsXtv2R4fxNOHIhpJ-wPA6Ss6MLs/view?usp=sharing 
 
 ---
 
@@ -656,12 +654,12 @@ Below the Quick Navigation table, add your mechanic's full entry. This is the on
 
 | | |
 |---|---|
-| **Author** | [Your Name](https://github.com/your-handle) |
+| **Author** | [Jash Savaliya](https://github.com/Jash2606) |
 | **Namespace** | `GameplayMechanicsUMFOSS.YourFeatureGroup` |
 | **Location** | `Runtime/YourFeatureGroup/YourMechanicScript.cs` |
 | **Category** | Movement / Combat / UI / Core / etc. |
 | **Demo Scene** | `Samples~/YourMechanicName/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Walkthrough](YOUR_VIDEO_LINK) |
+| **Video** | [▶ Watch Walkthrough](https://drive.google.com/drive/folders/1d3vY3Rbn1R7yiDcg34YOhl4gvYksV0Lm?usp=sharing) |
 
 **What it does**
 
@@ -1010,221 +1008,6 @@ Open an **Issue** before starting work on any new mechanic — this is the best 
 ---
 
 <div align="center">
-
-## 22. TLDR 
-
-# How To Submit Your Mechanic
-
----
-
-## The Rule Before Everything
-
-> **Build and test in your own Unity project first.**
-> Only move to the UMF repo once your mechanic works perfectly in isolation.
-> This saves you hours of pain.
-
----
-
-## Step 1 — Build In Your Own Project
-
-Create a brand new Unity project. Build your mechanic there. Test it until it works with zero console errors. Press Play — it should just work.
-
-While you are here:
-- Write your `ScriptExplainer.txt`
-- Build your demo scene
-- Record your video (upload to YouTube unlisted or Google Drive)
-
----
-
-## Step 2 — Fork and Clone the UMF Repo
-
-```bash
-# Fork on GitHub first, then:
-git clone https://github.com/YOUR_USERNAME/UnityMechanicsFramework.git
-cd UnityMechanicsFramework
-git remote add upstream https://github.com/vijit101/UnityMechanicsFramework.git
-git pull upstream main
-git checkout -b mechanic/your-mechanic-name
-```
-
----
-
-## Step 3 — Place Your Files
-
-**Script goes here:**
-```
-Runtime/YourCategory/YourScript_UMFOSS.cs
-```
-
-**Everything else goes here:**
-```
-Samples~/YourMechanicNameSample/
-  Assets/
-    Scenes/    → DemoScene.unity
-    Scripts/   → copy of your script
-    Prefabs/   → any prefabs the scene needs
-  Video/       → YourMechanicNameTutorial.mp4  (if under 100MB)
-  ScriptExplainer.txt
-```
-
----
-
-## Step 4 — The Meta Files Rule
-
-> ⚠️ This is the most Unity-specific thing and the most commonly missed.
-
-Every Unity file has a `.meta` file alongside it. **Always copy both together.**
-
-```
-DemoScene.unity       ✅ copy
-DemoScene.unity.meta  ✅ copy this too
-
-MyPrefab.prefab       ✅ copy
-MyPrefab.prefab.meta  ✅ copy this too
-```
-
-Missing `.meta` files = broken references when someone else opens the project = PR rejected.
-
-**Safest way:** Copy files through Explorer/Finder while Unity is closed. Open Unity after.
-
----
-
-## Step 5 — Open UMF in Unity and Verify
-
-Open the cloned UMF repo in Unity. Open your `DemoScene.unity`.
-
-```
-✅ Zero errors in console
-✅ Press Play — mechanic works immediately
-✅ No missing scripts, no pink objects
-```
-
-Fix anything broken before moving on.
-
----
-
-## Step 6 — Update the README
-
-In `README.md` update two things:
-
-**1. Quick Navigation table — add one row:**
-```markdown
-| N | [Your Mechanic](#n-your-mechanic) | [Your Name](github link) | Category | [▶ Watch](video link) |
-```
-
-**2. Full mechanic card — add below last entry:**
-```markdown
-### N. Your Mechanic Name
-| | |
-|---|---|
-| **Author** | [Your Name](github link) |
-| **Namespace** | `GameplayMechanicsUMFOSS.YourCategory` |
-| **Location** | `Runtime/YourCategory/YourScript_UMFOSS.cs` |
-| **Category** | Combat / Movement / Systems / etc. |
-| **Demo Scene** | `Samples~/YourMechanicNameSample/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch](your video link) |
-
-**What it does**
-One or two sentences. What problem does it solve?
-
-**How to use it**
-```csharp
-// Minimal working example
-```
-
-**Highlights**
-- Key architectural point
-- Key gameplay feature
-- Key learning value
-```
-
----
-
-## Step 7 — Commit and Push
-
-```bash
-git add Runtime/YourCategory/YourScript_UMFOSS.cs
-git add Runtime/YourCategory/YourScript_UMFOSS.cs.meta
-git add "Samples~/YourMechanicNameSample/"
-git add README.md
-git commit -m "Add YourMechanicName — script, demo, ScriptExplainer, README"
-git push origin mechanic/your-mechanic-name
-```
-
----
-
-## Step 8 — Raise the PR
-
-On GitHub — open a PR from your branch to `main`.
-
-**Title:** `[Mechanic] Add Your Mechanic Name`
-
-**Body:**
-```
-## What it does
-One paragraph.
-
-## How to test
-1. Open Samples~/YourMechanicNameSample/Assets/Scenes/DemoScene.unity
-2. Press Play
-3. ...
-
-## Video link
-[paste here]
-
-## Namespace
-GameplayMechanicsUMFOSS.YourCategory
-```
-
----
-
-## ✅ Pre-PR Checklist
-
-Go through this before you click Submit. Every unchecked box = PR not ready.
-
-**Code**
-- [ ] Script compiles — zero errors, zero warnings
-- [ ] Namespace is `GameplayMechanicsUMFOSS.FeatureGroup`
-- [ ] No magic numbers — all values named as constants
-- [ ] No direct `Rigidbody2D` references — `IPhysicsAdapter` used
-- [ ] `OnEnable` / `OnDisable` used for EventBus subscriptions
-- [ ] `OnDisable` restores any state the script modified (gravity, velocity, input lock)
-
-**Files**
-- [ ] Script is in correct `Runtime/` subfolder
-- [ ] Demo scene is in `Samples~/YourMechanicNameSample/Assets/Scenes/`
-- [ ] Every `.unity` file has its `.meta` file
-- [ ] Every `.prefab` file has its `.meta` file
-- [ ] Every `.cs` file has its `.meta` file
-- [ ] No `Library/`, `Temp/`, or `Logs/` folders staged
-
-**Scene**
-- [ ] `DemoScene.unity` plays immediately — zero setup, zero errors
-- [ ] No missing script errors in console
-- [ ] No pink / magenta objects in scene
-- [ ] Controls are labelled on screen with UI text
-
-**Documentation**
-- [ ] `ScriptExplainer.txt` complete — explains the WHY not just the what
-- [ ] Video uploaded and link is publicly accessible (not private)
-
-**README**
-- [ ] Quick Navigation row added — anchor matches heading exactly
-- [ ] Video link in nav row is live
-- [ ] Full mechanic card added below last existing entry
-- [ ] All 6 metadata rows filled
-- [ ] Code example in "How to use it" actually works
-- [ ] Exactly 3 Highlights bullet points
-
-**Git**
-- [ ] Branch named `mechanic/your-mechanic-name`
-- [ ] No `.DS_Store`, `Thumbs.db`, or OS files committed
-- [ ] Commit message is descriptive
-
----
-
-**Stuck?** Open an Issue with label `question` and tag @vijit101.
-Don't stay blocked for more than 30 minutes without asking.
 
 *Thank you for contributing to UnityMechanicsFramework.*  
 *Every mechanic you add is one less system that someone else has to write from scratch.*  

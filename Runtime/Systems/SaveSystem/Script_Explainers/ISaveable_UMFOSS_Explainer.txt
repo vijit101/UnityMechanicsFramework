@@ -1,0 +1,29 @@
+﻿================================================================================
+  SCRIPT: ISaveable_UMFOSS.cs
+  NAMESPACE: GameplayMechanicsUMFOSS.Systems
+================================================================================
+
+PURPOSE:
+Defines the contract that ANY MonoBehaviour must implement to participate in
+the Save & Load System. The SaveSystem never needs to know what HealthSystem
+or InventorySystem are. It only knows ISaveable_UMFOSS.
+
+Code    : public interface ISaveable_UMFOSS
+Explain : Defines a C# interface that forces implementing classes to provide
+          specific methods. By programming to this interface, the SaveSystem
+          is completely decoupled from any specific mechanic.
+
+Code    : string GetSaveID();
+Explain : Returns a unique string identifier for this saveable instance.
+          Uses a [SerializeField] uniqueID instead of gameObject.name because
+          names can change at runtime (e.g., "Player(Clone)").
+
+Code    : object CaptureState();
+Explain : Called by SaveSystem when saving. The implementing script packs its
+          current state into a serializable object and returns it.
+          Each mechanic owns its own data format (Open/Closed Principle).
+
+Code    : void RestoreState(object state);
+Explain : Called by SaveSystem when loading. Receives the JSON string that was
+          produced by serializing the object from CaptureState.
+          Cast to string, then use JsonUtility.FromJson<T>() to deserialize.

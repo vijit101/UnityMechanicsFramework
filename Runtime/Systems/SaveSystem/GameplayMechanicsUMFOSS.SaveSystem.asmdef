@@ -1,0 +1,16 @@
+{
+    "name": "GameplayMechanicsUMFOSS.SaveSystem",
+    "rootNamespace": "GameplayMechanicsUMFOSS.Systems",
+    "references": [
+        "GameplayMechanicsUMFOSS.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
