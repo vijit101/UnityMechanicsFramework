@@ -1,0 +1,23 @@
+====================================================
+FILE  : SpawnerSpawnExecution.cs
+SYSTEM: Spawner System (issue #25)
+NAMESPACE: GameplayMechanicsUMFOSS.World
+====================================================
+
+PURPOSE
+Static helpers shared by all three spawner MonoBehaviours to avoid copy-paste.
+
+TryFindPlayerTransform( string playerTag )
+- If tag is set,  GameObject.FindGameObjectWithTag  (swallows  UnityException  if
+  the tag is missing from  TagManager ). Fallback: object named  "Player" .
+
+ResolveSpawnPosition(…)
+- Branches on  profile.spawnPointMode  (random index, round-robin sequential, nearest
+  to player, or  All  / default — the latter is handled in wave/proximity loops).
+
+SpawnFromPool(…)
+- Gets a pooled instance from  ObjectPoolManager_UMFOSS , ensures
+  SpawnerTrackedEntity_UMFOSS  exists, and invokes  configureTracked  for wiring.
+
+CROSS-REFERENCES
+Call sites:  WaveSpawner_UMFOSS ,  TimedSpawner_UMFOSS ,  ProximitySpawner_UMFOSS .

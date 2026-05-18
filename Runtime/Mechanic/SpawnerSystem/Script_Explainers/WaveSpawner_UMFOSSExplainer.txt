@@ -1,0 +1,23 @@
+====================================================
+FILE  : WaveSpawner_UMFOSS.cs
+SYSTEM: Spawner System (issue #25)
+NAMESPACE: GameplayMechanicsUMFOSS.World
+====================================================
+
+PURPOSE
+Coroutine-driven “horde” flow: for each  SpawnProfile_UMFOSS  in  waveProfiles ,
+spawn rows from  entries  (respecting  SpawnPointMode.All  vs. resolved positions),
+optionally block until the wave is cleared, wait  timeBetweenWaves , then advance.
+Supports looping and pause via  GamePausedEvent .
+
+CLEAR CONDITIONS
+- AllDead  —  _activeCount  reaches 0.  TimedEnd  —  timedWaveDuration  elapses.
+- Manual  — external logic calls  ClearCurrentWave()  to set  _manualClearRequested .
+
+PUBLIC HINTS
+- StartWaves() ,  SkipToWave( int ) ,  GetCurrentWave() ,  ApplyRuntimeConfiguration
+  for code-only setup (demos, tests).
+
+CROSS-REFERENCES
+Uses  SpawnerSpawnExecution ,  OnTrackedDeath  releases to pool. Depends on
+ObjectPoolManager_UMFOSS  and  EventBus .

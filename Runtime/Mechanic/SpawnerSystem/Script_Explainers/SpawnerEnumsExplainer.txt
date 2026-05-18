@@ -1,0 +1,22 @@
+====================================================
+FILE  : SpawnerEnums.cs
+SYSTEM: Spawner System (issue #25)
+NAMESPACE: GameplayMechanicsUMFOSS.World
+====================================================
+
+PURPOSE
+Shared enum definitions only — no logic.
+
+SpawnPointMode
+- Random, Sequential, Nearest, All  — how  SpawnProfile_UMFOSS  chooses a
+  SpawnPoint_UMFOSS  from the list (see  SpawnerSpawnExecution ).
+
+SpawnShape
+- Point, Circle, Rectangle  — used by  SpawnPoint_UMFOSS.GetSpawnPosition .
+
+WaveClearCondition
+- AllDead  — wait until active count is zero.  TimedEnd  — fixed duration.  Manual  —
+  external code must call  WaveSpawner_UMFOSS.ClearCurrentWave() .
+
+CROSS-REFERENCES
+No UnityEngine import — pure C# public contracts for the rest of the mechanic.

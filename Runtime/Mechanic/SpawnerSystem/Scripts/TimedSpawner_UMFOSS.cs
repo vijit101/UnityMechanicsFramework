@@ -1,5 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
+using GameplayMechanicsUMFOSS.Core;
+using GameplayMechanicsUMFOSS.Utils;
 using UnityEngine;
 
 namespace GameplayMechanicsUMFOSS.World
@@ -7,174 +8,159 @@ namespace GameplayMechanicsUMFOSS.World
     public class TimedSpawner_UMFOSS : MonoBehaviour
     {
         [Header("Timed Configuration")]
-        [SerializeField] private SpawnProfile_UMFOSS profile;
-        [SerializeField] private List<SpawnPoint_UMFOSS> spawnPoints;
-        [SerializeField] private float spawnInterval = 3f;
-        [SerializeField] private int maxActive = 5;
-        [SerializeField] private bool spawnOnStart = true;
-        [SerializeField] private bool respawnOnDeath = true;
+        [SerializeField] SpawnProfile_UMFOSS profile;
+        [SerializeField] List<SpawnPoint_UMFOSS> spawnPoints;
+        [SerializeField] float spawnInterval = 3f;
+        [SerializeField] int maxActive = 5;
+        [SerializeField] bool spawnOnStart = true;
+        [SerializeField] bool respawnOnDeath = true;
 
-        private int activeCount = 0;
-        private bool isSpawning = false;
-        private bool isPaused = false;
-        private int sequentialIndex = 0;
-        private List<GameObject> spawnedObjects = new List<GameObject>();
-        private Coroutine spawnCoroutine;
+        [Header("Player")]
+        [SerializeField] string playerTag = "Player";
 
-        // --- Public Properties ---
+        int _activeCount;
+        int _repeatTimerId;
+        int _sequentialIndex;
+        bool _paused;
+        bool _spawning;
+        float _nextSpawnAllowedTime;
 
-        public int ActiveCount => activeCount;
-        public bool IsSpawning => isSpawning;
-
-        // --- Unity Lifecycle ---
-
-        private void Start()
+        void OnEnable()
         {
-            if (spawnOnStart)
-                StartSpawning();
+            EventBus.Subscribe<GamePausedEvent>(OnPause);
         }
 
-        private void OnEnable()
+        void OnDisable()
         {
-            EventBus.Subscribe<OnSpawnedObjectDied>(OnObjectDied);
+            EventBus.Unsubscribe<GamePausedEvent>(OnPause);
+            StopSpawning();
         }
 
-        private void OnDisable()
+        void Start()
         {
-            EventBus.Unsubscribe<OnSpawnedObjectDied>(OnObjectDied);
+            if (spawnOnStart) StartSpawning();
         }
 
-        // --- Public API ---
-
-        public void Configure(SpawnProfile_UMFOSS profile, List<SpawnPoint_UMFOSS> spawnPoints,
-            float interval = 3f, int maxActive = 5, bool spawnOnStart = true, bool respawnOnDeath = true)
+        void OnPause(GamePausedEvent e)
         {
-            this.profile = profile;
-            this.spawnPoints = spawnPoints;
-            this.spawnInterval = Mathf.Max(0.1f, interval);
-            this.maxActive = Mathf.Max(1, maxActive);
-            this.spawnOnStart = spawnOnStart;
-            this.respawnOnDeath = respawnOnDeath;
+            _paused = e.IsPaused;
         }
 
         public void StartSpawning()
         {
-            if (isSpawning) return;
-            isSpawning = true;
+            if (_spawning || profile == null) return;
+            if (TimerUtility_UMFOSS.Instance == null)
+            {
+                var go = new GameObject(nameof(TimerUtility_UMFOSS));
+                go.AddComponent<TimerUtility_UMFOSS>();
+            }
 
-            if (spawnCoroutine != null)
-                StopCoroutine(spawnCoroutine);
-            spawnCoroutine = StartCoroutine(SpawnLoop());
-            EventBus.Publish(new OnSpawnerStarted { spawner = gameObject });
+            _spawning = true;
+            _nextSpawnAllowedTime = Time.time;
+            EventBus.Publish(new OnSpawnerStartedEvent { Spawner = gameObject });
+            _repeatTimerId = TimerUtility_UMFOSS.Instance.ScheduleRepeating(spawnInterval, OnTimedTick);
         }
 
         public void StopSpawning()
         {
-            isSpawning = false;
-            if (spawnCoroutine != null)
-            {
-                StopCoroutine(spawnCoroutine);
-                spawnCoroutine = null;
-            }
-            EventBus.Publish(new OnSpawnerStopped { spawner = gameObject });
+            if (!_spawning) return;
+            if (TimerUtility_UMFOSS.Instance != null && _repeatTimerId != 0)
+                TimerUtility_UMFOSS.Instance.Cancel(_repeatTimerId);
+            _repeatTimerId = 0;
+            _spawning = false;
+            EventBus.Publish(new OnSpawnerStoppedEvent { Spawner = gameObject });
         }
 
         public void SetInterval(float seconds)
         {
-            spawnInterval = Mathf.Max(0.1f, seconds);
+            spawnInterval = Mathf.Max(0.01f, seconds);
+            if (_spawning)
+            {
+                StopSpawning();
+                StartSpawning();
+            }
         }
 
         public void SetMaxActive(int count)
         {
-            maxActive = Mathf.Max(1, count);
+            maxActive = Mathf.Max(0, count);
         }
 
-        public int GetActiveCount() => activeCount;
+        public int GetActiveCount() => _activeCount;
 
-        // --- Private Methods ---
-
-        private IEnumerator SpawnLoop()
+        /// <summary>Code-driven setup (e.g. demo/bootstrap) without Inspector references.</summary>
+        public void ApplyRuntimeConfiguration(
+            SpawnProfile_UMFOSS profileValue,
+            List<SpawnPoint_UMFOSS> points,
+            float interval,
+            int max,
+            bool onStart,
+            bool respawn,
+            string playerTagValue)
         {
-            while (isSpawning)
+            profile = profileValue;
+            spawnPoints = points;
+            spawnInterval = interval;
+            maxActive = max;
+            spawnOnStart = onStart;
+            respawnOnDeath = respawn;
+            playerTag = playerTagValue;
+        }
+
+        void OnTimedTick()
+        {
+            if (_paused || profile == null) return;
+            TrySpawnOne(false);
+        }
+
+        void TrySpawnOne(bool fromDeathRespawn)
+        {
+            if (profile == null) return;
+            var cap = Mathf.Min(maxActive, profile.maxSimultaneous);
+            if (_activeCount >= cap)
             {
-                if (!isPaused && activeCount < maxActive)
-                {
-                    SpawnOne();
-
-                    if (activeCount >= maxActive)
-                    {
-                        EventBus.Publish(new OnTimedSpawnCapReached
-                        {
-                            maxActive = maxActive
-                        });
-                    }
-                }
-
-                yield return WaitUnpaused(spawnInterval);
-            }
-        }
-
-        private void SpawnOne()
-        {
-            if (profile == null || profile.entries == null || profile.entries.Length == 0)
+                EventBus.Publish(new OnTimedSpawnCapReachedEvent { MaxActive = cap });
                 return;
-
-            var entry = SpawnHelper_UMFOSS.SelectWeightedRandom(profile.entries);
-            Vector3 pos = SpawnHelper_UMFOSS.GetSpawnPosition(
-                profile.spawnPointMode, spawnPoints, ref sequentialIndex, Vector3.zero);
-
-            GameObject obj = Instantiate(entry.prefab);
-            obj.transform.position = pos;
-            obj.SetActive(true);
-
-            spawnedObjects.Add(obj);
-            activeCount++;
-
-            EventBus.Publish(new OnTimedSpawnTriggered
-            {
-                spawnedObj = obj,
-                position = pos
-            });
-            EventBus.Publish(new OnSpawnCountChanged
-            {
-                activeCount = activeCount,
-                maxCount = maxActive
-            });
-        }
-
-        private void OnObjectDied(OnSpawnedObjectDied e)
-        {
-            if (!spawnedObjects.Contains(e.obj)) return;
-
-            spawnedObjects.Remove(e.obj);
-            activeCount = Mathf.Max(0, activeCount - 1);
-
-            EventBus.Publish(new OnSpawnCountChanged
-            {
-                activeCount = activeCount,
-                maxCount = maxActive
-            });
-
-            if (respawnOnDeath && isSpawning)
-                StartCoroutine(RespawnAfterDelay());
-        }
-
-        private IEnumerator RespawnAfterDelay()
-        {
-            yield return WaitUnpaused(spawnInterval);
-            if (isSpawning && activeCount < maxActive)
-                SpawnOne();
-        }
-
-        private IEnumerator WaitUnpaused(float seconds)
-        {
-            float elapsed = 0f;
-            while (elapsed < seconds)
-            {
-                if (!isPaused)
-                    elapsed += Time.deltaTime;
-                yield return null;
             }
+
+            if (Time.time < _nextSpawnAllowedTime && !fromDeathRespawn) return;
+
+            var entry = profile.SelectWeightedEntry();
+            if (entry == null || entry.prefab == null) return;
+
+            var playerTf = SpawnerSpawnExecution.TryFindPlayerTransform(playerTag);
+            var pos = SpawnerSpawnExecution.ResolveSpawnPosition(profile, spawnPoints, ref _sequentialIndex, playerTf);
+            var waveDisplay = 0;
+            var spawned = SpawnerSpawnExecution.SpawnFromPool(entry.prefab, pos, track =>
+            {
+                track.Configure(go => OnEntityEnded(go, cap), waveDisplay);
+            });
+
+            if (spawned == null) return;
+
+            _activeCount++;
+            _nextSpawnAllowedTime = Time.time + profile.respawnCooldown;
+            EventBus.Publish(new OnTimedSpawnTriggeredEvent
+            {
+                SpawnedObj = spawned,
+                Position = pos
+            });
+            EventBus.Publish(new OnSpawnCountChangedEvent { ActiveCount = _activeCount, MaxCount = cap });
+        }
+
+        void OnEntityEnded(GameObject go, int cap)
+        {
+            _activeCount = Mathf.Max(0, _activeCount - 1);
+            EventBus.Publish(new OnSpawnCountChangedEvent { ActiveCount = _activeCount, MaxCount = cap });
+            if (ObjectPoolManager_UMFOSS.Instance != null)
+                ObjectPoolManager_UMFOSS.Instance.Release(go);
+
+            if (!respawnOnDeath || profile == null) return;
+            if (TimerUtility_UMFOSS.Instance == null) return;
+            TimerUtility_UMFOSS.Instance.ScheduleOnce(spawnInterval, () =>
+            {
+                if (this != null && enabled) TrySpawnOne(true);
+            });
         }
     }
 }

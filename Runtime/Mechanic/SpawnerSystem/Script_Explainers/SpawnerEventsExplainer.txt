@@ -1,0 +1,20 @@
+====================================================
+FILE  : SpawnerEvents.cs
+SYSTEM: Spawner System (issue #25)
+NAMESPACE: GameplayMechanicsUMFOSS.World
+====================================================
+
+PURPOSE
+Lightweight  struct  payload types for  EventBus.Publish  / subscribe. Spawners
+never force other systems to reference them — listeners opt in to these events.
+
+GROUPS
+- Wave lifecycle:  OnWaveStartedEvent ,  OnWaveClearedEvent ,  OnAllWavesCompleteEvent
+- Instance lifecycle:  OnSpawnedObjectDiedEvent
+- Timed:  OnTimedSpawnTriggeredEvent ,  OnTimedSpawnCapReachedEvent
+- Proximity:  OnProximitySpawnTriggeredEvent ,  OnProximitySpawnerResetEvent
+- Shared:  OnSpawnerStartedEvent ,  OnSpawnerStoppedEvent ,  OnSpawnCountChangedEvent
+
+CROSS-REFERENCES
+Published from  WaveSpawner_UMFOSS ,  TimedSpawner_UMFOSS ,  ProximitySpawner_UMFOSS .
+Subscribers live anywhere that calls  EventBus.Subscribe<...> .

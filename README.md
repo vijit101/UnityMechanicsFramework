@@ -174,8 +174,11 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 > Every entry is contributed by a community member. Each one includes:
 > the author's name and profile, a video walkthrough, a link to the mechanic, usage instructions, and highlights.
 >
-> **Contributors:** when your PR is merged, add your entry here following the format below.  
-> See [CONTRIBUTING.md → Section 14](./CONTRIBUTING.md#14-updating-the-mechanics-library-in-readme) for the exact format required.
+> **Contributors — before you open a PR:**
+> 1. Add a row to the **Quick Navigation** table below (use your GitHub **issue number** as `#`, e.g. Issue **#25** → `#25-spawner-system`).
+> 2. Add a full **`### N. Your Mechanic Name`** section using the template at the bottom of this section.
+> 3. See [CONTRIBUTING.md → Section 14](./CONTRIBUTING.md#14-updating-the-mechanics-library-in-readme) for the exact format, video rules, and PR checklist.
+>
 
 ---
 
@@ -185,24 +188,14 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Spawner System](#3-spawner-system) | [Satish Rathod](https://github.com/satish-rathod) | World / Spawning | [▶ Watch](Sample/SpawnerSystem/SpawnerSystemVideos.zip) |
-| 4 | [Scene Manager System](#4-scene-manager-system) | [Nymish](https://github.com/nymishkash) | Systems | [▶ Watch](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
-| 5 | [Modular Jump System](#5-modular-jump-system) | [Ankur Kalita](https://github.com/ankur-kalita) | Movement | [▶ Watch](./Samples~/JumpSystemSample/Video/ModularJumpImpl.mp4.zip) |
-| 23 | [Currency System](#23-currency-system) | [Aayush Khopade](https://github.com/aayushashokkhopade) [Krishna Patidar](https://github.com/krishna-p060) | Systems / Economy | [▶ Watch](https://www.loom.com/share/01de26ff40114577a2aff1fce3f39ec2) |
-| 64 | [Utils](#64-Utils) | [Shubham](https://github.com/vijit101) | Core | [▶ Watch]() |
-| 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | (https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch]
-| 3 | [Modular Jump System](#3-modular-jump-system) | [Ankur Kalita](https://github.com/ankur-kalita) | Movement | [▶ Watch](./Samples~/JumpSystemSample/Video/ModularJumpImpl.mp4.zip) |
-| 27 | [Boomerang Weapon](#27-boomerang-weapon-system) | [Shrinibas Mahanta](https://github.com/2k4sm), [Shreyas Garg](https://github.com/shreyas-garg), [Sudharsan](https://github.com/Bug-Finderr) | Combat | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/BoomerangWeapon/BoomerangWeaponDemoVideo.zip) |
-| 24 | [Pause System](#24-pause-system) | [Souvik Kumar](https://github.com/Souvik-Cyclic) | Systems | [▶ Watch](Samples~/PauseSystemSample/Video/PauseSystemVideo.zip) |
-| 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
-
-| 6 | [Screen Shake System](#6-screen-shake-system) | [Paramjeet Kaur](https://github.com/kauxp) | Systems | [▶ Watch](Samples~/ScreenShakeExample/Video/ScreenShakeTutorial.mp4) |
-| 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
-(https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
 | 3 | [Scene Manager System](#3-scene-manager-system) | [Nymish](https://github.com/nymishkash) | Systems | [▶ Watch](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
-| 9 | [Modular 2D Movement System](#9-modular-2d-movement-system) | [Kumar Kartikay](https://github.com/KKartikay-27/) & [Amrutha CA](https://github.com/Amruthacagithub) | Movement | [▶ Watch](https://github.com/KKartikay-27/UnityMechanicsFramework/blob/feature/movement2d-system/Samples~/Modular2DMovementSystem/Modular2DMovementSystemVideo.zip) |
-|
+| 5 | [Modular Jump System](#5-modular-jump-system) | [Ankur Kalita](https://github.com/ankur-kalita) | Movement | [▶ Watch](./Samples~/JumpSystemSample/Video/ModularJumpImpl.mp4.zip) |
+| 6 | [Screen Shake System](#6-screen-shake-system) | [Paramjeet Kaur](https://github.com/kauxp) | Systems | [▶ Watch](Samples~/ScreenShakeExample/Video/ScreenShakeTutorial.mp4) |
+| 24 | [Pause System](#24-pause-system) | [Souvik Kumar](https://github.com/Souvik-Cyclic) | Systems | [▶ Watch](Samples~/PauseSystemSample/Video/PauseSystemVideo.zip) |
+| 25 | [Spawner System](#25-spawner-system) | [Naresh Kumar Thodupunoori](https://github.com/Naresh-Kumar-Thodupunoori) | World / Spawning | [▶ Watch](./Sample/SpawnerSystem/SpawnerSystemTutorial.mp4.zip) |
+| 27 | [Boomerang Weapon](#27-boomerang-weapon-system) | [Shrinibas Mahanta](https://github.com/2k4sm), [Shreyas Garg](https://github.com/shreyas-garg), [Sudharsan](https://github.com/Bug-Finderr) | Combat | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/BoomerangWeapon/BoomerangWeaponDemoVideo.zip) |
+| 64 | [Utils](#4-utils) | [Shubham](https://github.com/vijit101) | Core | — |
+
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -264,7 +257,7 @@ GameManager.Instance.AddScore(10);
 A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data not code.
 
 **How to use it**
- Note to meintainer : need to fix the part for how to use dialogue system later / for the one using it find the video and watch it  
+ Note to maintainer: need to fix the part for how to use the dialogue system later / for those using it, find the video and watch it  
 ```csharp
 using GameplayMechanicsUMFOSS.Dialogue;
 
@@ -331,7 +324,6 @@ EventBus.Subscribe<WeaponCaughtEvent>(e => Debug.Log("Caught!"));
 - Parents to hit surfaces on impact, works with moving platforms out of the box
 
 ---
----
 
 ### 6. Screen Shake System
 
@@ -387,108 +379,90 @@ namespace GameplayMechanicsUMFOSS.Samples.ScreenShake
 - Uses Perlin noise instead of random to generate smooth, jitter-free camera motion
 - Singleton architecture — any script can trigger shake in one line (Instance.TriggerShake)
 
-### 64 . Utils
+------
+
+### 25. Spawner System
 
 | | |
 |---|---|
-| **Author** | [Shubham](https://github.com/vijit101) |
-| **Namespace** | `GameplayMechanicsUMFOSS.Core` 
-| **Location** | [`RuntimeMechanics/Dialogue/2. GenericAndScalableDialogueSystem/`](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem) |
-| **Category** | Dialogue / Narrative |
-| **Demo Scene** | `Samples~/DialogueExample/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Tutorial](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/dailogueSample/Video) |
-
-**What it does**
-
-A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data, not code.
-
-**How to use it**
- Note to maintainer: need to fix the part for how to use the dialogue system later / for the one using it find the video and watch it  
-```csharp
-using GameplayMechanicsUMFOSS.Dialogue;
-
-// Step 1: Create DialogueNode ScriptableObjects in the Inspector
-// Step 2: Link them into a DialogueDatabase asset
-// Step 3: Reference the database from your DialogueSystem component
-
-[SerializeField] private DialogueSystem dialogueSystem;
-[SerializeField] private DialogueDatabase npcDatabase;
-
-// Step 4: Start a conversation
-dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
-{
-    Debug.Log("Conversation finished.");
-});
-```
-
-**Highlights**
-
-- Fully data-driven — all dialogue lives in ScriptableObject assets, not in code
-- Supports branching and multi-path dialogue trees
-- Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
-- Add new conversations without touching any existing scripts
-- Scales to large narrative systems without architectural changes
-
----
-
-### 3. Spawner System
-
-| | |
-|---|---|
-| **Author** | [Satish Rathod](https://github.com/satish-rathod) |
+| **Issue** | [#25 — Spawner System](https://github.com/vijit101/UnityMechanicsFramework/issues/25) |
+| **Author** | [Naresh Kumar Thodupunoori](https://github.com/Naresh-Kumar-Thodupunoori) |
 | **Namespace** | `GameplayMechanicsUMFOSS.World` |
-| **Location** | [`Runtime/Mechanic/SpawnerSystem/Scripts/`](Runtime/Mechanic/SpawnerSystem/Scripts/) |
+| **Location** | [`Runtime/Mechanic/SpawnerSystem/Scripts/`](Runtime/Mechanic/SpawnerSystem/Scripts/) — `WaveSpawner_UMFOSS`, `TimedSpawner_UMFOSS`, `ProximitySpawner_UMFOSS`, `SpawnProfile_UMFOSS`, `SpawnPoint_UMFOSS`, `SpawnerSpawnExecution`, `SpawnerTrackedEntity_UMFOSS`, `SpawnerEvents_UMFOSS`, `SpawnerEnums` |
 | **Script Explainers** | [`Runtime/Mechanic/SpawnerSystem/Script_Explainers/`](Runtime/Mechanic/SpawnerSystem/Script_Explainers/) (one per script) |
 | **Category** | World / Spawning |
-| **Sample Project** | [`Sample/SpawnerSystem/SpawnerSystem.zip`](Sample/SpawnerSystem/SpawnerSystem.zip) (extract & open in Unity) |
-| **Videos** | [`Sample/SpawnerSystem/SpawnerSystemVideos.zip`](Sample/SpawnerSystem/SpawnerSystemVideos.zip) (Demo + Detailed walkthrough) |
+| **UPM sample** | Package Manager → **Samples** → import **Spawner System** (`Sample/SpawnerSystem/`) |
+| **Demo project** | Unzip [Spwaner_System.zip](./Sample/SpawnerSystem/Spwaner_System.zip) and open in Unity — demo scene: `Assets/Scenes/DemoScene.unity` |
+| **Extra samples** | [`Samples~/SpawnerSystem/SpawnerSystem.zip`](Samples~/SpawnerSystem/SpawnerSystem.zip), [`SpawnerSystemVideos.zip`](Samples~/SpawnerSystem/SpawnerSystemVideos.zip) |
+| **Video** | [▶ Watch tutorial](./Sample/SpawnerSystem/SpawnerSystemTutorial.mp4.zip) |
 
 **What it does**
 
-A modular spawner system handling three spawn patterns — wave-based, timed interval, and proximity-triggered — all configured via ScriptableObjects. Drop a spawner on any GameObject, assign a `SpawnProfile` asset, and enemies spawn without writing gameplay code. Used in tower defence, arena games, patrol systems, and ambush encounters.
+ScriptableObject-driven spawning for three patterns: **wave-based** rounds, **timed** interval respawns (with optional refill on defeat), and **proximity-triggered** bursts using `Physics2D.OverlapCircle` (no trigger collider required on the spawner). All runtime spawning goes through `ObjectPoolManager_UMFOSS`; active counts use `SpawnerTrackedEntity_UMFOSS` and lifecycle events instead of polling for destroyed objects.
 
 **How to use it**
 
 ```csharp
 using GameplayMechanicsUMFOSS.World;
 
-// WaveSpawner — assign waveProfiles in Inspector, then:
-waveSpawner.StartWaves();
+// 1. Create SpawnProfile_UMFOSS assets (Create → UMFOSS/World/SpawnProfile) with entries, weights, and caps.
+// 2. Place SpawnPoint_UMFOSS objects in the scene.
+// 3. Add WaveSpawner_UMFOSS, TimedSpawner_UMFOSS, or ProximitySpawner_UMFOSS; assign profiles + spawn points.
+// 4. Ensure ObjectPoolManager_UMFOSS exists and pools are warmed for each prefab in the profile.
 
-// TimedSpawner — auto-starts if spawnOnStart=true, or:
-timedSpawner.StartSpawning();
-timedSpawner.SetInterval(2f);  // change interval at runtime
+// Wave example — start from the Inspector or code:
+GetComponent<WaveSpawner_UMFOSS>().StartWaves();
 
-// ProximitySpawner — auto-detects player via Physics2D.OverlapCircle
-// Or force-trigger manually:
-proximitySpawner.ForceSpawn();
+// Listen for wave lifecycle (Event Bus — types may change when the unified bus lands)
+EventBus.Subscribe<OnWaveStartedEvent>(e => Debug.Log($"Wave {e.WaveNumber}/{e.TotalWaves}"));
+EventBus.Subscribe<OnSpawnCountChangedEvent>(e => Debug.Log($"Active: {e.ActiveCount}/{e.MaxCount}"));
 ```
 
 **Highlights**
 
-- Fully data-driven via `SpawnProfile_UMFOSS` ScriptableObjects — change encounters without code
-- Weighted random selection for natural enemy variety distribution
-- Event-driven active count tracking — reliable with pooled objects
-- Difficulty scaling via AnimationCurve — designer-controlled difficulty curves
-- Three spawner types sharing one data layer — only the trigger mechanism differs
+- Three spawner components (`WaveSpawner_UMFOSS`, `TimedSpawner_UMFOSS`, `ProximitySpawner_UMFOSS`) sharing one `SpawnProfile_UMFOSS` data layer
+- Weighted random selection for mixed enemy types (timed/proximity single picks; waves iterate per entry row)
+- Pause-aware via `GamePausedEvent` and `TimerUtility_UMFOSS` for timed spawns
+- `AnimationCurve` count/delay scaling optional — flat curves at `1` preserve default behaviour
+- Event Bus payloads in `SpawnerEvents_UMFOSS.cs` (e.g. `OnWaveStartedEvent`, `OnWaveClearedEvent`, `OnTimedSpawnTriggeredEvent`, `OnProximitySpawnTriggeredEvent`, `OnSpawnCountChangedEvent`)
+
+> **Event Bus note:** This mechanic uses the current `EventBus` API. When the maintainer ships the **common Event Bus**, event struct names or namespaces may be updated — subscribe via `EventBus.Subscribe<T>` and watch repo release notes for a short migration.
 
 ---
 
-### 4. Scene Manager System
-### 23. Currency System
+### 4. Utils
 
 | | |
 |---|---|
-| **Author** | [Aayush Khopade](https://github.com/aayushashokkhopade) [Krishna Patidar](https://github.com/krishna-p060) |
-| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
-| **Location** | `Runtime/Systems/3. CurrencySystem/CurrencySystem_UMFOSS.cs` |
-| **Category** | Systems / Economy |
-| **Demo Scene** | `Samples~/CurrencySystem/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Walkthrough](https://www.loom.com/share/01de26ff40114577a2aff1fce3f39ec2) |
+| **Author** | [Shubham](https://github.com/vijit101) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Utils`, `GameplayMechanicsUMFOSS.Core` |
+| **Location** | `Runtime/Utils/` (`TimerUtility_UMFOSS`, `ObjectPoolManager_UMFOSS`, …), `Runtime/Utils/Utils.cs` |
+| **Category** | Core / Helpers |
+| **Demo Scene** | — |
+| **Video** | — |
 
 **What it does**
 
-A centralised, ScriptableObject-configured currency manager that tracks multiple currency types (Gold, Gems, XP, Keys, or any custom type) with earn, spend, atomic trade, balance capping, and save/load support. Drop it into any project that needs an in-game economy — shops, quests, upgrades, and loot systems plug in with a single line each.
+Shared helpers used across mechanics: pause-aware timers (`TimerUtility_UMFOSS`), object pooling (`ObjectPoolManager_UMFOSS`), and small static utilities such as scene reload helpers (`Utils`).
+
+**How to use it**
+
+```csharp
+// Example: schedule a one-shot callback
+TimerUtility_UMFOSS.Instance.ScheduleOnce(2f, () => Debug.Log("Fired"));
+
+// Example: reload active scene
+GameplayMechanicsUMFOSS.Core.Utils.ReloadLvl();
+```
+
+**Highlights**
+
+- Centralized timers that respect `GamePausedEvent`
+- Pooling integration for spawn-heavy mechanics
+- Lightweight static helpers for common scene flow
+
+---
+
 ### 3. Scene Manager System
 
 | | |
@@ -504,57 +478,7 @@ A centralised, ScriptableObject-configured currency manager that tracks multiple
 **What it does**
 
 A centralized async scene management system that solves four real-world problems with Unity's built-in `SceneManager`: main-thread blocking on load, singleton destruction across scene changes, missing fade transitions, and zero support for additive overlay scenes (pause menus, inventory, settings). Ships with a persistent-scene pattern that keeps your singletons alive across every load, fade transitions as ScriptableObject assets, an auto-created fade canvas (zero manual UI setup), a stack-based push/pop API for overlays, and a full EventBus integration so any other system can react to scene transitions without holding a direct reference.
-
-**How to use it**
-
-```csharp
-using GameplayMechanicsUMFOSS.Systems;
-
-// Earn 50 gold from anywhere
-CurrencySystem_UMFOSS.Instance.Earn(CurrencyType_UMFOSS.Gold, 50);
-
-// Spend 30 gold — returns false if insufficient
-bool success = CurrencySystem_UMFOSS.Instance.Spend(CurrencyType_UMFOSS.Gold, 30);
-
-// Atomic trade: 10 gems for 200 gold — neither runs if gems insufficient
-CurrencySystem_UMFOSS.Instance.Transaction(
-    CurrencyType_UMFOSS.Gold, 200,
-    CurrencyType_UMFOSS.Gems, 10);
-
-// Subscribe to balance changes for UI updates
-CurrencySystem_UMFOSS.Instance.OnBalanceChanged += (type, oldBal, newBal) =>
-    Debug.Log($"{type}: {oldBal} -> {newBal}");
-using GameplayMechanicsUMFOSS.Core;
-
-// Step 1: Drop SceneManager_UMFOSS + PersistentScene_UMFOSS onto a bootstrap
-//         GameObject in your persistent scene. Set persistentSceneName + a default
-//         SceneTransition asset in the inspector. The fade canvas is created
-//         automatically on Awake — no manual UI wiring needed.
-
-// Step 2: Load a scene with a fade transition
-SceneManager_UMFOSS.Instance.LoadScene("Level_01", fadeBlack);
-
-// Step 3: Push an overlay (pause menu, inventory, settings)
-SceneManager_UMFOSS.Instance.Push("PauseMenu");
-SceneManager_UMFOSS.Instance.Pop(); // close it
-
-// Step 4: React to scene events from anywhere via the EventBus
-EventBus.Subscribe<SceneLoadCompleteEvent>(e => Debug.Log($"Loaded {e.sceneName}"));
-EventBus.Subscribe<SceneLoadProgressEvent>(e => loadingBar.fillAmount = e.progress);
-```
-
-**Highlights**
-
-- **Async-first** — `LoadSceneMode.Additive` + `allowSceneActivation = false` until 90% means no main-thread freeze and no half-loaded flashes
-- **Persistent scene pattern** — your `AudioManager`, `SaveSystem`, and HUD singletons survive every transition without scattered `DontDestroyOnLoad` calls
-- **Auto-created fade canvas** — drop the prefab in any scene, call `LoadScene`, fades just work; zero inspector wiring required
-- **Push / Pop scene stacking** — pause menus, inventory, settings overlays additively load on top of gameplay without unloading the world beneath
-- **Seven EventBus events fire across the load lifecycle** — `SceneLoadStart`, `SceneLoadProgress`, `SceneLoadComplete`, `ScenePushed`, `ScenePopped`, `SceneReloaded`, `InputLock` — every other mechanic can hook in without coupling
-- **Ships with a full SLITHER snake game demo** — three levels, pause/stats overlays, game-over and victory screens — proving every API surface in a real game flow
-
----
-
-### 5. Modular Jump System
+### 3. Modular Jump System
 
 | | |
 |---|---|
@@ -573,6 +497,24 @@ A fully modular, configurable jump system supporting both 2D and 3D physics via 
 **How to use it**
 
 ```csharp
+using GameplayMechanicsUMFOSS.Systems;
+using GameplayMechanicsUMFOSS.Core;
+
+// Step 1: Drop SceneManager_UMFOSS + PersistentScene_UMFOSS onto a bootstrap
+//         GameObject in your persistent scene. Set persistentSceneName + a default
+//         SceneTransition asset in the inspector. The fade canvas is created
+//         automatically on Awake — no manual UI wiring needed.
+
+// Step 2: Load a scene with a fade transition
+SceneManager_UMFOSS.Instance.LoadScene("Level_01", fadeBlack);
+
+// Step 3: Push an overlay (pause menu, inventory, settings)
+SceneManager_UMFOSS.Instance.Push("PauseMenu");
+SceneManager_UMFOSS.Instance.Pop(); // close it
+
+// Step 4: React to scene events from anywhere via the EventBus
+EventBus.Subscribe<SceneLoadCompleteEvent>(e => Debug.Log($"Loaded {e.sceneName}"));
+EventBus.Subscribe<SceneLoadProgressEvent>(e => loadingBar.fillAmount = e.progress);
 using GameplayMechanicsUMFOSS.Movement;
 
 // Step 1: Add ModularJumpSystem_UMFOSS component to your player
@@ -596,11 +538,6 @@ jumpSystem.OnJumpEnd += () => Debug.Log("Landed!");
 
 **Highlights**
 
-- ScriptableObject-driven configuration — add new currency types with zero code changes
-- Six granular C# events for UI binding, audio, and game logic reactions
-- Atomic transactions prevent partial state corruption in multi-currency exchanges
-- Implements `ISaveable_UMFOSS` for seamless save/load integration (enum stored as int for stability)
-- Singleton access via `MonoSingletongeneric<T>` — one line from anywhere
 - **Async-first** — `LoadSceneMode.Additive` + `allowSceneActivation = false` until 90% means no main-thread freeze and no half-loaded flashes
 - **Persistent scene pattern** — your `AudioManager`, `SaveSystem`, and HUD singletons survive every transition without scattered `DontDestroyOnLoad` calls
 - **Auto-created fade canvas** — drop the prefab in any scene, call `LoadScene`, fades just work; zero inspector wiring required
@@ -610,82 +547,6 @@ jumpSystem.OnJumpEnd += () => Debug.Log("Landed!");
 - **Adapter pattern** — `IPhysicsAdapter` with `Physics2DAdapter` and `Physics3DAdapter`. Zero duplicated logic between 2D and 3D modes.
 - **Platformer-ready** — coyote time, jump buffering, variable jump height, N-jumps, gravity multipliers, and terminal velocity — all configurable from the Inspector
 - **Demonstrates the Strategy pattern** — swappable physics backends via interface abstraction, teaching clean dependency inversion in Unity
-
----
-
-### 9. Modular 2D Movement System
-
-| | |
-|---|---|
-| **Author** | [Kumar Kartikay](https://github.com/KKartikay-27/) and [Amrutha CA](https://github.com/Amruthacagithub)|
-| **Namespace** | `GameplayMechanicsUMFOSS.Movement` |
-| **Location** | `Runtime/Mechanic/Movement2D/Scripts/` |
-| **Category** | Movement |
-| **Demo Scene** | `Samples~/Modular2DMovementSystem/Modular2DMovementSystem.zip` |
-| **Video Zip** | `Samples~/Modular2DMovementSystem/Modular2DMovementSystemVideo.zip` |
-
-**What it does**
-
-One 2D movement script that changes its entire movement behavior by switching a dropdown in the Inspector. Nine movement modes covering every approach Unity offers for moving a 2D object — from pixel-perfect transform positioning to physics-based force accumulation.
-### 24. Pause System
-
-| | |
-|---|---|
-| **Author** | [Souvik Kumar](https://github.com/Souvik-Cyclic) |
-| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
-| **Location** | `Runtime/Mechanic/PauseSystem/Scripts/PauseSystem_UMFOSS.cs` |
-| **Script Explainers** | `Runtime/Mechanic/PauseSystem/Script_Explainers/` |
-| **Category** | Systems |
-| **Demo Scene** | `Samples~/PauseSystemSample/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Walkthrough](Samples~/PauseSystemSample/Video/PauseSystemVideo.zip) |
-
-**What it does**
-
-A centralised singleton pause system that freezes gameplay by setting `Time.timeScale` to 0, pauses all audio globally via `AudioListener.pause`, and broadcasts events so every other system can react without coupling to this one. Preserves bullet time and slow motion through a store-and-restore `timeScale` pattern, and optionally auto-pauses when the application loses OS focus.
-
-**How to use it**
-
-```csharp
-using GameplayMechanicsUMFOSS.Movement;
-
-// Step 1: Add Movement2D_UMFOSS component to your GameObject
-// Step 2: Select movement mode in Inspector dropdown
-// Step 3: Adjust parameters for desired feel
-
-// Step 4: Switch modes at runtime if needed
-Movement2D_UMFOSS movement = GetComponent<Movement2D_UMFOSS>();
-movement.SetMode(MovementMode.ForceAdditive); // Ice physics
-movement.SetMode(MovementMode.LerpSmooth);    // Ghost float
-```
-
-**Highlights**
-
-- **9 distinct movement modes** in one component — Transform group (5 modes) + Physics group (4 modes)
-- **Runtime mode switching** with proper state cleanup — no velocity bleeding between modes
-- **Adapter pattern** for physics — using the project-wide `IPhysicsAdapter` for dimension-agnostic logic
-- **Event-driven architecture** — decoupled via actions for start, stop, and mode changes
-- **Comprehensive documentation** — detailed script explainers for both the core movement logic and the adapter system
-using GameplayMechanicsUMFOSS.Systems;
-using GameplayMechanicsUMFOSS.Core;
-
-// Step 1: Add PauseSystem_UMFOSS to a persistent GameObject in your scene
-
-// Step 2: Toggle pause from input or UI
-PauseSystem_UMFOSS.Instance.TogglePause();
-
-// Step 3: Call Pause() / Resume() directly from UI buttons
-pauseButton.onClick.AddListener(() => PauseSystem_UMFOSS.Instance.Pause());
-resumeButton.onClick.AddListener(() => PauseSystem_UMFOSS.Instance.Resume());
-
-// Step 4: React to pause/resume events from any other system — no direct reference needed
-EventBus.Subscribe<GamePausedEvent>(e => aiController.SetInputEnabled(false));
-EventBus.Subscribe<GameResumedEvent>(e => aiController.SetInputEnabled(true));
-```
-
-**Highlights**
-- Store-and-restore `timeScale` pattern — bullet time and slow motion survive pause/resume with zero extra code
-- Configurable pause key, optional focus-loss auto-pause, and per-project audio toggle via Inspector
-- Demonstrates the Singleton and EventBus patterns — pause state is globally accessible and fully decoupled from every system that reacts to it
 
 ---
 
@@ -746,11 +607,12 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 | `GameplayMechanicsUMFOSS.Dialogue` | DialogueSystem, nodes, database | ✅ Active |
 | `GameplayMechanicsUMFOSS.Input` | InputAdapter | ✅ Active |
 | `GameplayMechanicsUMFOSS.Utils` | TimerUtility, helpers | ✅ Active |
+| `GameplayMechanicsUMFOSS.World` | Spawner system, spawn points, world tools | ✅ Active |
 | `GameplayMechanicsUMFOSS.Inventory` | Item systems, loot, equipment | 🔓 Open for contribution |
-| `GameplayMechanicsUMFOSS.Combat` | Boomerang weapon, damage, hitboxes | ✅ Active |
+| `GameplayMechanicsUMFOSS.Combat` | Boomerang weapon, damage, combat events | ✅ Active |
 | `GameplayMechanicsUMFOSS.UI` | HUD, menus, tooltips | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.AI` | Patrol, pathfinding, decisions | 🔓 Open for contribution |
-| `GameplayMechanicsUMFOSS.Systems` | Save/load, audio, scene management, currency | ✅ Active |
+| `GameplayMechanicsUMFOSS.Systems` | Save/load, audio, scene management | 🔓 Open for contribution |
 
 ---
 
@@ -764,7 +626,7 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 | Unity 6 | ✅ Supported |
 
 **Additional notes:**
-- All mechanics target **2D games** by default. But some Issues and PR's  are beyond 2d or 3d that can be used by all. The `IPhysicsAdapter` layer makes extending to 3D straightforward without modifying mechanic code
+- All mechanics target **2D games** by default. But some Issues and PR's  are beyond 2d or 3d that can be used by all. The `IPhysicsAdapter` layer makes extending to 3D straightforward without modifying the mechanics code
 - Compatible with both **Built-In Render Pipeline** and **URP**
 - Compatible with both **Legacy Input** and the **new Unity Input System** via `InputAdapter`
 - If your mechanic requires additional packages (Cinemachine, TextMeshPro, etc.), declare them in your PR and in your `ScriptExplainer.txt` header
@@ -773,28 +635,32 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 
 ## 9. How to Contribute
 
-This library grows with every Pull Request. Every mechanic you contribute is permanently credited to you in the Mechanics Library above, complete with your name, your GitHub profile, and a link to your walkthrough video.
+This library grows with every Pull Request. Every mechanic you contribute is permanently credited to you in the [Mechanics Library](#6-mechanics-library) above, complete with your name, your GitHub profile, and a link to your walkthrough video.
 
-**The contribution flow at a Glance (See details in Contributing.MD):**
+> **Upcoming change (Event Bus):** Maintainers will introduce a **common Event Bus** after reviewing all submissions. You may need to update event types or subscriptions in a follow-up PR once that lands. Until then, use `EventBus.Publish` / `EventBus.Subscribe` with small `struct` event payloads — avoid duplicating bus classes in your mechanic folder.
+
+**The contribution flow at a glance** (details in [CONTRIBUTING.md](./CONTRIBUTING.md)):
 
 ```
 1.  Open an Issue  →  label: mechanic-proposal  →  describe what you want to build
 2.  Fork the repo and create a branch:  mechanic/your-mechanic-name
 3.  Build your mechanic inside  Runtime/
-4.  Create a self-contained demo scene inside  Samples~/
-5.  Write  ScriptExplainer.txt  (line-by-line code explanation)
-6.  Record  Demo.mp4  (video walkthrough — mandatory)
-7.  Add your entry to the Mechanics Library in this README
+4.  Add samples under  Sample/  and/or  Samples~/  (see CONTRIBUTING.md)
+5.  Write  ScriptExplainer.txt  (line-by-line code explanation — mandatory)
+6.  Record a video walkthrough (zip or linked — mandatory)
+7.  Update README.md: Quick Navigation row + full  ### N.  section (N = issue number)
 8.  Open a PR titled:  [Mechanic] Add Your Mechanic Name
 ```
 
 **Your README entry must include:**
+- Your GitHub **issue number** in the section heading (e.g. `### 25. Spawner System`)
 - Your name linked to your GitHub profile
-- A link to your video walkthrough
+- **Location** and **Script Explainers** paths under `Runtime/`
+- Links to demo/sample assets and your video walkthrough
 - A minimal code example showing how to use the mechanic
-- A short description and highlights
+- A short **What it does** summary and **Highlights** bullets
 
-Read the full [CONTRIBUTING.md](./CONTRIBUTING.md) before you start. It covers everything: folder structure, namespace rules, ScriptExplainer format, video requirements, PR checklist, and code standards.
+Read the full [CONTRIBUTING.md](./CONTRIBUTING.md) before you start. It covers folder structure, namespace rules, ScriptExplainer format, video requirements, PR checklist, and code standards.
 
 > **Not sure if your mechanic fits?** Open an Issue with the label `mechanic-proposal` before writing any code. You'll get feedback on scope and design before you invest time building.
 

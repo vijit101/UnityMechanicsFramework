@@ -1,0 +1,21 @@
+====================================================
+FILE  : SpawnerTrackedEntity_UMFOSS.cs
+SYSTEM: Spawner System (issue #25)
+NAMESPACE: GameplayMechanicsUMFOSS.World
+====================================================
+
+PURPOSE
+Pooled objects are not destroyed, so  Destroy  checks are unreliable. This component
+sits on each spawned instance. When gameplay ends the entity (defeat, despawn, etc.),
+it calls  NotifyLifecycleEnded() , which runs the spawner’s callback to decrement
+active counts and  Release  the instance to  ObjectPoolManager_UMFOSS .
+
+Configure( Action<GameObject> onEnded, int waveNumber)  is called at spawn time from
+spawner code (see  SpawnerSpawnExecution.SpawnFromPool ).
+
+WAVE NUMBERS
+Used for diagnostics and  OnSpawnedObjectDiedEvent  — timed spawners may pass 0 for
+“no wave”.
+
+CROSS-REFERENCES
+Demos typically add a one-line  NotifyLifecycleEnded  on death in your enemy script.

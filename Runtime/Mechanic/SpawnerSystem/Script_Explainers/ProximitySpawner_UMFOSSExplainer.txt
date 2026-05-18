@@ -1,0 +1,20 @@
+====================================================
+FILE  : ProximitySpawner_UMFOSS.cs
+SYSTEM: Spawner System (issue #25)
+NAMESPACE: GameplayMechanicsUMFOSS.World
+====================================================
+
+PURPOSE
+Each frame, if unpaused, off cooldown, and not mid-burst, uses
+ Physics2D.OverlapCircleAll  on  triggerRadius  and  playerLayer  to see if the
+player is in range. Optional  Physics2D.Raycast  to  obstacleLayers  enforces
+line-of-sight. On success, runs  SpawnBurstRoutine  to spawn the same way waves
+iterate profile + entries.
+
+ONE-SHOT VS REPEAT
+ isOneShot  sets  _disabled  after the burst. Otherwise  cooldown  timestamps gate
+re-triggers.  Enable()  /  OnProximitySpawnerResetEvent  path resets for designers.
+
+CROSS-REFERENCES
+No collider is required *on* the spawner; detection is query-based. Uses
+ SpawnerSpawnExecution  and  SpawnerTrackedEntity_UMFOSS  for pooling.

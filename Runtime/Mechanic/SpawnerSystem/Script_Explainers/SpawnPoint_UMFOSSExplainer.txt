@@ -1,0 +1,18 @@
+====================================================
+FILE  : SpawnPoint_UMFOSS.cs
+SYSTEM: Spawner System (issue #25)
+NAMESPACE: GameplayMechanicsUMFOSS.World
+====================================================
+
+PURPOSE
+Optional scene object that defines *where* something can appear.  GetSpawnPosition()
+returns a point, a random point in a 2D circle, or a random point in an axis-aligned
+rectangle — all in the component’s local space, using  UnityEngine.Random .
+
+EDITOR
+OnDrawGizmos  draws a faint preview in Scene view (point / wire sphere / box) so
+designers can place and size areas without running the game.
+
+CROSS-REFERENCES
+Referenced by  SpawnerSpawnExecution.ResolveSpawnPosition  and by wave/timed/
+proximity spawners’ spawn point lists.

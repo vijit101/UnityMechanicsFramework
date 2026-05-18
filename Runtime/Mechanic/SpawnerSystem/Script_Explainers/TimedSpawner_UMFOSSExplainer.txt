@@ -1,0 +1,24 @@
+====================================================
+FILE  : TimedSpawner_UMFOSS.cs
+SYSTEM: Spawner System (issue #25)
+NAMESPACE: GameplayMechanicsUMFOSS.World
+====================================================
+
+PURPOSE
+Repeating spawns on a single  SpawnProfile_UMFOSS  using
+TimerUtility_UMFOSS.ScheduleRepeating  so tick rate respects game pause. Uses
+SelectWeightedEntry  per tick (one pick per attempt).  maxActive  and profile
+ maxSimultaneous  both cap the population.
+
+RESPIRATION
+ respawnOnDeath  schedules a one-shot  ScheduleOnce( spawnInterval )  to refill
+after  NotifyLifecycleEnded  — implements “lose a slot, get one back after interval”
+without a second timer loop.
+
+COOLDOWNS
+ profile.respawnCooldown  gates how soon the next *scheduled* tick may fire after a
+release (in addition to the repeating interval, see  _nextSpawnAllowedTime ).
+
+CROSS-REFERENCES
+Creates  TimerUtility_UMFOSS  at runtime if missing. Publishes timed events and
+ OnSpawnCountChangedEvent .

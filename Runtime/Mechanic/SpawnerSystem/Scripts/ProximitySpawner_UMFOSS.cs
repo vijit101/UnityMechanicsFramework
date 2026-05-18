@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using GameplayMechanicsUMFOSS.Core;
+using GameplayMechanicsUMFOSS.Utils;
 using UnityEngine;
 
 namespace GameplayMechanicsUMFOSS.World
@@ -7,157 +9,236 @@ namespace GameplayMechanicsUMFOSS.World
     public class ProximitySpawner_UMFOSS : MonoBehaviour
     {
         [Header("Proximity Configuration")]
-        [SerializeField] private SpawnProfile_UMFOSS profile;
-        [SerializeField] private List<SpawnPoint_UMFOSS> spawnPoints;
-        [SerializeField] private float triggerRadius = 5f;
-        [SerializeField] private bool isOneShot = true;
-        [SerializeField] private bool requireLineOfSight = false;
-        [SerializeField] private float cooldown = 0f;
-        [SerializeField] private LayerMask playerLayer;
+        [SerializeField] SpawnProfile_UMFOSS profile;
+        [SerializeField] List<SpawnPoint_UMFOSS> spawnPoints;
+        [SerializeField] float triggerRadius = 5f;
+        [SerializeField] bool isOneShot = true;
+        [SerializeField] bool requireLineOfSight;
+        [SerializeField] float cooldown;
+        [SerializeField] LayerMask playerLayer = ~0;
+        [SerializeField] LayerMask obstacleLayers;
 
-        [Header("Detection")]
-        [SerializeField] private float checkInterval = 0.2f;
+        [Header("Player")]
+        [SerializeField] string playerTag = "Player";
 
-        private bool hasFired = false;
-        private bool isEnabled = true;
-        private bool isPaused = false;
-        private float lastTriggerTime = -999f;
-        private int sequentialIndex = 0;
-        private List<GameObject> spawnedObjects = new List<GameObject>();
+        bool _paused;
+        bool _disabled;
+        bool _hasFired;
+        float _cooldownUntil;
+        int _sequentialIndex;
+        int _activeCount;
+        Coroutine _burstRoutine;
 
-        // --- Public Properties ---
-
-        public bool HasFiredValue => hasFired;
-        public float TriggerRadius => triggerRadius;
-
-        // --- Unity Lifecycle ---
-
-        private void OnEnable()
+        void OnEnable()
         {
-            EventBus.Subscribe<OnSpawnedObjectDied>(OnObjectDied);
+            EventBus.Subscribe<GamePausedEvent>(OnPause);
         }
 
-        private void OnDisable()
+        void OnDisable()
         {
-            EventBus.Unsubscribe<OnSpawnedObjectDied>(OnObjectDied);
+            EventBus.Unsubscribe<GamePausedEvent>(OnPause);
         }
 
-        private void Start()
+        void OnPause(GamePausedEvent e)
         {
-            StartCoroutine(ProximityCheckLoop());
+            _paused = e.IsPaused;
         }
 
-        // --- Public API ---
-
-        public void Enable()
+        void Update()
         {
-            isEnabled = true;
-            hasFired = false;
-        }
+            if (_paused || _disabled || profile == null) return;
+            if (Time.time < _cooldownUntil) return;
+            if (_burstRoutine != null) return;
 
-        public void Disable()
-        {
-            isEnabled = false;
-        }
-
-        public void ForceSpawn()
-        {
-            DoSpawn(transform.position);
-        }
-
-        public bool HasFired() => hasFired;
-
-        // --- Private Methods ---
-
-        private IEnumerator ProximityCheckLoop()
-        {
-            while (true)
+            Collider2D playerCol = null;
+            foreach (var h in Physics2D.OverlapCircleAll(transform.position, triggerRadius, playerLayer))
             {
-                if (isEnabled && !isPaused)
+                if (h == null) continue;
+                if (h.name == "Player" ||
+                    (!string.IsNullOrEmpty(playerTag) && h.CompareTag(playerTag)))
                 {
-                    if (!(isOneShot && hasFired)
-                        && Time.time - lastTriggerTime >= cooldown)
+                    playerCol = h;
+                    break;
+                }
+            }
+
+            if (playerCol == null) return;
+            if (requireLineOfSight && !HasLineOfSight(playerCol.transform.position)) return;
+
+            _burstRoutine = StartCoroutine(SpawnBurstRoutine());
+        }
+
+        bool HasLineOfSight(Vector3 targetPos)
+        {
+            var origin = transform.position;
+            var dir = (Vector2)(targetPos - origin);
+            var dist = dir.magnitude;
+            if (dist < 0.01f) return true;
+            var hit = Physics2D.Raycast(origin, dir.normalized, dist, obstacleLayers);
+            return hit.collider == null;
+        }
+
+        IEnumerator SpawnBurstRoutine()
+        {
+            var scaleKey = 0f;
+            var countScale = profile.EvaluateCountScale(scaleKey);
+            var delayScale = profile.EvaluateDelayScale(scaleKey);
+            var playerTf = SpawnerSpawnExecution.TryFindPlayerTransform(playerTag);
+            var spawnedTotal = 0;
+
+            if (profile.entries != null)
+            {
+                foreach (var entry in profile.entries)
+                {
+                    if (entry == null || entry.prefab == null) continue;
+                    var raw = Random.Range(entry.minCount, entry.maxCount + 1) * countScale;
+                    var count = Mathf.Max(0, Mathf.RoundToInt(raw));
+                    for (var i = 0; i < count; i++)
                     {
-                        Collider2D hit = Physics2D.OverlapCircle(
-                            transform.position, triggerRadius, playerLayer);
-
-                        if (hit != null)
+                        while (_activeCount >= profile.maxSimultaneous)
                         {
-                            bool canSpawn = true;
+                            while (_paused) yield return null;
+                            yield return null;
+                        }
 
-                            if (requireLineOfSight)
+                        if (profile.spawnPointMode == SpawnPointMode.All)
+                        {
+                            if (spawnPoints == null) yield break;
+                            foreach (var pt in spawnPoints)
                             {
-                                Vector2 direction = (Vector2)(hit.transform.position
-                                    - transform.position);
-                                RaycastHit2D ray = Physics2D.Raycast(
-                                    transform.position, direction, triggerRadius);
-                                if (ray.collider != hit)
-                                    canSpawn = false;
+                                if (pt == null) continue;
+                                while (_activeCount >= profile.maxSimultaneous)
+                                {
+                                    while (_paused) yield return null;
+                                    yield return null;
+                                }
+
+                                if (SpawnOne(entry.prefab, pt.GetSpawnPosition())) spawnedTotal++;
+                                var dAll = entry.spawnDelay * (1f / delayScale);
+                                if (dAll > 0f)
+                                {
+                                    var w = 0f;
+                                    while (w < dAll)
+                                    {
+                                        while (_paused) yield return null;
+                                        w += Time.deltaTime;
+                                        yield return null;
+                                    }
+                                }
                             }
-
-                            if (canSpawn)
+                        }
+                        else
+                        {
+                            var pos = SpawnerSpawnExecution.ResolveSpawnPosition(profile, spawnPoints,
+                                ref _sequentialIndex, playerTf);
+                            if (SpawnOne(entry.prefab, pos)) spawnedTotal++;
+                            var d = entry.spawnDelay * (1f / delayScale);
+                            if (d > 0f)
                             {
-                                DoSpawn(hit.transform.position);
-                                lastTriggerTime = Time.time;
-
-                                if (isOneShot)
-                                    hasFired = true;
+                                var w = 0f;
+                                while (w < d)
+                                {
+                                    while (_paused) yield return null;
+                                    w += Time.deltaTime;
+                                    yield return null;
+                                }
                             }
                         }
                     }
                 }
-
-                yield return new WaitForSeconds(checkInterval);
-            }
-        }
-
-        private void DoSpawn(Vector3 playerPosition)
-        {
-            if (profile == null || profile.entries == null) return;
-
-            int totalSpawned = 0;
-
-            foreach (var entry in profile.entries)
-            {
-                int count = Random.Range(entry.minCount, entry.maxCount + 1);
-
-                for (int i = 0; i < count; i++)
-                {
-                    if (spawnedObjects.Count >= profile.maxSimultaneous)
-                        break;
-
-                    Vector3 pos = SpawnHelper_UMFOSS.GetSpawnPosition(
-                        profile.spawnPointMode, spawnPoints,
-                        ref sequentialIndex, playerPosition);
-
-                    GameObject obj = Instantiate(entry.prefab);
-                    obj.transform.position = pos;
-                    obj.SetActive(true);
-
-                    spawnedObjects.Add(obj);
-                    totalSpawned++;
-                }
             }
 
-            EventBus.Publish(new OnProximitySpawnTriggered
+            EventBus.Publish(new OnProximitySpawnTriggeredEvent
             {
-                triggerPosition = transform.position,
-                spawnCount = totalSpawned
+                TriggerPosition = transform.position,
+                SpawnCount = spawnedTotal
             });
-            EventBus.Publish(new OnSpawnerStarted { spawner = gameObject });
+            EventBus.Publish(new OnSpawnCountChangedEvent
+            {
+                ActiveCount = _activeCount,
+                MaxCount = profile.maxSimultaneous
+            });
+
+            if (isOneShot)
+            {
+                _hasFired = true;
+                _disabled = true;
+            }
+            else
+                _cooldownUntil = Time.time + Mathf.Max(0f, cooldown);
+
+            _burstRoutine = null;
         }
 
-        private void OnObjectDied(OnSpawnedObjectDied e)
+        bool SpawnOne(GameObject prefab, Vector3 pos)
         {
-            if (spawnedObjects.Contains(e.obj))
-                spawnedObjects.Remove(e.obj);
+            var spawned = SpawnerSpawnExecution.SpawnFromPool(prefab, pos, track =>
+            {
+                track.Configure(OnTrackedEnded, 0);
+            });
+            if (spawned == null) return false;
+            _activeCount++;
+            return true;
         }
 
-        private void OnDrawGizmos()
+        void OnTrackedEnded(GameObject go)
         {
-            Gizmos.color = hasFired
-                ? new Color(0.5f, 0.5f, 0.5f, 0.2f)
-                : new Color(1f, 1f, 0f, 0.2f);
+            _activeCount = Mathf.Max(0, _activeCount - 1);
+            EventBus.Publish(new OnSpawnCountChangedEvent
+            {
+                ActiveCount = _activeCount,
+                MaxCount = profile != null ? profile.maxSimultaneous : 0
+            });
+            if (ObjectPoolManager_UMFOSS.Instance != null)
+                ObjectPoolManager_UMFOSS.Instance.Release(go);
+        }
+
+        public void Enable()
+        {
+            _disabled = false;
+            _hasFired = false;
+            EventBus.Publish(new OnProximitySpawnerResetEvent());
+        }
+
+        public void Disable()
+        {
+            _disabled = true;
+        }
+
+        public void ForceSpawn()
+        {
+            if (profile == null || _burstRoutine != null) return;
+            _burstRoutine = StartCoroutine(SpawnBurstRoutine());
+        }
+
+        public bool HasFired() => _hasFired;
+
+        /// <summary>Code-driven setup (e.g. demo/bootstrap) without Inspector references.</summary>
+        public void ApplyRuntimeConfiguration(
+            SpawnProfile_UMFOSS profileValue,
+            List<SpawnPoint_UMFOSS> points,
+            float radius,
+            bool oneShot,
+            bool los,
+            float cooldownSeconds,
+            LayerMask players,
+            LayerMask obstacles,
+            string playerTagValue)
+        {
+            profile = profileValue;
+            spawnPoints = points;
+            triggerRadius = radius;
+            isOneShot = oneShot;
+            requireLineOfSight = los;
+            cooldown = cooldownSeconds;
+            playerLayer = players;
+            obstacleLayers = obstacles;
+            playerTag = playerTagValue;
+        }
+
+        void OnDrawGizmosSelected()
+        {
+            Gizmos.color = new Color(0f, 1f, 0.5f, 0.35f);
             Gizmos.DrawWireSphere(transform.position, triggerRadius);
         }
     }

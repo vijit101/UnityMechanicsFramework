@@ -1,0 +1,24 @@
+====================================================
+FILE  : SpawnProfile_UMFOSS.cs
+SYSTEM: Spawner System (issue #25)
+NAMESPACE: GameplayMechanicsUMFOSS.World
+====================================================
+
+PURPOSE
+ScriptableObject that holds all designer-tunable data for a spawn configuration:
+weighted prefab rows, spawn point mode, max simultaneous, cooldowns, and optional
+count/delay scaling curves. Runtime spawners only read this asset — they do not
+duplicate tuning fields.
+
+KEY API
+- SelectWeightedEntry() — “loot table” style pick by cumulative weight, not a random
+  array index. Entries with weight ≤ 0 or null prefab are skipped.
+- EvaluateCountScale / EvaluateDelayScale — return 1 when the curve is empty, so
+  existing profiles behave unchanged when curves are left unset.
+
+INSPECTOR
+Create via  Assets → Create → UMFOSS/World/SpawnProfile  (menu path in code).
+
+CROSS-REFERENCES
+Used by  WaveSpawner_UMFOSS ,  TimedSpawner_UMFOSS ,  ProximitySpawner_UMFOSS .
+Prefabs here must be warmed in  ObjectPoolManager_UMFOSS  before Play.

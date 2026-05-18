@@ -12,6 +12,11 @@
   },
   "samples": [
     {
+      "displayName": "Spawner System",
+      "description": "Zipped Unity demo project (Spwaner_System.zip) and tutorial video (SpawnerSystemTutorial.mp4.zip) for Issue #25 — import via Package Manager → Samples.",
+      "path": "Sample/SpawnerSystem"
+    },
+    {
       "displayName": "Boomerang Weapon Demo",
       "description": "God-of-War-style throw-and-return weapon with damage, knockback, camera shake, and one-click scene builder.",
       "path": "Samples~/BoomerangWeapon"

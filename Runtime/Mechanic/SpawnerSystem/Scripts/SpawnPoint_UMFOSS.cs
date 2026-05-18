@@ -5,46 +5,39 @@ namespace GameplayMechanicsUMFOSS.World
     public class SpawnPoint_UMFOSS : MonoBehaviour
     {
         [Header("Spawn Area")]
-        [SerializeField] private SpawnShape shape = SpawnShape.Point;
-        [SerializeField] private float radius = 0f;
-        [SerializeField] private Vector2 size = Vector2.one;
-
-        public void Configure(SpawnShape shape, float radius = 0f, Vector2 size = default)
-        {
-            this.shape = shape;
-            this.radius = radius;
-            this.size = size == default ? Vector2.one : size;
-        }
+        [SerializeField] SpawnShape shape = SpawnShape.Point;
+        [SerializeField] float radius = 1f;
+        [SerializeField] Vector2 size = Vector2.one;
 
         public Vector3 GetSpawnPosition()
         {
             return shape switch
             {
                 SpawnShape.Point => transform.position,
-                SpawnShape.Circle => transform.position +
-                    (Vector3)(Random.insideUnitCircle * radius),
+                SpawnShape.Circle => transform.position + (Vector3)Random.insideUnitCircle * radius,
                 SpawnShape.Rectangle => transform.position + new Vector3(
                     Random.Range(-size.x / 2f, size.x / 2f),
-                    Random.Range(-size.y / 2f, size.y / 2f), 0f),
+                    Random.Range(-size.y / 2f, size.y / 2f),
+                    0f),
                 _ => transform.position
             };
         }
 
-        private void OnDrawGizmos()
+        void OnDrawGizmos()
         {
-            Gizmos.color = new Color(1f, 0.3f, 0f, 0.3f);
-
+            Gizmos.color = new Color(1f, 0f, 0f, 0.3f);
+            var pos = transform.position;
             switch (shape)
             {
                 case SpawnShape.Point:
-                    Gizmos.DrawWireSphere(transform.position, 0.2f);
+                    Gizmos.DrawSphere(pos, 0.15f);
                     break;
                 case SpawnShape.Circle:
-                    Gizmos.DrawWireSphere(transform.position, radius);
+                    Gizmos.DrawWireSphere(pos, radius);
                     break;
                 case SpawnShape.Rectangle:
-                    Gizmos.DrawWireCube(transform.position,
-                        new Vector3(size.x, size.y, 0.1f));
+                    var half = new Vector3(size.x / 2f, size.y / 2f, 0.1f);
+                    Gizmos.DrawCube(pos, half * 2f);
                     break;
             }
         }
