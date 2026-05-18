@@ -1,0 +1,263 @@
+Line 1: using System.Collections;
+Explanation: Imports collections namespace for IEnumerator, required for coroutine methods.
+
+Line 2: using System.Collections.Generic;
+Explanation: Imports generic collections for List<T>, used for spawnPoints and spawnedObjects.
+
+Line 3: using UnityEngine;
+Explanation: Imports Unity engine namespace for MonoBehaviour, GameObject, Vector3, Time, and Mathf.
+
+Line 5: namespace GameplayMechanicsUMFOSS.World
+Explanation: Places TimedSpawner in the World namespace alongside all other spawner scripts.
+
+Line 7: public class TimedSpawner_UMFOSS : MonoBehaviour
+Explanation: Inherits MonoBehaviour so it can be placed in a scene as a component and use Unity lifecycle and coroutines.
+
+Line 10: [SerializeField] private SpawnProfile_UMFOSS profile;
+Explanation: The single SpawnProfile asset driving what and how many objects this spawner creates on each interval tick.
+
+Line 11: [SerializeField] private List<SpawnPoint_UMFOSS> spawnPoints;
+Explanation: Scene references to available SpawnPoint components; passed to SpawnHelper for position resolution.
+
+Line 12: [SerializeField] private float spawnInterval = 3f;
+Explanation: Seconds between spawn attempts; defaults to 3 seconds for a moderate spawn rate.
+
+Line 13: [SerializeField] private int maxActive = 5;
+Explanation: Hard cap on how many spawned objects can be alive at once before the spawner stops creating new ones.
+
+Line 14: [SerializeField] private bool spawnOnStart = true;
+Explanation: When true, spawning begins automatically on Start; set to false when you want to trigger it manually via StartSpawning().
+
+Line 15: [SerializeField] private bool respawnOnDeath = true;
+Explanation: When true, an immediate respawn coroutine fires whenever a tracked object dies, maintaining population density.
+
+Line 17: private int activeCount = 0;
+Explanation: Tracks how many spawned objects are currently alive; checked against maxActive before each spawn.
+
+Line 18: private bool isSpawning = false;
+Explanation: Flag to prevent duplicate coroutines from starting; also controls the SpawnLoop while condition.
+
+Line 19: private bool isPaused = false;
+Explanation: Pause flag checked by WaitUnpaused to freeze timers without stopping the coroutine.
+
+Line 20: private int sequentialIndex = 0;
+Explanation: Persistent counter passed by ref to SpawnHelper for Sequential spawn point mode.
+
+Line 21: private List<GameObject> spawnedObjects = new List<GameObject>();
+Explanation: Tracks all currently alive spawned objects so OnObjectDied can confirm ownership before decrementing activeCount.
+
+Line 22: private Coroutine spawnCoroutine;
+Explanation: Stores the running coroutine reference so StopSpawning() can stop it precisely.
+
+Line 26: public int ActiveCount => activeCount;
+Explanation: Read-only property exposing current live object count to external UI or game logic.
+
+Line 27: public bool IsSpawning => isSpawning;
+Explanation: Read-only property indicating whether the spawn loop is currently running.
+
+Line 31: private void Start()
+Explanation: Unity lifecycle callback called once after the component initialises.
+
+Line 33:     if (spawnOnStart)
+Explanation: Checks the Inspector toggle before auto-starting, allowing designers to control the activation timing.
+
+Line 34:         StartSpawning();
+Explanation: Calls the public API method to begin the interval spawn loop.
+
+Line 37: private void OnEnable()
+Explanation: Unity callback on component enable; subscribes to death events so active count stays accurate.
+
+Line 39:     EventBus.Subscribe<OnSpawnedObjectDied>(OnObjectDied);
+Explanation: Registers the death handler so the spawner is notified whenever a tracked object publishes OnSpawnedObjectDied.
+
+Line 42: private void OnDisable()
+Explanation: Unity callback on component disable; unsubscribes to prevent callbacks after the component is gone.
+
+Line 44:     EventBus.Unsubscribe<OnSpawnedObjectDied>(OnObjectDied);
+Explanation: Removes the death handler from the EventBus to avoid null reference errors after this object is disabled.
+
+Line 49: public void StartSpawning()
+Explanation: Public API to begin interval spawning; safe to call at any time — guards against double-start.
+
+Line 51:     if (isSpawning) return;
+Explanation: Early exit if already spawning, preventing duplicate SpawnLoop coroutines from running simultaneously.
+
+Line 52:     isSpawning = true;
+Explanation: Sets the flag before starting the coroutine so the guard check works immediately.
+
+Line 54:     if (spawnCoroutine != null)
+Explanation: Checks if a previous coroutine reference exists before attempting to stop it.
+
+Line 55:         StopCoroutine(spawnCoroutine);
+Explanation: Stops any lingering coroutine to ensure a clean restart.
+
+Line 56:     spawnCoroutine = StartCoroutine(SpawnLoop());
+Explanation: Starts the interval spawn loop and stores the reference for later control.
+
+Line 57:     EventBus.Publish(new OnSpawnerStarted { spawner = gameObject });
+Explanation: Notifies all listeners (audio, UI, analytics) that this spawner has activated.
+
+Line 60: public void StopSpawning()
+Explanation: Public API to halt the spawn loop, typically called by game logic when a level ends or an objective changes.
+
+Line 62:     isSpawning = false;
+Explanation: Clears the flag that SpawnLoop's while condition checks, causing the coroutine to exit cleanly.
+
+Line 63:     if (spawnCoroutine != null)
+Explanation: Guards against stopping a null coroutine reference.
+
+Line 65:         StopCoroutine(spawnCoroutine);
+Explanation: Immediately stops the coroutine rather than waiting for the while condition to be checked.
+
+Line 66:         spawnCoroutine = null;
+Explanation: Clears the reference so future null checks behave correctly.
+
+Line 68:     EventBus.Publish(new OnSpawnerStopped { spawner = gameObject });
+Explanation: Fires the stopped event so any spawner-lifecycle listeners are notified.
+
+Line 71: public void SetInterval(float seconds)
+Explanation: Public API to change the spawn interval at runtime, e.g. for difficulty ramping during gameplay.
+
+Line 73:     spawnInterval = Mathf.Max(0.1f, seconds);
+Explanation: Updates the interval, clamping to 0.1 seconds minimum to prevent zero or negative intervals from causing infinite loops.
+
+Line 76: public void SetMaxActive(int count)
+Explanation: Public API to change the active object cap at runtime.
+
+Line 78:     maxActive = Mathf.Max(1, count);
+Explanation: Updates maxActive, clamped to at least 1 to prevent a zero cap from blocking all spawning.
+
+Line 81: public int GetActiveCount() => activeCount;
+Explanation: Public method alternative to the ActiveCount property for callers that prefer method syntax.
+
+Line 85: private IEnumerator SpawnLoop()
+Explanation: Core coroutine that attempts a spawn on each interval tick as long as isSpawning is true.
+
+Line 87:     while (isSpawning)
+Explanation: Loop condition — continues until StopSpawning() sets isSpawning to false.
+
+Line 89:         if (!isPaused && activeCount < maxActive)
+Explanation: Only spawns if the game is not paused and there is room under the active cap.
+
+Line 91:             SpawnOne();
+Explanation: Calls the spawn helper to instantiate one weighted-random object from the profile.
+
+Line 93:             if (activeCount >= maxActive)
+Explanation: Checks whether the cap was just reached after SpawnOne incremented the count.
+
+Line 95:                 EventBus.Publish(new OnTimedSpawnCapReached
+Explanation: Fires the cap-reached event so UI or game logic can respond (e.g. stop spawning indicator).
+
+Line 97:                     maxActive = maxActive
+Explanation: Passes the cap value in the event struct so listeners know what limit was hit.
+
+Line 102:         yield return WaitUnpaused(spawnInterval);
+Explanation: Waits the configured interval (pause-aware) before looping back to attempt the next spawn.
+
+Line 106: private void SpawnOne()
+Explanation: Private helper that selects, instantiates, and tracks a single object from the profile.
+
+Line 108:     if (profile == null || profile.entries == null || profile.entries.Length == 0)
+Explanation: Guards against a missing or empty profile to prevent null reference errors at runtime.
+
+Line 109:         return;
+Explanation: Exits early without spawning if the profile is not configured.
+
+Line 111:     var entry = SpawnHelper_UMFOSS.SelectWeightedRandom(profile.entries);
+Explanation: Delegates entry selection to SpawnHelper's weighted random algorithm so heavier-weighted prefabs spawn more often.
+
+Line 112:     Vector3 pos = SpawnHelper_UMFOSS.GetSpawnPosition(
+Explanation: Resolves the spawn world position using SpawnHelper with the profile's configured SpawnPointMode.
+
+Line 113:         profile.spawnPointMode, spawnPoints, ref sequentialIndex, Vector3.zero);
+Explanation: Passes mode, points list, sequential index ref, and Vector3.zero as player position placeholder (TimedSpawner does not track player).
+
+Line 115:     GameObject obj = Instantiate(entry.prefab);
+Explanation: Instantiates the selected prefab; a production implementation should use ObjectPoolManager_UMFOSS here.
+
+Line 116:     obj.transform.position = pos;
+Explanation: Moves the new object to the resolved spawn position.
+
+Line 117:     obj.SetActive(true);
+Explanation: Ensures the object is active, relevant when using object pooling.
+
+Line 119:     spawnedObjects.Add(obj);
+Explanation: Registers the object for ownership tracking so OnObjectDied can match it to this spawner.
+
+Line 120:     activeCount++;
+Explanation: Increments the live count checked by SpawnLoop's cap condition.
+
+Line 122:     EventBus.Publish(new OnTimedSpawnTriggered
+Explanation: Fires the spawn event with the new object reference and position for listeners like VFX or audio.
+
+Line 124:         spawnedObj = obj,
+Explanation: The newly created GameObject, passed for any listener that needs a direct reference.
+
+Line 125:         position = pos
+Explanation: The world position of the spawn, useful for playing a spawn VFX at the correct location.
+
+Line 127:     EventBus.Publish(new OnSpawnCountChanged
+Explanation: Fires count-changed event immediately after spawn so UI counters update in real time.
+
+Line 129:         activeCount = activeCount,
+Explanation: Current live count after this spawn.
+
+Line 130:         maxCount = maxActive
+Explanation: The configured cap so UI can display proportional fill like "3 / 5".
+
+Line 134: private void OnObjectDied(OnSpawnedObjectDied e)
+Explanation: EventBus callback invoked when any object publishes OnSpawnedObjectDied.
+
+Line 136:     if (!spawnedObjects.Contains(e.obj)) return;
+Explanation: Ownership check — early exits if the dying object was not spawned by this spawner.
+
+Line 138:     spawnedObjects.Remove(e.obj);
+Explanation: Removes the dead object from the tracking list.
+
+Line 139:     activeCount = Mathf.Max(0, activeCount - 1);
+Explanation: Decrements the live count, clamped to 0 to guard against race condition negatives.
+
+Line 141:     EventBus.Publish(new OnSpawnCountChanged
+Explanation: Fires count-changed event so UI updates when an object dies.
+
+Line 143:         activeCount = activeCount,
+Explanation: Updated live count after the death.
+
+Line 144:         maxCount = maxActive
+Explanation: The cap value for proportional UI display.
+
+Line 147:     if (respawnOnDeath && isSpawning)
+Explanation: Triggers an immediate respawn only if the respawnOnDeath option is enabled and the spawner is still active.
+
+Line 148:         StartCoroutine(RespawnAfterDelay());
+Explanation: Starts a separate coroutine so the respawn delay runs independently without blocking the main SpawnLoop.
+
+Line 151: private IEnumerator RespawnAfterDelay()
+Explanation: Coroutine that waits the spawn interval then attempts one extra spawn to replace a recently dead object.
+
+Line 153:     yield return WaitUnpaused(spawnInterval);
+Explanation: Waits the configured interval (pause-aware) before attempting the replacement spawn.
+
+Line 154:     if (isSpawning && activeCount < maxActive)
+Explanation: Re-checks that the spawner is still active and below cap before spawning, since state may have changed during the wait.
+
+Line 155:         SpawnOne();
+Explanation: Spawns one replacement object if the conditions are still met.
+
+Line 158: private IEnumerator WaitUnpaused(float seconds)
+Explanation: Pause-aware delay coroutine; accumulates elapsed time only on unpaused frames.
+
+Line 160:     float elapsed = 0f;
+Explanation: Accumulated unpaused time; starts at zero each invocation.
+
+Line 161:     while (elapsed < seconds)
+Explanation: Loops until the full requested duration has elapsed in unpaused time.
+
+Line 163:         if (!isPaused)
+Explanation: Only adds time when the game is not paused; paused frames yield without advancing elapsed.
+
+Line 164:             elapsed += Time.deltaTime;
+Explanation: Adds this frame's real delta time to the accumulator.
+
+Line 165:         yield return null;
+Explanation: Yields one frame so Unity can continue running; the loop resumes next frame.

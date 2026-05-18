@@ -1,0 +1,143 @@
+Line 1: using System.Collections.Generic;
+Explanation: Imports the generic collections namespace for List<T>, used in the spawnPoints parameter.
+
+Line 2: using UnityEngine;
+Explanation: Imports the Unity engine namespace for Vector3, Random, and Mathf.
+
+Line 4: namespace GameplayMechanicsUMFOSS.World
+Explanation: Places the helper in the World namespace so it is accessible to all spawner classes in the same namespace.
+
+Line 6: public static class SpawnHelper_UMFOSS
+Explanation: A static class with no instances — all methods are utility functions called directly, e.g. SpawnHelper_UMFOSS.GetSpawnPosition(...).
+
+Line 14: public static SpawnProfile_UMFOSS.SpawnEntry SelectWeightedRandom(
+Explanation: Static method that takes an array of spawn entries and returns one selected by weighted probability.
+
+Line 15:     SpawnProfile_UMFOSS.SpawnEntry[] entries)
+Explanation: The input array of entries, each carrying a weight field that biases selection probability.
+
+Line 17: float totalWeight = 0f;
+Explanation: Accumulator that will hold the sum of all entry weights, forming the upper bound for the random range.
+
+Line 18: for (int i = 0; i < entries.Length; i++)
+Explanation: Iterates all entries to calculate the total weight sum needed for the weighted random algorithm.
+
+Line 19:     totalWeight += entries[i].weight;
+Explanation: Adds each entry's weight to the running total; after the loop totalWeight equals the sum of all weights.
+
+Line 21: float randomValue = Random.Range(0f, totalWeight);
+Explanation: Picks a uniform random float between 0 and the total weight; entries with larger weight cover a bigger share of this range.
+
+Line 22: float cumulative = 0f;
+Explanation: Running sum used in the second loop to determine which entry's range the random value falls into.
+
+Line 24: for (int i = 0; i < entries.Length; i++)
+Explanation: Second pass through entries, accumulating weight and checking when the random value is first exceeded.
+
+Line 26:     cumulative += entries[i].weight;
+Explanation: Extends the cumulative range by this entry's weight; once cumulative surpasses randomValue, this entry wins.
+
+Line 27:     if (randomValue <= cumulative)
+Explanation: Checks if the random value has landed in this entry's probability band.
+
+Line 28:         return entries[i];
+Explanation: Returns the winning entry immediately when its cumulative range contains the random value.
+
+Line 31: return entries[entries.Length - 1];
+Explanation: Fallback — returns the last entry in case floating-point rounding causes randomValue to exactly equal totalWeight without triggering the loop condition.
+
+Line 37: public static Vector3 GetSpawnPosition(
+Explanation: Static method that resolves the final world position for a spawn based on the configured SpawnPointMode.
+
+Line 38:     SpawnPointMode mode,
+Explanation: The mode enum value from the SpawnProfile that dictates how the spawn point is selected.
+
+Line 39:     List<SpawnPoint_UMFOSS> spawnPoints,
+Explanation: The list of available SpawnPoint components in the scene assigned to this spawner.
+
+Line 40:     ref int sequentialIndex,
+Explanation: Passed by reference so Sequential mode can increment the index and persist it across multiple calls to this method.
+
+Line 41:     Vector3 playerPosition)
+Explanation: Player's current world position, used only in Nearest mode to find the closest spawn point.
+
+Line 43: if (spawnPoints == null || spawnPoints.Count == 0)
+Explanation: Guard clause — if no spawn points are configured, returns Vector3.zero to avoid null reference errors.
+
+Line 44:     return Vector3.zero;
+Explanation: Returns the world origin as a safe fallback when no spawn points exist.
+
+Line 48: case SpawnPointMode.Random:
+Explanation: Randomly picks any spawn point from the list with uniform distribution.
+
+Line 49:     return spawnPoints[Random.Range(0, spawnPoints.Count)]
+Explanation: Selects a random index from 0 to Count-1 (Random.Range int is exclusive on the max) and calls GetSpawnPosition on it.
+
+Line 52: case SpawnPointMode.Sequential:
+Explanation: Cycles through spawn points in order, wrapping back to the start after the last point is used.
+
+Line 53:     var point = spawnPoints[sequentialIndex % spawnPoints.Count];
+Explanation: Modulo keeps the index within bounds even as sequentialIndex grows beyond the list size.
+
+Line 54:     sequentialIndex++;
+Explanation: Increments the persistent index (via the ref parameter) so the next call uses the following point in sequence.
+
+Line 55:     return point.GetSpawnPosition();
+Explanation: Gets the (potentially area-randomised) position from the selected sequential point.
+
+Line 57: case SpawnPointMode.Nearest:
+Explanation: Finds the spawn point whose transform is physically closest to the player's position.
+
+Line 58:     SpawnPoint_UMFOSS nearest = spawnPoints[0];
+Explanation: Initialises nearest to the first point as a starting candidate before the comparison loop.
+
+Line 59:     float minDist = float.MaxValue;
+Explanation: Initialises minimum distance to the largest possible float so any real distance will be smaller on the first comparison.
+
+Line 60:     for (int i = 0; i < spawnPoints.Count; i++)
+Explanation: Iterates all spawn points to find which one is closest to the player.
+
+Line 62:         float dist = Vector3.Distance(
+Explanation: Calculates straight-line distance between the spawn point's transform and the player position.
+
+Line 63:             spawnPoints[i].transform.position, playerPosition);
+Explanation: The two positions being compared — the spawn point's world position and the player's world position.
+
+Line 64:         if (dist < minDist)
+Explanation: If this point is closer than the current closest, update the nearest candidate.
+
+Line 66:             minDist = dist;
+Explanation: Updates the minimum distance record for the next iteration's comparison.
+
+Line 67:             nearest = spawnPoints[i];
+Explanation: Stores the new nearest spawn point reference.
+
+Line 70:     return nearest.GetSpawnPosition();
+Explanation: Returns the area-randomised position from the closest spawn point found.
+
+Line 72: case SpawnPointMode.All:
+Explanation: Intended for spawning at all points simultaneously; this helper returns the first point's position as a single-call entry, and the caller is responsible for iterating all points.
+
+Line 73:     return spawnPoints[0].GetSpawnPosition();
+Explanation: Returns the first spawn point's position; the spawner using All mode calls this per-point in its own loop.
+
+Line 84: public static int GetScaledCount(
+Explanation: Calculates how many objects to spawn for one entry, scaling the base count by the difficulty curve.
+
+Line 85:     SpawnProfile_UMFOSS.SpawnEntry entry,
+Explanation: The entry whose minCount/maxCount range will be used for the base count.
+
+Line 86:     AnimationCurve countScaleCurve,
+Explanation: The profile's difficulty curve, evaluated at the current wave progress to produce a multiplier.
+
+Line 87:     float progressNormalized)
+Explanation: A 0-to-1 value representing how far through the wave sequence we are (0 = first wave, 1 = last wave).
+
+Line 89: int baseCount = Random.Range(entry.minCount, entry.maxCount + 1);
+Explanation: Picks a random integer in [minCount, maxCount] inclusive; +1 because Random.Range int is exclusive on the upper bound.
+
+Line 90: float scale = countScaleCurve.Evaluate(progressNormalized);
+Explanation: Samples the animation curve at the current progress to get the difficulty multiplier (1.0 = no change).
+
+Line 91: return Mathf.Max(1, Mathf.RoundToInt(baseCount * scale));
+Explanation: Multiplies base count by the scale, rounds to the nearest integer, and clamps to a minimum of 1 so at least one object always spawns.

@@ -1,0 +1,98 @@
+Line 1: using UnityEngine;
+Explanation: Imports the Unity engine namespace, required for GameObject and Vector3 types used in the event structs.
+
+Line 3: namespace GameplayMechanicsUMFOSS.World
+Explanation: Places all event types in the World feature group namespace, keeping them organized alongside the spawner scripts.
+
+Line 7: public enum SpawnShape { Point, Circle, Rectangle }
+Explanation: Defines three area shapes a SpawnPoint can use — exact position, random circle, or random rectangle.
+
+Line 9: public enum SpawnPointMode { Random, Sequential, Nearest, All }
+Explanation: Defines how the spawner selects which SpawnPoint to use — randomly, in order, closest to the player, or all at once.
+
+Line 11: public enum WaveClearCondition { AllDead, TimedEnd, Manual }
+Explanation: Defines what condition ends a wave — all spawned enemies die, a timer expires, or the game code calls ClearCurrentWave() manually.
+
+Line 15: public struct OnWaveStarted
+Explanation: Event fired when a new wave begins. Structs are used instead of classes for zero-allocation event data.
+
+Line 17: public int waveNumber;
+Explanation: The 1-based wave index (waveIndex + 1) so UI and listeners can display "Wave 1", "Wave 2", etc.
+
+Line 18: public int totalWaves;
+Explanation: Total number of waves in this run, lets listeners show progress like "Wave 2 of 5".
+
+Line 22: public struct OnWaveCleared
+Explanation: Event fired when a wave's clear condition is met (all dead, timed out, or manually cleared).
+
+Line 24: public int waveNumber;
+Explanation: The wave number that just cleared, used to match against wave-start tracking in listeners.
+
+Line 25: public float timeTaken;
+Explanation: Seconds elapsed from wave start to wave clear, useful for scoring or difficulty adjustment.
+
+Line 28: public struct OnAllWavesComplete
+Explanation: Event fired once after the final wave clears (and loopWaves is false), signalling the full run is over.
+
+Line 30: public int totalWaves;
+Explanation: How many waves were completed in total, useful for end-of-run score screens.
+
+Line 33: public struct OnSpawnedObjectDied
+Explanation: Event that an enemy/spawned object must publish when it dies; the spawners listen to this to decrement their active counts.
+
+Line 35: public GameObject obj;
+Explanation: Reference to the dying object so the spawner can confirm it belongs to its own tracked list before decrementing.
+
+Line 36: public int waveNumber;
+Explanation: Which wave the object belonged to, allowing multi-wave tracking if needed.
+
+Line 37: public int remainingCount;
+Explanation: How many of this spawner's objects are still alive after this death, for use by UI or logic listeners.
+
+Line 41: public struct OnTimedSpawnTriggered
+Explanation: Event fired each time the TimedSpawner successfully instantiates a new object.
+
+Line 43: public GameObject spawnedObj;
+Explanation: Reference to the newly spawned object, so listeners can apply extra setup (e.g. assign a target).
+
+Line 44: public Vector3 position;
+Explanation: World position where the object was spawned, useful for VFX or sound at the spawn location.
+
+Line 48: public struct OnTimedSpawnCapReached
+Explanation: Event fired when the active count reaches maxActive, notifying listeners the spawner is at capacity.
+
+Line 50: public int maxActive;
+Explanation: The cap value that was reached, so listeners know the configured limit without needing a reference to the spawner.
+
+Line 54: public struct OnProximitySpawnTriggered
+Explanation: Event fired when a ProximitySpawner detects the player and executes a spawn batch.
+
+Line 56: public Vector3 triggerPosition;
+Explanation: The spawner's world position when triggered, useful for placing a VFX or audio cue at the trigger source.
+
+Line 57: public int spawnCount;
+Explanation: Total number of objects spawned in this trigger batch, useful for UI or analytics.
+
+Line 60: public struct OnProximitySpawnerReset { }
+Explanation: Parameterless event signalling a one-shot ProximitySpawner has been re-enabled and can fire again.
+
+Line 64: public struct OnSpawnerStarted
+Explanation: Shared event fired by any spawner type when it begins operation, for centralized tracking or UI.
+
+Line 66: public GameObject spawner;
+Explanation: Reference to the spawner GameObject that started, so listeners can distinguish between multiple spawners in the scene.
+
+Line 70: public struct OnSpawnerStopped
+Explanation: Shared event fired by any spawner type when it stops or completes, pairing with OnSpawnerStarted for lifecycle tracking.
+
+Line 72: public GameObject spawner;
+Explanation: Reference to the spawner that stopped, matching the spawner field in OnSpawnerStarted.
+
+Line 75: public struct OnSpawnCountChanged
+Explanation: Shared event fired after any spawn or death to let UI elements like health bars or counters update in real time.
+
+Line 77: public int activeCount;
+Explanation: Current number of live spawned objects after the change.
+
+Line 78: public int maxCount;
+Explanation: The configured cap for this spawner, so UI can show "3 / 5" style displays without a direct spawner reference.

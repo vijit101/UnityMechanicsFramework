@@ -1,0 +1,108 @@
+====================================================
+SCRIPT: EventBus.cs
+AUTHOR: Souvik Kumar (https://github.com/Souvik-Cyclic)
+NAMESPACE: GameplayMechanicsUMFOSS.Core
+====================================================
+
+PURPOSE:
+A global publish/subscribe event bus for decoupled communication between
+mechanics. Any system can publish an event, and any other system can listen
+for it — without either one holding a direct reference to the other. This
+eliminates tight coupling between mechanics and makes each system independently
+swappable, testable, and removable.
+
+----------------------------------------------------
+
+Code    : using System;
+Explain : Imports the base .NET namespace for the Type class and the Delegate
+          base class, both of which are central to how the bus looks up and
+          invokes listeners at runtime.
+
+Code    : using System.Collections.Generic;
+Explain : Imports Dictionary<TKey, TValue>, used to store one multicast
+          delegate per event type. Dictionary gives O(1) average lookup time,
+          so publishing an event never iterates over all registered event types.
+
+Code    : namespace GameplayMechanicsUMFOSS.Core
+Explain : Places EventBus in the Core feature group. Every mechanic in the
+          framework can access it via this namespace. Being in Core signals
+          that it is a foundational system, not a feature-specific one.
+
+Code    : public static class EventBus
+Explain : Declared static so it requires no instantiation and has a single
+          shared state for the entire application. Any script anywhere can
+          call EventBus.Publish or EventBus.Subscribe without finding or
+          storing a reference to a GameObject or component.
+
+Code    : private static readonly Dictionary<Type, Delegate> subscribers = new Dictionary<Type, Delegate>();
+Explain : The core data structure. Each key is an event type (e.g.
+          typeof(GamePausedEvent)) and each value is a multicast delegate
+          holding all listeners registered for that type. Using Type as the
+          key means only listeners for the published event type are invoked —
+          there is zero iteration over unrelated listeners. readonly prevents
+          the reference from being replaced; the contents can still change.
+
+Code    : public static void Subscribe<T>(Action<T> listener)
+Explain : Generic method so the compiler enforces type safety at the call site.
+          Callers write Subscribe<GamePausedEvent>(OnPaused) — passing a
+          handler with the wrong signature is a compile-time error, not a
+          runtime crash.
+
+Code    : Type type = typeof(T);
+Explain : Resolves the generic type T to a runtime Type object used as the
+          dictionary key. This is done once per call and reused below, avoiding
+          redundant typeof() evaluations.
+
+Code    : if (subscribers.ContainsKey(type)) subscribers[type] = Delegate.Combine(subscribers[type], listener);
+Explain : When a key already exists, Delegate.Combine chains the new listener
+          onto the existing multicast delegate. The result is a single delegate
+          object that calls all registered methods in the order they were added.
+          Combining instead of replacing means earlier subscribers are never lost.
+
+Code    : else subscribers[type] = listener;
+Explain : When no listener exists for this type yet, stores the incoming
+          Action<T> directly as the first entry. This branch avoids calling
+          Delegate.Combine(null, listener), which would work but is unnecessary.
+
+Code    : public static void Unsubscribe<T>(Action<T> listener)
+Explain : Mirror of Subscribe. Must be called in OnDisable or OnDestroy for
+          every MonoBehaviour that subscribed. Skipping this leaves a dead
+          delegate in the dictionary pointing at a destroyed object, which
+          causes MissingReferenceException the next time that event is published.
+
+Code    : if (!subscribers.ContainsKey(type)) return;
+Explain : Early exit when nothing is registered for this type. Prevents
+          Delegate.Remove from being called with a null target, and avoids
+          creating a dictionary entry just to store null.
+
+Code    : subscribers[type] = Delegate.Remove(subscribers[type], listener);
+Explain : Delegate.Remove returns a new delegate with the specified listener
+          removed from the invocation list. If the listener was never added,
+          Remove returns the original delegate unchanged — it is a safe no-op.
+          The result is written back to the dictionary, replacing the old entry.
+
+Code    : if (subscribers[type] == null) subscribers.Remove(type);
+Explain : Delegate.Remove returns null when the last subscriber is removed.
+          Cleaning up the key here prevents the dictionary from accumulating
+          null entries for every event type that ever had subscribers. Without
+          this, a long-running game would slowly fill the dictionary with dead keys.
+
+Code    : public static void Publish<T>(T eventData)
+Explain : Accepts any struct or class as the event payload. Using a generic
+          means the event data is passed with full type information — no boxing
+          when T is a struct, no casting required by subscribers.
+
+Code    : if (subscribers.TryGetValue(type, out Delegate del))
+Explain : TryGetValue is a single dictionary lookup that both checks existence
+          and retrieves the value. More efficient than ContainsKey followed by
+          a second indexer call, which would perform two lookups. If no one
+          has subscribed to this event type, the method exits silently — it
+          is valid to publish an event with zero listeners.
+
+Code    : (del as Action<T>)?.Invoke(eventData);
+Explain : Casts the stored Delegate to Action<T> and invokes it with the event
+          data. The cast is always safe because Subscribe<T> exclusively stores
+          Action<T> under typeof(T) — no other type can ever be placed at this
+          key. The ?. null-conditional guard handles the edge case where the
+          dictionary contained the key but the delegate was somehow null,
+          preventing a NullReferenceException without an extra null check.
