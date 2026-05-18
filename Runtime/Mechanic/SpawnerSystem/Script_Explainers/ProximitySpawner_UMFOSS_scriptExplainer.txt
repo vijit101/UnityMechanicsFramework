@@ -1,0 +1,254 @@
+Line 1: using System.Collections;
+Explanation: Imports collections namespace for IEnumerator, required for the ProximityCheckLoop coroutine.
+
+Line 2: using System.Collections.Generic;
+Explanation: Imports generic collections for List<T>, used for spawnPoints and spawnedObjects.
+
+Line 3: using UnityEngine;
+Explanation: Imports Unity engine namespace for MonoBehaviour, Physics2D, Vector2, Vector3, Gizmos, and LayerMask.
+
+Line 5: namespace GameplayMechanicsUMFOSS.World
+Explanation: Places ProximitySpawner in the World namespace alongside all other spawner scripts and events.
+
+Line 7: public class ProximitySpawner_UMFOSS : MonoBehaviour
+Explanation: Inherits MonoBehaviour so it exists as a scene component with a transform and access to Unity coroutines.
+
+Line 10: [SerializeField] private SpawnProfile_UMFOSS profile;
+Explanation: The SpawnProfile asset defining what prefabs and counts to spawn when the player enters range.
+
+Line 11: [SerializeField] private List<SpawnPoint_UMFOSS> spawnPoints;
+Explanation: Scene SpawnPoint components available for this spawner to place objects at when triggered.
+
+Line 12: [SerializeField] private float triggerRadius = 5f;
+Explanation: Radius of the detection circle; when the player enters this radius the spawn is triggered.
+
+Line 13: [SerializeField] private bool isOneShot = true;
+Explanation: When true the spawner fires only once and sets hasFired; call Enable() to reset it for reuse.
+
+Line 14: [SerializeField] private bool requireLineOfSight = false;
+Explanation: When true a raycast is fired toward the player before spawning; blocked by geometry means no spawn.
+
+Line 15: [SerializeField] private float cooldown = 0f;
+Explanation: Minimum seconds between trigger events; zero means it can retrigger every checkInterval (used when isOneShot is false).
+
+Line 16: [SerializeField] private LayerMask playerLayer;
+Explanation: Physics layer mask for the OverlapCircle call; restricts detection to the player layer to avoid false triggers.
+
+Line 19: [SerializeField] private float checkInterval = 0.2f;
+Explanation: How often in seconds the proximity loop polls with Physics2D.OverlapCircle; 0.2s is a good balance of responsiveness and performance.
+
+Line 21: private bool hasFired = false;
+Explanation: Tracks whether a one-shot spawner has already triggered; prevents re-firing until Enable() is called.
+
+Line 22: private bool isEnabled = true;
+Explanation: Master enable flag; allows external code to disable the spawner without destroying or disabling the component.
+
+Line 23: private bool isPaused = false;
+Explanation: Pause flag; when true the check loop skips the overlap test but keeps running so it can resume instantly.
+
+Line 24: private float lastTriggerTime = -999f;
+Explanation: Records the last trigger timestamp; initialised to -999 so the cooldown condition passes on the very first check.
+
+Line 25: private int sequentialIndex = 0;
+Explanation: Persistent counter for Sequential spawn point mode, passed by ref to SpawnHelper.
+
+Line 26: private List<GameObject> spawnedObjects = new List<GameObject>();
+Explanation: Tracks objects spawned by this proximity spawner so OnObjectDied can match ownership.
+
+Line 30: public bool HasFiredValue => hasFired;
+Explanation: Read-only property exposing the hasFired state for external UI or logic without allowing writes.
+
+Line 31: public float TriggerRadius => triggerRadius;
+Explanation: Read-only property exposing triggerRadius so other systems can query the detection range.
+
+Line 35: private void OnEnable()
+Explanation: Unity callback when the component enables; subscribes to death events to maintain tracked object list.
+
+Line 37:     EventBus.Subscribe<OnSpawnedObjectDied>(OnObjectDied);
+Explanation: Registers the death handler so spawned objects' deaths can remove them from the tracking list.
+
+Line 40: private void OnDisable()
+Explanation: Unity callback when the component disables; unsubscribes to prevent callbacks after removal.
+
+Line 42:     EventBus.Unsubscribe<OnSpawnedObjectDied>(OnObjectDied);
+Explanation: Removes the death handler from EventBus to avoid null reference errors after this object is gone.
+
+Line 45: private void Start()
+Explanation: Unity lifecycle callback on first frame; starts the proximity detection loop.
+
+Line 47:     StartCoroutine(ProximityCheckLoop());
+Explanation: Launches the background polling coroutine that checks for player proximity every checkInterval seconds.
+
+Line 52: public void Enable()
+Explanation: Public API to re-enable a one-shot spawner that has already fired, resetting it for another trigger.
+
+Line 54:     isEnabled = true;
+Explanation: Restores the master enable flag so the check loop resumes acting on proximity detections.
+
+Line 55:     hasFired = false;
+Explanation: Resets the one-shot flag so the spawner can fire again after being re-enabled.
+
+Line 58: public void Disable()
+Explanation: Public API to stop the spawner from triggering, e.g. when a puzzle is already solved or an objective is complete.
+
+Line 60:     isEnabled = false;
+Explanation: Clears the master enable flag; the check loop will skip the overlap test each interval.
+
+Line 63: public void ForceSpawn()
+Explanation: Public API to trigger spawning immediately regardless of player proximity, useful for cutscenes or debug testing.
+
+Line 65:     DoSpawn(transform.position);
+Explanation: Calls DoSpawn with this spawner's position as the player position, since there is no real player proximity in a forced spawn.
+
+Line 68: public bool HasFired() => hasFired;
+Explanation: Public method alternative to HasFiredValue property; returns whether a one-shot spawner has triggered.
+
+Line 72: private IEnumerator ProximityCheckLoop()
+Explanation: Background coroutine that polls player proximity every checkInterval seconds without using OnTriggerEnter.
+
+Line 74:     while (true)
+Explanation: Infinite loop — the coroutine runs for the lifetime of the component, handled safely by WaitForSeconds yields.
+
+Line 76:         if (isEnabled && !isPaused)
+Explanation: Only performs the check when both enabled and unpaused; saves the OverlapCircle physics call when inactive.
+
+Line 78:             if (!(isOneShot && hasFired)
+Explanation: Skips the check if this is a one-shot spawner that has already fired (hasFired is true).
+
+Line 79:                 && Time.time - lastTriggerTime >= cooldown)
+Explanation: Also skips if the cooldown has not elapsed since the last trigger, preventing rapid re-triggers.
+
+Line 81:                 Collider2D hit = Physics2D.OverlapCircle(
+Explanation: Performs a 2D physics overlap test — returns the first collider found within the radius on the specified layer.
+
+Line 82:                     transform.position, triggerRadius, playerLayer);
+Explanation: Centre of the check is this spawner's world position; radius and layer come from the Inspector fields.
+
+Line 84:                 if (hit != null)
+Explanation: A non-null result means a collider on playerLayer was found within triggerRadius — the player is nearby.
+
+Line 86:                     bool canSpawn = true;
+Explanation: Default assumption is that spawning is allowed; may be set to false by the line-of-sight check below.
+
+Line 88:                     if (requireLineOfSight)
+Explanation: Only performs the expensive raycast if the requireLineOfSight option is enabled.
+
+Line 90:                         Vector2 direction = (Vector2)(hit.transform.position
+Explanation: Calculates the direction vector from this spawner to the detected player collider.
+
+Line 91:                             - transform.position);
+Explanation: Subtracts the spawner's position from the player's position to get the world-space direction.
+
+Line 92:                         RaycastHit2D ray = Physics2D.Raycast(
+Explanation: Fires a 2D raycast from the spawner toward the player to test for obstructions.
+
+Line 93:                             transform.position, direction, triggerRadius);
+Explanation: The ray starts at the spawner, travels in the calculated direction, and checks up to triggerRadius units.
+
+Line 94:                         if (ray.collider != hit)
+Explanation: If the first thing the ray hits is not the player collider, something is blocking the line of sight.
+
+Line 95:                             canSpawn = false;
+Explanation: Sets canSpawn to false so the spawn is skipped when the player is hidden behind geometry.
+
+Line 98:                     if (canSpawn)
+Explanation: Final gate — only proceeds with spawning if line-of-sight check passed (or was not required).
+
+Line 100:                         DoSpawn(hit.transform.position);
+Explanation: Triggers the spawn batch, passing the player's position for Nearest spawn point mode resolution.
+
+Line 101:                         lastTriggerTime = Time.time;
+Explanation: Records the trigger timestamp so the cooldown calculation works correctly next check.
+
+Line 103:                         if (isOneShot)
+Explanation: Marks the spawner as fired only if it is configured as one-shot.
+
+Line 104:                             hasFired = true;
+Explanation: Sets hasFired so subsequent checks skip the overlap test until Enable() resets it.
+
+Line 110:                 yield return new WaitForSeconds(checkInterval);
+Explanation: Pauses the coroutine for checkInterval seconds before polling again; WaitForSeconds is used here since proximity detection does not need to be pause-aware at this level.
+
+Line 114: private void DoSpawn(Vector3 playerPosition)
+Explanation: Private method that executes the actual spawn batch when the proximity condition is met.
+
+Line 116:     if (profile == null || profile.entries == null) return;
+Explanation: Guards against a missing or unconfigured profile to prevent null reference exceptions.
+
+Line 118:     int totalSpawned = 0;
+Explanation: Counter for how many objects are spawned in this batch, reported in the event payload.
+
+Line 120:     foreach (var entry in profile.entries)
+Explanation: Iterates each spawn entry in the profile to spawn all configured prefab types.
+
+Line 122:         int count = Random.Range(entry.minCount, entry.maxCount + 1);
+Explanation: Picks a random count within the entry's min/max range; +1 makes maxCount inclusive.
+
+Line 124:         for (int i = 0; i < count; i++)
+Explanation: Spawns each object in this entry's batch one at a time.
+
+Line 126:             if (spawnedObjects.Count >= profile.maxSimultaneous)
+Explanation: Checks the simultaneous cap using the tracked list count rather than a separate counter.
+
+Line 127:                 break;
+Explanation: Stops spawning this entry if the cap is reached.
+
+Line 129:             Vector3 pos = SpawnHelper_UMFOSS.GetSpawnPosition(
+Explanation: Resolves the world position for this object using SpawnHelper.
+
+Line 130:                 profile.spawnPointMode, spawnPoints,
+Explanation: Passes the profile's SpawnPointMode and the list of available spawn points.
+
+Line 131:                 ref sequentialIndex, playerPosition);
+Explanation: Passes the sequential index ref and the player's actual position so Nearest mode can find the closest spawn point to the player.
+
+Line 133:             GameObject obj = Instantiate(entry.prefab);
+Explanation: Creates the prefab instance; should use ObjectPoolManager_UMFOSS in production.
+
+Line 134:             obj.transform.position = pos;
+Explanation: Positions the object at the resolved spawn world position.
+
+Line 135:             obj.SetActive(true);
+Explanation: Ensures the object is active, relevant when using pooling.
+
+Line 137:             spawnedObjects.Add(obj);
+Explanation: Registers the object for ownership tracking by OnObjectDied.
+
+Line 138:             totalSpawned++;
+Explanation: Increments the batch spawn counter for the event payload.
+
+Line 142:     EventBus.Publish(new OnProximitySpawnTriggered
+Explanation: Fires the proximity trigger event so audio, VFX, and analytics listeners can react.
+
+Line 144:         triggerPosition = transform.position,
+Explanation: The spawner's world position when triggered, useful for placing a spawn VFX at the source.
+
+Line 145:         spawnCount = totalSpawned
+Explanation: How many objects were spawned in this batch, for analytics or UI display.
+
+Line 147:     EventBus.Publish(new OnSpawnerStarted { spawner = gameObject });
+Explanation: Fires the shared spawner-started event so lifecycle listeners know this spawner activated.
+
+Line 151: private void OnObjectDied(OnSpawnedObjectDied e)
+Explanation: EventBus callback invoked when any object publishes OnSpawnedObjectDied.
+
+Line 152:     if (spawnedObjects.Contains(e.obj))
+Explanation: Ownership check — only acts if the dying object was spawned by this proximity spawner.
+
+Line 153:         spawnedObjects.Remove(e.obj);
+Explanation: Removes the dead object from the tracked list, freeing up capacity for the maxSimultaneous check.
+
+Line 156: private void OnDrawGizmos()
+Explanation: Editor callback that draws the trigger radius in the Scene view for designer visibility.
+
+Line 158:     Gizmos.color = hasFired
+Explanation: Chooses the gizmo colour based on fired state — grey when fired, yellow when ready to fire.
+
+Line 159:         ? new Color(0.5f, 0.5f, 0.5f, 0.2f)
+Explanation: Semi-transparent grey colour indicating the one-shot spawner has already fired.
+
+Line 160:         : new Color(1f, 1f, 0f, 0.2f);
+Explanation: Semi-transparent yellow colour indicating the spawner is armed and ready to trigger.
+
+Line 161:     Gizmos.DrawWireSphere(transform.position, triggerRadius);
+Explanation: Draws a wireframe sphere at the spawner's position matching the exact triggerRadius so designers can see the detection area.

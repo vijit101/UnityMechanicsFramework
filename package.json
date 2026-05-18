@@ -15,6 +15,11 @@
       "displayName": "Save System Demo",
       "description": "Complete save and load system demo with health and inventory saveables.",
       "path": "Samples~/SaveSystem"
+    },
+    {
+      "displayName": "Boomerang Weapon Demo",
+      "description": "God-of-War-style throw-and-return weapon with damage, knockback, camera shake, and one-click scene builder.",
+      "path": "Samples~/BoomerangWeapon"
     }
   ]
 }

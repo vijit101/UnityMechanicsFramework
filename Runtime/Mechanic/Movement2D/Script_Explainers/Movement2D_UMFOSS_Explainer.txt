@@ -1,0 +1,212 @@
+# Modular 2D Movement System - Script Explainer
+
+Note: This mechanic uses the project-wide `IPhysicsAdapter` and its implementations (`Physics2DAdapter_UMFOSS`, `Physics3DAdapter_UMFOSS`) located in `Runtime/Mechanic/ModularJumpSystem/Scripts/`. This ensures compatibility with other mechanics like the Modular Jump System.
+
+## Overview
+Movement2D_UMFOSS is a modular 2D movement system that provides 9 distinct movement modes in a single component. Switch between modes via Inspector dropdown or at runtime using SetMode(). Each mode produces a unique movement feel while maintaining the same interface.
+
+## Movement Modes Explained
+
+### TRANSFORM GROUP (No Rigidbody Required)
+
+#### 1. TransformDirect
+```csharp
+transform.position += new Vector3(input.x, 0, 0) * MoveSpeed * Time.deltaTime;
+```
+**Feel:** Instant, zero float, pixel-perfect movement
+**Use Case:** Grid-based games, retro platformers, top-down games where precision matters
+**Key Param:** `UpdateIn` - FixedUpdate for frame-rate independence, Update for most cases
+
+#### 2. TransformTranslate
+```csharp
+transform.Translate(new Vector3(input.x, 0, 0) * MoveSpeed * Time.deltaTime, space);
+```
+**Feel:** Similar to Direct but with space parameter control
+**Use Case:** Top-down games with character rotation (tanks, spaceships)
+**Key Param:** `Space` - World = moves along world axes, Self = follows object rotation
+
+#### 3. MoveTowards
+```csharp
+Vector3 target = transform.position + new Vector3(input.x, 0, 0) * MoveSpeed;
+transform.position = Vector3.MoveTowards(transform.position, target, MaxDelta * Time.deltaTime);
+```
+**Feel:** Linear, constant pace, no easing
+**Use Case:** Enemy AI, moving platforms, predictable arrival timing
+**Key Param:** `MaxDelta` - Step size per frame (lower = slower, higher = snappier)
+
+#### 4. LerpSmooth
+```csharp
+Vector3 target = transform.position + new Vector3(input.x, 0, 0) * MoveSpeed;
+transform.position = Vector3.Lerp(transform.position, target, LerpSpeed * Time.deltaTime);
+```
+**Feel:** Smooth, floaty, exponential ease-in/ease-out
+**Use Case:** Ghost characters, mobile games, fluid movement
+**Key Params:** 
+- `LerpSpeed 1-3` = Very floaty, dreamlike
+- `LerpSpeed 8-12` = Smooth but responsive, AAA mobile feel
+- `LerpSpeed 18-25` = Nearly instant
+- `LerpTarget` - InputDirection vs TargetTransform for click-to-move
+
+#### 5. SmoothDamp
+```csharp
+transform.position = Vector3.SmoothDamp(
+    transform.position, targetPosition, ref currentVelocity, SmoothTime, MaxSmoothSpeed
+);
+```
+**Feel:** Spring-damper, natural overshoot, organic
+**Use Case:** Character controllers with weight, camera follow, UI elements
+**Key Params:**
+- `SmoothTime` - Low (0.05) = tight/snappy, Medium (0.2) = natural, High (0.5) = floaty
+- `MaxSmoothSpeed` - Prevents overcorrection at extreme values
+
+### PHYSICS GROUP (Requires Rigidbody2D)
+
+#### 6. VelocityDirect
+```csharp
+rb.velocity = new Vector2(input.x * MoveSpeed, PreserveVertical ? rb.velocity.y : 0);
+```
+**Feel:** Responsive, predictable, works with gravity
+**Use Case:** Standard 2D platformers, most common Unity approach
+**Key Params:**
+- `HorizontalDeceleration 0` = Instant stop (Super Meat Boy)
+- `HorizontalDeceleration 8` = Slide to stop (Hollow Knight)
+- `PreserveVertical true` = Keep gravity/jump momentum
+
+#### 7. ForceAdditive
+```csharp
+rb.AddForce(new Vector2(input.x * AccelerationForce, 0), ForceMode2D.Force);
+rb.velocity = Vector2.ClampMagnitude(rb.velocity, MaxSpeed);
+```
+**Feel:** Momentum-based acceleration, sliding
+**Use Case:** Ice levels, space games, hovercraft
+**Key Params:**
+- `AccelerationForce` - How quickly full speed is reached
+- `MaxSpeed` - Prevents infinite acceleration
+- `Drag` - Slide-to-stop behavior (0 = ice, 3 = normal, 10 = mud, 20 = near-instant)
+
+#### 8. ForceImpulse
+```csharp
+if (inputPressed && Time.time > lastImpulseTime + ImpulseCooldown) {
+    rb.AddForce(new Vector2(input.x * ImpulseForce, 0), ForceMode2D.Impulse);
+    lastImpulseTime = Time.time;
+}
+```
+**Feel:** Staccato, discrete pushes per input
+**Use Case:** Bumper cars, pinball, underwater swimming
+**Key Params:**
+- `ImpulseForce` - How hard each push is
+- `ImpulseCooldown` - Gap between pushes (low = shaky, high = deliberate)
+
+#### 9. KinematicMovePosition
+```csharp
+rb.MovePosition(rb.position + new Vector2(input.x, 0) * MoveSpeed * Time.fixedDeltaTime);
+```
+**Feel:** Solid, collision-aware, no physics forces
+**Use Case:** Moving platforms, enemies with collision detection but no physics response
+**Key Params:**
+- `CollisionDetection` - Discrete (faster) vs Continuous (prevents tunnelling)
+- `InterpolationMode` - Smooths visual movement between physics updates
+
+## Runtime Mode Switching
+
+```csharp
+// Enter ice zone
+movement.SetMode(MovementMode.ForceAdditive);
+
+// Pick up ghost powerup
+movement.SetMode(MovementMode.LerpSmooth);
+
+// Enter space (no drag)
+movement.SetMode(MovementMode.ForceImpulse);
+
+// Respawn - reset to default
+movement.SetMode(MovementMode.VelocityDirect);
+```
+
+`SetMode()` automatically calls cleanup for the previous mode before activating the new one.
+
+## State Cleanup - Critical Architecture Requirement
+
+Every mode must clean up when switched away to prevent state bleeding:
+
+### Why Cleanup is Required
+Without cleanup, switching from ForceAdditive (which accumulates velocity) to TransformDirect (which has no velocity control) leaves the character sliding uncontrollably.
+
+### Cleanup Per Mode
+- **TransformDirect/Translate/MoveTowards/LerpSmooth:** No cleanup needed
+- **SmoothDamp:** Reset `currentVelocity` to Vector3.zero
+- **VelocityDirect/ForceAdditive/ForceImpulse:** Set `rb.velocity = Vector2.zero`
+- **KinematicMovePosition:** Ensure `rb.isKinematic` is correct
+
+### Implementation
+```csharp
+private void CleanupPreviousMode(MovementMode oldMode)
+{
+    switch (oldMode)
+    {
+        case MovementMode.SmoothDamp:
+            smoothDampVelocity = Vector3.zero;
+            break;
+        case MovementMode.VelocityDirect:
+        case MovementMode.ForceAdditive:
+        case MovementMode.ForceImpulse:
+            if (rb2d != null) physicsAdapter.SetVelocity(rb2d, Vector2.zero);
+            break;
+        // ... other modes
+    }
+}
+```
+
+## Events System
+
+```csharp
+OnMovementStarted(MovementMode mode)    // Input begins
+OnMovementStopped(MovementMode mode)    // Input ends
+OnDirectionChanged(Vector2 newDirection)  // Movement direction changes
+OnModeChanged(MovementMode previous, MovementMode current)  // Mode switches
+```
+
+Events enable decoupled systems (audio, visual effects, camera) to respond to movement changes without direct references.
+
+## Adapter Pattern
+
+The system uses adapters for:
+- **IInputAdapter:** Abstracts input (Unity Input System, custom input)
+- **IPhysicsAdapter:** Abstracts Rigidbody2D calls (testing, custom physics)
+- **IEventBus:** Decoupled event communication
+
+This enables testing, future input system upgrades, and physics replacements without modifying core movement logic.
+
+## Common Parameters
+
+- **MoveSpeed:** Base movement speed (used by all modes)
+- **FaceDirection:** Flips sprite based on movement direction
+- **GroundLayer:** What counts as ground (for future extensions)
+
+## Technical Notes
+
+- Physics modes log clear errors if no Rigidbody2D is present
+- ForceAdditive/ForceImpulse use `Vector2.ClampMagnitude` (not per-axis clamping)
+- KinematicMovePosition runs in FixedUpdate only
+- SmoothDamp uses persistent `ref currentVelocity` field
+- No hardcoded input - uses InputAdapter pattern
+- FaceDirection works across all nine modes
+- All communication via EventBus (no direct UI/audio/camera references)
+
+## Demo Scene Usage
+
+The demo scene includes:
+- 9 buttons for instant mode switching
+- Real-time parameter display
+- Visual grid for movement visibility
+- Current mode and key parameters shown on screen
+- No setup required on Play
+
+## Performance Considerations
+
+- Transform modes: Very cheap, no physics overhead
+- Physics modes: Standard Unity physics cost
+- SmoothDamp: Slightly more expensive due to spring calculations
+- All modes optimized for 60fps+ gameplay
+
+This system provides maximum flexibility while maintaining clean architecture and predictable behavior across all movement styles.

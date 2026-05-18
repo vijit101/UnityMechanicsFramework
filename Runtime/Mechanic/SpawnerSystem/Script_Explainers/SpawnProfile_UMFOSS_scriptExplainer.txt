@@ -1,0 +1,65 @@
+Line 1: using UnityEngine;
+Explanation: Imports the Unity engine namespace for ScriptableObject, AnimationCurve, and the Range attribute.
+
+Line 3: namespace GameplayMechanicsUMFOSS.World
+Explanation: Places SpawnProfile in the World namespace alongside all other spawner scripts.
+
+Line 5: [CreateAssetMenu(fileName = "NewSpawnProfile", menuName = "UMFOSS/World/SpawnProfile")]
+Explanation: Adds a right-click menu entry in the Unity Project window so designers can create a SpawnProfile asset without writing code.
+
+Line 6: public class SpawnProfile_UMFOSS : ScriptableObject
+Explanation: Inherits from ScriptableObject so the profile lives as a data asset in the project, shared across scenes without duplication.
+
+Line 8: [System.Serializable]
+Explanation: Makes the nested SpawnEntry class visible and editable in the Unity Inspector when used as a field.
+
+Line 9: public class SpawnEntry
+Explanation: Inner class grouping all per-prefab spawn settings — prefab, count range, weight, and delay — into one Inspector-friendly unit.
+
+Line 11: public GameObject prefab;
+Explanation: The prefab that will be instantiated when this entry is selected during spawning.
+
+Line 12: public int minCount = 1;
+Explanation: Minimum number of this prefab to spawn when the entry is picked; randomised against maxCount at runtime.
+
+Line 13: public int maxCount = 1;
+Explanation: Maximum number of this prefab to spawn; defaults to 1 so a single entry spawns exactly one object unless changed.
+
+Line 14: [Range(0.1f, 100f)]
+Explanation: Constrains the weight slider in the Inspector to a sensible range, preventing zero-weight entries that could cause divide-by-zero issues.
+
+Line 15: public float weight = 1f;
+Explanation: Relative probability of this entry being selected by the weighted random algorithm; higher weight = chosen more often.
+
+Line 16: public float spawnDelay = 0f;
+Explanation: Seconds to wait after spawning this entry's objects before continuing to the next entry, creating staggered wave spawning.
+
+Line 19: [Header("Spawn Entries")]
+Explanation: Adds a bold label in the Inspector to visually separate the entries array from other settings.
+
+Line 20: public SpawnEntry[] entries;
+Explanation: The array of all spawn entries for this profile; the spawner iterates through these to decide what and how many to spawn.
+
+Line 22: [Header("Spawn Points")]
+Explanation: Inspector section label separating spawn point configuration from the entries above.
+
+Line 23: public SpawnPointMode spawnPointMode = SpawnPointMode.Random;
+Explanation: Controls which SpawnPoint is chosen — Random, Sequential, Nearest to player, or All — defaulting to random for variety.
+
+Line 25: [Header("Limits")]
+Explanation: Inspector section label for the cap and cooldown settings below.
+
+Line 26: public int maxSimultaneous = 10;
+Explanation: Hard cap on how many spawned objects can be alive at once from this profile, preventing performance overload.
+
+Line 27: public float respawnCooldown = 0f;
+Explanation: Minimum seconds between respawn cycles; zero means no cooldown, objects respawn as fast as the interval allows.
+
+Line 29: [Header("Difficulty Scaling")]
+Explanation: Inspector section label for the animation curve scaling fields.
+
+Line 30: public AnimationCurve countScaleCurve = AnimationCurve.Constant(0f, 1f, 1f);
+Explanation: Curve evaluated by normalized wave progress (0=first wave, 1=last wave) to multiply spawn counts; flat at 1.0 means no scaling until the designer edits the curve.
+
+Line 31: public AnimationCurve delayScaleCurve = AnimationCurve.Constant(0f, 1f, 1f);
+Explanation: Same progress-based curve for scaling spawn delays, allowing faster pacing in later waves; flat at 1.0 means delays stay constant by default.

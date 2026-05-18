@@ -1,0 +1,341 @@
+Line 1: using System.Collections;
+Explanation: Imports the collections namespace for IEnumerator, required to write coroutine methods with yield return.
+
+Line 2: using System.Collections.Generic;
+Explanation: Imports generic collections for List<T>, used for spawnPoints and spawnedObjects.
+
+Line 3: using UnityEngine;
+Explanation: Imports the Unity engine namespace for MonoBehaviour, GameObject, Vector3, Time, and Coroutine.
+
+Line 5: namespace GameplayMechanicsUMFOSS.World
+Explanation: Places WaveSpawner in the World namespace alongside SpawnProfile, SpawnPoint, and the shared events.
+
+Line 7: public class WaveSpawner_UMFOSS : MonoBehaviour
+Explanation: Inherits MonoBehaviour so it lives as a component on a scene GameObject and participates in Unity's lifecycle (OnEnable, coroutines, etc.).
+
+Line 10: [SerializeField] private SpawnProfile_UMFOSS[] waveProfiles;
+Explanation: Inspector array of SpawnProfile assets — one per wave. The spawner advances through this array sequentially.
+
+Line 11: [SerializeField] private List<SpawnPoint_UMFOSS> spawnPoints;
+Explanation: Scene references to all SpawnPoint components available for this spawner, passed to SpawnHelper for position resolution.
+
+Line 12: [SerializeField] private float timeBetweenWaves = 5f;
+Explanation: Pause in seconds between one wave clearing and the next wave beginning, giving players a breather.
+
+Line 13: [SerializeField] private bool loopWaves = false;
+Explanation: When true, after the last wave clears the spawner restarts from wave 0, creating endless waves.
+
+Line 16: [SerializeField] private WaveClearCondition clearCondition = WaveClearCondition.AllDead;
+Explanation: Sets how a wave ends — waiting for all enemies to die is the default, giving the most natural gameplay feel.
+
+Line 17: [SerializeField] private float waveDuration = 30f;
+Explanation: Duration in seconds used only when clearCondition is TimedEnd; the wave clears after this many seconds regardless of surviving enemies.
+
+Line 19: private int currentWave = 0;
+Explanation: Tracks which wave index is currently running or about to run; starts at 0 (first profile).
+
+Line 20: private int activeCount = 0;
+Explanation: Number of spawned objects currently alive; decremented by the OnObjectDied listener and checked to detect wave-clear in AllDead mode.
+
+Line 21: private bool isWaveActive = false;
+Explanation: Flag used by the Manual clear condition — the wave loop waits while this is true, and ClearCurrentWave() sets it false.
+
+Line 22: private bool isPaused = false;
+Explanation: Pauses the WaitUnpaused coroutine timers so the wave system freezes without stopping the coroutine entirely.
+
+Line 23: private int sequentialIndex = 0;
+Explanation: Persistent counter passed by ref to SpawnHelper for Sequential spawn point mode, tracking which point is next.
+
+Line 24: private float waveStartTime;
+Explanation: Records Time.time when a wave begins, used to calculate timeTaken when publishing OnWaveCleared.
+
+Line 25: private List<GameObject> spawnedObjects = new List<GameObject>();
+Explanation: Tracks all objects spawned in the current wave so OnObjectDied can verify the dying object belongs to this spawner before decrementing activeCount.
+
+Line 26: private Coroutine waveCoroutine;
+Explanation: Stores the running coroutine reference so StartWaves() can stop any previously running coroutine before starting a new one.
+
+Line 30: public int CurrentWave => currentWave;
+Explanation: Read-only property exposing the current wave index to UI or game logic without allowing external modification.
+
+Line 31: public int ActiveCount => activeCount;
+Explanation: Read-only property for the current live enemy count, useful for HUDs or win condition checks.
+
+Line 32: public bool IsWaveActive => isWaveActive;
+Explanation: Read-only property indicating whether a wave is currently in progress.
+
+Line 33: public int TotalWaves => waveProfiles != null ? waveProfiles.Length : 0;
+Explanation: Read-only property returning the number of waves configured; guards against null waveProfiles to avoid NullReferenceException.
+
+Line 37: private void OnEnable()
+Explanation: Unity callback when the component is enabled; subscribes to OnSpawnedObjectDied so the spawner is notified when tracked enemies die.
+
+Line 39:     EventBus.Subscribe<OnSpawnedObjectDied>(OnObjectDied);
+Explanation: Registers the OnObjectDied handler with the EventBus for the OnSpawnedObjectDied event type.
+
+Line 42: private void OnDisable()
+Explanation: Unity callback when the component is disabled or destroyed; unsubscribes to prevent ghost callbacks after the spawner is gone.
+
+Line 44:     EventBus.Unsubscribe<OnSpawnedObjectDied>(OnObjectDied);
+Explanation: Removes the handler from the EventBus, preventing null reference errors if events fire after this object is disabled.
+
+Line 49: public void StartWaves()
+Explanation: Public API to begin the full wave sequence from wave 0; called by game logic (e.g. a GameManager or UI button).
+
+Line 51:     currentWave = 0;
+Explanation: Resets to the first wave, allowing StartWaves() to restart a completed or previously started sequence.
+
+Line 52:     if (waveCoroutine != null)
+Explanation: Checks if a previous wave coroutine is still running before starting a new one.
+
+Line 53:         StopCoroutine(waveCoroutine);
+Explanation: Stops the old coroutine to prevent two RunWaves coroutines running simultaneously.
+
+Line 54:     waveCoroutine = StartCoroutine(RunWaves());
+Explanation: Starts the main wave loop coroutine and stores the reference for future stop/control.
+
+Line 55:     EventBus.Publish(new OnSpawnerStarted { spawner = gameObject });
+Explanation: Notifies all listeners (UI, audio, analytics) that this spawner has begun operating.
+
+Line 58: public void PauseWaves()
+Explanation: Public API to freeze wave timers — typically called by a game pause system.
+
+Line 60:     isPaused = true;
+Explanation: Sets the pause flag; WaitUnpaused coroutines check this flag and stop accumulating elapsed time.
+
+Line 63: public void ResumeWaves()
+Explanation: Public API to unfreeze wave timers after a pause.
+
+Line 65:     isPaused = false;
+Explanation: Clears the pause flag so WaitUnpaused resumes accumulating elapsed time on the next frame.
+
+Line 68: public void ClearCurrentWave()
+Explanation: Public API used with the Manual clear condition; external game logic calls this to signal the current wave is over.
+
+Line 70:     if (clearCondition == WaveClearCondition.Manual)
+Explanation: Guard — only acts on Manual mode so it cannot accidentally clear a wave in AllDead or TimedEnd mode.
+
+Line 71:         isWaveActive = false;
+Explanation: Clears the flag that the RunSingleWave coroutine is watching in the Manual wait loop, unblocking it to proceed.
+
+Line 74: public void SkipToWave(int waveIndex)
+Explanation: Public API allowing game logic or cheats to jump to a specific wave index.
+
+Line 76:     if (waveIndex >= 0 && waveIndex < waveProfiles.Length)
+Explanation: Bounds check to ensure the target index is a valid position in the waveProfiles array.
+
+Line 77:         currentWave = waveIndex;
+Explanation: Sets currentWave to the target index; the for loop in RunWaves will pick this up on the next iteration.
+
+Line 80: public int GetActiveCount() => activeCount;
+Explanation: Public method alternative to the ActiveCount property, providing the same value for callers that prefer method syntax.
+
+Line 84: private IEnumerator RunWaves()
+Explanation: Main coroutine that drives the full wave sequence, looping if loopWaves is true.
+
+Line 86:     do
+Explanation: do-while ensures the wave loop body always executes at least once before checking the loopWaves condition.
+
+Line 88:         for (; currentWave < waveProfiles.Length; currentWave++)
+Explanation: Iterates from the current wave index (allows SkipToWave mid-run) through all configured profiles.
+
+Line 90:             yield return StartCoroutine(RunSingleWave(currentWave));
+Explanation: Runs the single-wave coroutine and suspends RunWaves until that wave fully completes.
+
+Line 91:             if (currentWave < waveProfiles.Length - 1 || loopWaves)
+Explanation: Only waits between waves if there is a next wave to run, or if looping is enabled.
+
+Line 92:                 yield return WaitUnpaused(timeBetweenWaves);
+Explanation: Pauses for the configured inter-wave delay, respecting the isPaused flag so pause menus work correctly.
+
+Line 95:             if (loopWaves)
+Explanation: After the for loop exhausts all waves, resets the index to 0 if looping is enabled.
+
+Line 96:                 currentWave = 0;
+Explanation: Resets currentWave so the for loop condition becomes true again and the sequence restarts.
+
+Line 98:     } while (loopWaves);
+Explanation: Continues the do-while loop only if loopWaves is enabled; exits the coroutine otherwise.
+
+Line 100:     EventBus.Publish(new OnAllWavesComplete { totalWaves = waveProfiles.Length });
+Explanation: Fires the completion event so game logic (win screen, score board) can respond when all waves are done.
+
+Line 101:     EventBus.Publish(new OnSpawnerStopped { spawner = gameObject });
+Explanation: Fires the stopped event so any spawner-lifecycle listeners know this spawner has finished.
+
+Line 104: private IEnumerator RunSingleWave(int waveIndex)
+Explanation: Coroutine that handles one complete wave — spawning all objects and waiting for the clear condition.
+
+Line 106:     isWaveActive = true;
+Explanation: Marks the wave as active; used by the Manual clear condition's wait loop and the IsWaveActive property.
+
+Line 107:     waveStartTime = Time.time;
+Explanation: Records the start timestamp to compute timeTaken when OnWaveCleared is published.
+
+Line 108:     spawnedObjects.Clear();
+Explanation: Clears the previous wave's tracked objects list so the new wave starts with a clean slate.
+
+Line 109:     activeCount = 0;
+Explanation: Resets the live count to zero at wave start; objects will increment it as they spawn.
+
+Line 111:     SpawnProfile_UMFOSS profile = waveProfiles[waveIndex];
+Explanation: Local reference to the current wave's profile for cleaner access throughout the method.
+
+Line 112:     float progress = (float)waveIndex / Mathf.Max(1, waveProfiles.Length - 1);
+Explanation: Normalizes the wave index to 0-1; Mathf.Max(1,...) prevents divide-by-zero when there is only one wave.
+
+Line 114:     EventBus.Publish(new OnWaveStarted
+Explanation: Fires the wave-started event so UI can display "Wave X of Y" before objects begin spawning.
+
+Line 116:         waveNumber = waveIndex + 1,
+Explanation: Converts 0-based index to 1-based wave number for human-readable UI display.
+
+Line 117:         totalWaves = waveProfiles.Length
+Explanation: Passes the total wave count so the event receiver has full context without a spawner reference.
+
+Line 120:     foreach (var entry in profile.entries)
+Explanation: Iterates each spawn entry in the profile to determine what and how many to spawn this wave.
+
+Line 122:         int count = SpawnHelper_UMFOSS.GetScaledCount(
+Explanation: Delegates count calculation to SpawnHelper, which applies the difficulty scaling curve.
+
+Line 123:             entry, profile.countScaleCurve, progress);
+Explanation: Passes the entry, the scaling curve, and the normalized wave progress to SpawnHelper.GetScaledCount.
+
+Line 125:         for (int i = 0; i < count; i++)
+Explanation: Spawns the calculated number of objects for this entry one by one.
+
+Line 127:             if (activeCount >= profile.maxSimultaneous)
+Explanation: Checks the simultaneous cap before each spawn to avoid exceeding the configured limit.
+
+Line 128:                 break;
+Explanation: Exits the inner loop early if the cap is reached, skipping remaining spawns for this entry.
+
+Line 130:             SpawnOneObject(entry, profile);
+Explanation: Calls the helper method to instantiate one object from this entry and track it.
+
+Line 132:             if (entry.spawnDelay > 0f)
+Explanation: Only introduces a stagger delay if one is configured, avoiding unnecessary yield frames.
+
+Line 133:                 yield return WaitUnpaused(entry.spawnDelay);
+Explanation: Waits the entry's configured stagger delay before spawning the next object in this batch, respecting the pause flag.
+
+Line 137:     switch (clearCondition)
+Explanation: Determines how this wave will wait before declaring itself cleared.
+
+Line 139:     case WaveClearCondition.AllDead:
+Explanation: Waits until activeCount reaches zero, meaning every spawned object has died.
+
+Line 140:         while (activeCount > 0)
+Explanation: Busy-wait loop that yields each frame until the EventBus death callbacks decrement activeCount to zero.
+
+Line 141:             yield return null;
+Explanation: Yields one frame at a time, continuously checking the condition without blocking the engine.
+
+Line 143:     case WaveClearCondition.TimedEnd:
+Explanation: Clears the wave after a fixed duration regardless of how many objects are still alive.
+
+Line 144:         yield return WaitUnpaused(waveDuration);
+Explanation: Waits waveDuration seconds (pause-aware) then falls through to the wave-cleared logic.
+
+Line 146:     case WaveClearCondition.Manual:
+Explanation: Waits until external code calls ClearCurrentWave(), which sets isWaveActive to false.
+
+Line 147:         while (isWaveActive)
+Explanation: Busy-wait loop checking the flag that ClearCurrentWave() will flip to false.
+
+Line 148:             yield return null;
+Explanation: Yields one frame per iteration so Unity can continue running while waiting for the manual signal.
+
+Line 152:     isWaveActive = false;
+Explanation: Explicitly marks the wave as inactive after clearing (required for AllDead and TimedEnd paths since Manual already set it).
+
+Line 153:     EventBus.Publish(new OnWaveCleared
+Explanation: Fires the wave-cleared event after every wave regardless of clear condition type.
+
+Line 155:         waveNumber = waveIndex + 1,
+Explanation: 1-based wave number for human-readable event data.
+
+Line 156:         timeTaken = Time.time - waveStartTime
+Explanation: Computes elapsed time by subtracting the stored start timestamp from the current time.
+
+Line 160: private void SpawnOneObject(
+Explanation: Private helper that instantiates a single object from an entry, positions it, and registers it with the tracking list.
+
+Line 161:     SpawnProfile_UMFOSS.SpawnEntry entry,
+Explanation: The spawn entry providing the prefab reference.
+
+Line 162:     SpawnProfile_UMFOSS profile)
+Explanation: The profile providing spawnPointMode and maxSimultaneous context.
+
+Line 164:     Vector3 pos = SpawnHelper_UMFOSS.GetSpawnPosition(
+Explanation: Resolves the spawn world position using SpawnHelper, which applies the configured SpawnPointMode.
+
+Line 165:         profile.spawnPointMode, spawnPoints, ref sequentialIndex, Vector3.zero);
+Explanation: Passes the mode, point list, sequential index ref, and Vector3.zero as a placeholder player position (WaveSpawner does not use Nearest mode).
+
+Line 167:     GameObject obj = Instantiate(entry.prefab);
+Explanation: Creates a new instance of the prefab; in a production project this should use ObjectPoolManager_UMFOSS instead.
+
+Line 168:     obj.transform.position = pos;
+Explanation: Moves the instantiated object to the resolved spawn position.
+
+Line 169:     obj.SetActive(true);
+Explanation: Ensures the object is active (relevant when using object pooling where objects may start inactive).
+
+Line 171:     spawnedObjects.Add(obj);
+Explanation: Registers the object in the wave's tracking list so OnObjectDied can verify ownership.
+
+Line 172:     activeCount++;
+Explanation: Increments the live count that the clear condition and cap checks rely on.
+
+Line 174:     EventBus.Publish(new OnSpawnCountChanged
+Explanation: Fires a count-changed event immediately after each spawn so UI counters update in real time.
+
+Line 176:         activeCount = activeCount,
+Explanation: Current live count after this spawn.
+
+Line 177:         maxCount = profile.maxSimultaneous
+Explanation: The cap value so UI can show "3 / 10" style displays.
+
+Line 181: private void OnObjectDied(OnSpawnedObjectDied e)
+Explanation: EventBus callback that runs when any object anywhere publishes OnSpawnedObjectDied.
+
+Line 183:     if (!spawnedObjects.Contains(e.obj)) return;
+Explanation: Early exit if the dying object was not spawned by this wave spawner, avoiding incorrect count decrements.
+
+Line 185:     spawnedObjects.Remove(e.obj);
+Explanation: Removes the dead object from the tracked list so it will not be matched again.
+
+Line 186:     activeCount = Mathf.Max(0, activeCount - 1);
+Explanation: Decrements activeCount, clamped to 0 to prevent negative values from a race condition.
+
+Line 188:     EventBus.Publish(new OnSpawnCountChanged
+Explanation: Publishes an updated count event so UI reflects the death in real time.
+
+Line 190:         activeCount = activeCount,
+Explanation: Updated live count after this death.
+
+Line 191:         maxCount = waveProfiles != null && currentWave < waveProfiles.Length
+Explanation: Null and bounds check before accessing waveProfiles to avoid errors if called after all waves complete.
+
+Line 192:             ? waveProfiles[currentWave].maxSimultaneous : 0
+Explanation: Returns the current wave's cap, or 0 as a safe fallback if no valid wave profile exists.
+
+Line 196: private IEnumerator WaitUnpaused(float seconds)
+Explanation: Pause-aware delay coroutine used instead of WaitForSeconds so the spawner respects game pause state.
+
+Line 198:     float elapsed = 0f;
+Explanation: Accumulated real time that only increases when the game is not paused.
+
+Line 199:     while (elapsed < seconds)
+Explanation: Loops until the full requested duration has elapsed in unpaused time.
+
+Line 201:         if (!isPaused)
+Explanation: Only accumulates time when not paused; paused frames pass through the loop without adding to elapsed.
+
+Line 202:             elapsed += Time.deltaTime;
+Explanation: Adds this frame's delta time to the accumulator, advancing the timer toward the target duration.
+
+Line 203:         yield return null;
+Explanation: Yields control back to Unity for one frame, then resumes the loop on the next frame.

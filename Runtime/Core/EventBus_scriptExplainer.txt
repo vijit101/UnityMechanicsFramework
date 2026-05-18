@@ -1,0 +1,62 @@
+Line 1: using System;
+Explanation: Imports the System namespace for the Type class and the Action<T> generic delegate used throughout.
+
+Line 2: using System.Collections.Generic;
+Explanation: Imports generic collections for Dictionary and List, used to store subscribers keyed by event type.
+
+Line 8: public static class EventBus
+Explanation: A static class with no instances — all methods are called globally via EventBus.Subscribe/Publish/etc., making it a true global message bus.
+
+Line 10:     private static readonly Dictionary<Type, List<Delegate>> subscribers = new();
+Explanation: The central registry mapping each event type to its list of subscriber delegates. readonly ensures the dictionary reference cannot be replaced, but its contents can be modified.
+
+Line 12:     public static void Subscribe<T>(Action<T> handler)
+Explanation: Generic method that registers a listener for event type T. Using generics avoids boxing and keeps the API type-safe.
+
+Line 14:         var type = typeof(T);
+Explanation: Gets the runtime Type object for T, used as the dictionary key to look up or create this event type's subscriber list.
+
+Line 15:         if (!subscribers.ContainsKey(type))
+Explanation: Checks whether a list already exists for this event type before creating one, avoiding overwriting existing subscribers.
+
+Line 16:             subscribers[type] = new List<Delegate>();
+Explanation: Creates a new empty list for this event type on first subscription.
+
+Line 17:         subscribers[type].Add(handler);
+Explanation: Appends the handler delegate to this event type's list so it will be called on future Publish calls.
+
+Line 20:     public static void Unsubscribe<T>(Action<T> handler)
+Explanation: Generic method that removes a previously registered listener; must be called in OnDisable/OnDestroy to prevent ghost callbacks.
+
+Line 22:         var type = typeof(T);
+Explanation: Resolves the runtime Type for T to find the correct subscriber list in the dictionary.
+
+Line 23:         if (subscribers.ContainsKey(type))
+Explanation: Guards against removing from a non-existent list; if no one has ever subscribed to T, this is a no-op.
+
+Line 24:             subscribers[type].Remove(handler);
+Explanation: Removes the specific handler delegate from the list; only removes one instance if the same handler was added multiple times.
+
+Line 27:     public static void Publish<T>(T eventData)
+Explanation: Generic method that delivers an event struct to all registered subscribers for type T.
+
+Line 29:         var type = typeof(T);
+Explanation: Resolves T's runtime Type to look up the subscriber list in the dictionary.
+
+Line 30:         if (!subscribers.ContainsKey(type)) return;
+Explanation: Early exit if nothing has subscribed to this event type, avoiding unnecessary iteration.
+
+Line 31:         for (int i = subscribers[type].Count - 1; i >= 0; i--)
+Explanation: Iterates backwards so that a subscriber can safely unsubscribe itself during the callback without causing index out-of-range errors.
+
+Line 33:             if (subscribers[type][i] is Action<T> action)
+Explanation: Pattern-matches the stored Delegate to the concrete Action<T> type; guards against stale or mismatched delegate entries.
+
+Line 34:                 action.Invoke(eventData);
+Explanation: Calls the subscriber's handler method with the event data struct, delivering the message.
+
+Line 38:     public static void Clear()
+Explanation: Removes all subscribers for all event types at once; typically called on scene unload or game reset to prevent memory leaks.
+
+Line 40:         subscribers.Clear();
+Explanation: Clears the entire dictionary, releasing all delegate references and freeing associated memory.
