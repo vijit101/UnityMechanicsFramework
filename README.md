@@ -200,6 +200,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 | 6 | [Screen Shake System](#6-screen-shake-system) | [Paramjeet Kaur](https://github.com/kauxp) | Systems | [▶ Watch](Samples~/ScreenShakeExample/Video/ScreenShakeTutorial.mp4) |
 | 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
 (https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Base Inventory System](#3-base-inventory-system) | [Amlan](https://github.com/amlanxbghn) | Inventory | [▶ Watch](Samples~/InventorySystem/Video/InventorySystemTutorial.mp4) |
 | 3 | [Scene Manager System](#3-scene-manager-system) | [Nymish](https://github.com/nymishkash) | Systems | [▶ Watch](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
 | 9 | [Modular 2D Movement System](#9-modular-2d-movement-system) | [Kumar Kartikay](https://github.com/KKartikay-27/) & [Amrutha CA](https://github.com/Amruthacagithub) | Movement | [▶ Watch](https://github.com/KKartikay-27/UnityMechanicsFramework/blob/feature/movement2d-system/Samples~/Modular2DMovementSystem/Modular2DMovementSystemVideo.zip) |
 |
@@ -431,6 +432,20 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 
 ---
 
+### 3. Base Inventory System
+
+| | |
+|---|---|
+| **Author** | [Amlan](https://github.com/amlanxbghn) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Inventory` |
+| **Location** | `Runtime/Inventory/InventorySystem_UMFOSS.cs` |
+| **Category** | Inventory |
+| **Demo Scene** | `Samples~/InventorySystem/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](Samples~/InventorySystem/Video/InventorySystemTutorial.mp4) |
+
+**What it does**
+
+A ScriptableObject-driven base inventory system that works for any game — RPG, survival, action, or sandbox. Handles item stacking, weight limits, slot management, and fires events for UI synchronisation without coupling to any specific player, UI, or game implementation. Future systems (equipment, shops, crafting, save/load) build on top of this foundation without modifying the core.
 ### 3. Spawner System
 
 | | |
@@ -450,6 +465,28 @@ A modular spawner system handling three spawn patterns — wave-based, timed int
 **How to use it**
 
 ```csharp
+using GameplayMechanicsUMFOSS.Inventory;
+
+// Step 1: Add InventorySystem_UMFOSS component to your Player or GameManager
+InventorySystem_UMFOSS inventory = GetComponent<InventorySystem_UMFOSS>();
+
+// Step 2: Add items at runtime (ItemData is a ScriptableObject asset)
+inventory.AddItem(healthPotionData, 3);  // adds 3 health potions, fills stacks first
+inventory.AddItem(swordData);            // adds 1 sword (non-stackable)
+
+// Step 3: Query and remove
+if (inventory.HasItem(healthPotionData, 2))
+    inventory.RemoveItem(healthPotionData, 2);
+
+// Step 4: React to changes via events
+inventory.OnItemAdded += (item, qty, slot) => RefreshSlotUI(slot);
+inventory.OnInventoryFull += () => ShowFullMessage();
+```
+
+**Highlights**
+- Fully data-driven — all item definitions live in ScriptableObject assets, zero code needed to add new item types
+- Decoupled event system keeps inventory, UI, audio, and game logic completely independent
+- Demonstrates the Data vs Instance separation pattern — the most important design decision in any RPG inventory system
 using GameplayMechanicsUMFOSS.World;
 
 // WaveSpawner — assign waveProfiles in Inspector, then:
@@ -746,6 +783,8 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 | `GameplayMechanicsUMFOSS.Dialogue` | DialogueSystem, nodes, database | ✅ Active |
 | `GameplayMechanicsUMFOSS.Input` | InputAdapter | ✅ Active |
 | `GameplayMechanicsUMFOSS.Utils` | TimerUtility, helpers | ✅ Active |
+| `GameplayMechanicsUMFOSS.Inventory` | Item systems, loot, equipment | ✅ Active |
+| `GameplayMechanicsUMFOSS.Combat` | Hitboxes, damage, status effects | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.Inventory` | Item systems, loot, equipment | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.Combat` | Boomerang weapon, damage, hitboxes | ✅ Active |
 | `GameplayMechanicsUMFOSS.UI` | HUD, menus, tooltips | 🔓 Open for contribution |

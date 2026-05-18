@@ -1,0 +1,134 @@
+ScriptExplainer — Base Inventory System
+========================================
+Author: Amlan (amlanxbghn)
+Namespace: GameplayMechanicsUMFOSS.Inventory
+
+What this is
+------------
+A base inventory system that handles the stuff every inventory needs —
+storing items, adding them, removing them, querying what's there, and
+letting other systems know when something changed. It doesn't try to be
+the Witcher inventory or the Minecraft inventory. It's the foundation
+you'd build either of those on top of.
+
+
+The four pieces
+---------------
+ItemData_UMFOSS (ScriptableObject)
+  The definition of an item. One asset per item type in the whole game.
+  Think of it like a database entry — it says "a Health Potion heals,
+  stacks up to 5, weighs 0.5, and is worth 10 gold." Every health
+  potion in every slot points back to this same asset.
+
+ItemInstance_UMFOSS (plain C# class)
+  One actual item sitting in one slot. This is where the mutable stuff
+  lives — quantity, and eventually things like durability or enchantments.
+  If ItemData is the recipe, ItemInstance is the specific cake you baked.
+
+InventorySlot_UMFOSS (plain C# class)
+  A container for one ItemInstance. That's literally all it does. How
+  slots get arranged on screen is the UI's problem, not the slot's.
+
+InventorySystem_UMFOSS (MonoBehaviour)
+  The main manager. Owns a list of slots, exposes the public API
+  (Add, Remove, Has, Get, Swap, Clear), and fires events when things
+  change so UI and other systems can react without being coupled.
+
+
+Why ItemData and ItemInstance are separate
+------------------------------------------
+This tripped me up at first but it makes total sense once you think
+about it. If you just stored ItemData directly in slots, every sword
+would be the same object. You couldn't give one +5 fire damage and
+another +10. You couldn't even track stack quantities without modifying
+the ScriptableObject asset, which would affect every slot everywhere.
+
+ItemData = blueprint, shared, read-only in practice
+ItemInstance = copy, per-slot, mutable
+
+Every big RPG does this. Diablo has item templates and item instances.
+Witcher 3 has item definitions and item copies. It's the same pattern.
+
+
+Why ScriptableObject for ItemData
+----------------------------------
+This was a design choice from the issue spec and it's the right one.
+Adding a new item type means right-clicking in the Project window and
+filling in some fields. No new class, no code, no recompile. A designer
+could add 50 items without ever opening a script. MonoBehaviour would've
+been wrong here because items aren't scene objects — they're data.
+
+
+How AddItem works
+-----------------
+1. Null check and weight check first (if weight system is on)
+2. CanFitItem does a dry run to see if we have room for the full qty
+3. If stackable: first pass tops up existing stacks of the same item,
+   second pass puts the rest in empty slots
+4. If not stackable: each unit goes in its own empty slot
+5. Fire events for every slot that changed
+
+The key thing is the "no partial adds" rule — either the whole quantity
+goes in or nothing does. This avoids weird edge cases where you pick up
+10 coins but only 7 actually make it in.
+
+
+How RemoveItem works
+--------------------
+1. Check if we even have enough of this item across all slots
+2. Find all slots with this item, sort by quantity ascending
+3. Deplete from smallest stacks first
+
+Depleting smallest first is a UX thing. If you have stacks of 1, 3,
+and 5, and you use 2 potions, it empties the 1-stack and takes 1 from
+the 3-stack. You end up with clean stacks of 2 and 5 instead of a
+messy 1 and 4.
+
+
+The event system
+----------------
+Events use C# Action delegates. The inventory fires them, and whatever
+cares about inventory changes subscribes:
+
+  inventory.OnItemAdded += (item, qty, slot) => RefreshSlotUI(slot);
+  inventory.OnInventoryFull += () => ShowFullMessage();
+
+The inventory has zero knowledge of what's listening. Could be UI, could
+be audio, could be a save system, could be nothing. This is what keeps
+the inventory decoupled from everything else.
+
+
+Weight system (opt-in)
+----------------------
+If maxWeight is set to 0, no weight checks happen anywhere. No if-else
+branches, no wasted computation. The system just skips weight logic
+entirely. Set maxWeight to something positive and suddenly everything
+starts tracking weight automatically. Items with weight = 0 (like quest
+items) don't contribute even in weight-enabled inventories.
+
+
+SwapSlots
+---------
+This is the only slot manipulation method and that's intentional. Every
+UI interaction — drag and drop, hotbar rearranging, equipping —
+ultimately comes down to swapping the contents of two slots. Making
+swap the atomic operation means everything that builds on top gets
+consistency for free.
+
+
+How expansion works (without touching this code)
+-------------------------------------------------
+Equipment system: create an EquipmentSlot that calls RemoveItem when
+equipping and AddItem when unequipping. Never touches inventory code.
+
+Shop system: calls RemoveItem for the currency and AddItem for the
+purchased item. Reads baseValue from ItemData. Never touches this.
+
+Crafting: calls HasItem to check ingredients, RemoveItem to consume,
+AddItem to deliver result. Never touches this.
+
+Save system: serializes the slot list — each slot becomes an item name
++ quantity pair. Loads by resolving names back to ItemData assets.
+
+That's the whole point of building a minimal base — everything else
+composes on top of the public API.
