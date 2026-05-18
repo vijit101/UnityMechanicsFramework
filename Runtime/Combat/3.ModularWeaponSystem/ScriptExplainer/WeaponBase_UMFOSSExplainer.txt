@@ -1,0 +1,174 @@
+====================================================
+SCRIPT: WeaponBase_UMFOSS.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+The abstract base class for every weapon in the framework. Owns the
+identity (name, skin, model) and shared stats (damage, range, weight),
+and defines the equip/unequip lifecycle that publishes through the
+WeaponEventBus. Capabilities like firing, reloading, and charging are
+added by subclasses via interfaces — never by inheriting more methods
+from this base. This composition-over-inheritance split is what lets
+bullet weapons, melee weapons, and charged weapons share a single base
+class without polluting each other's API.
+
+----------------------------------------------------
+
+Code    : // Author: Aditya Jaiswal, Atharv S. Jain
+Explain : Contributor attribution comment.
+
+Code    : using UnityEngine;
+Explain : Needed for MonoBehaviour, SerializeField, Sprite, and
+          GameObject.
+
+Code    : namespace GameplayMechanicsUMFOSS.Combat
+Explain : Places the base class in the Combat feature group.
+
+Code    : public abstract class WeaponBase_UMFOSS : MonoBehaviour
+Explain : Declares the class as abstract so you cannot drop it directly
+          on a GameObject — only concrete subclasses (Standard, Melee,
+          Unorthodox) are usable. Inheriting MonoBehaviour is what lets
+          weapons be components on prefabs. Abstract keeps the interface
+          honest: every concrete weapon must implement GetData().
+
+Code    : [Header("Identity")]
+Explain : Groups the identity fields in the Inspector under a clear
+          label so designers can tell identity from stats at a glance.
+
+Code    : [SerializeField] private string weaponName;
+Explain : The weapon's display name. Private + [SerializeField] is the
+          preferred Unity pattern: editable in the Inspector but hidden
+          from other scripts, which forces them to go through the
+          protected WeaponName property instead of reading fields
+          directly.
+
+Code    : [SerializeField] private Sprite skin;
+Explain : Icon/skin sprite used by HUD and inventory UI. Stored at the
+          base level because every weapon has a visual representation.
+
+Code    : [SerializeField] private GameObject model;
+Explain : Optional 3D model reference for weapons that swap meshes on
+          equip. Stored as a GameObject rather than a MeshRenderer so it
+          can also hold 2D sprite setups.
+
+Code    : [Header("Stats")]
+Explain : Groups the numeric stat fields into their own Inspector
+          section for clarity.
+
+Code    : [SerializeField] private float damage;
+Explain : Base damage. Exposed to subclasses through the protected
+          Damage property so a subclass cannot accidentally overwrite
+          it, only read it.
+
+Code    : [SerializeField] private float range;
+Explain : Effective range stat. Present on every weapon so UI tooltips
+          can read it uniformly.
+
+Code    : [SerializeField] private float weight;
+Explain : Weight stat, reserved for movement/inventory systems.
+          Included here so every weapon carries the field even when
+          unused.
+
+Code    : [Header("State")]
+Explain : Groups runtime-state flags in the Inspector. Serialized for
+          debugging so you can see the state mid-play-mode.
+
+Code    : [SerializeField] private bool isEquipped;
+Explain : Whether the weapon is currently equipped on its holder.
+
+Code    : [SerializeField] private bool isActive;
+Explain : Whether the weapon is currently the active (selected) one in
+          the holder's slot.
+
+Code    : protected float Damage => damage;
+Explain : Expression-bodied read-only property. Makes `damage` visible
+          to subclasses through a property (which can be logged, mocked,
+          or tightened later) without exposing the field directly.
+
+Code    : protected float Range => range;
+Explain : Read-only accessor for the range stat, same pattern as
+          Damage.
+
+Code    : protected float Weight => weight;
+Explain : Read-only accessor for weight, same pattern.
+
+Code    : protected string WeaponName => weaponName;
+Explain : Read-only accessor for the name. Subclasses like
+          UnorthodoxWeapon use this for debug logs.
+
+Code    : protected GameObject Model => model;
+Explain : Read-only accessor for the optional model reference.
+
+Code    : protected bool IsEquipped => isEquipped;
+Explain : Read-only accessor for the equipped flag.
+
+Code    : protected bool IsActive => isActive;
+Explain : Read-only accessor for the active flag.
+
+Code    : public abstract WeaponData GetData();
+Explain : Abstract method every concrete weapon MUST implement. By
+          making it abstract (rather than virtual with a default) the
+          compiler guarantees no subclass can forget to provide its own
+          data snapshot. In practice every subclass just returns
+          BuildWeaponData().
+
+Code    : public virtual void OnEquip()
+Explain : Equip lifecycle hook. Virtual so subclasses can add their own
+          setup logic but still call base.OnEquip() to fire the event.
+
+Code    : WeaponEventBus.RaiseWeaponEquipped(GetData());
+Explain : Publishes a WeaponEquippedEvent with the current data
+          snapshot. HUD, audio, and animation systems subscribe to this
+          event rather than listening to each weapon individually.
+
+Code    : public virtual void OnUnequip()
+Explain : Unequip lifecycle hook. Same pattern as OnEquip — virtual so
+          subclasses can reset state before the event fires.
+
+Code    : WeaponEventBus.RaiseWeaponUnequipped(GetData());
+Explain : Publishes the unequipped event. Subscribers use this to hide
+          HUD elements, stop idle animations, etc.
+
+Code    : protected WeaponData BuildWeaponData()
+Explain : Shared helper that packs the base fields into a WeaponData
+          struct. Defined once here so every subclass's GetData() can
+          just call this — that keeps the packing consistent and means
+          adding a new field only requires one edit.
+
+Code    : return new WeaponData { name = weaponName, skin = skin, damage = damage, range = range, weight = weight };
+Explain : Object-initializer syntax that sets every field of the
+          WeaponData in one expression. Clean and explicit — a reader
+          can see exactly which base fields are included in the
+          snapshot.
+
+----------------------------------------------------
+
+DESIGN NOTES:
+
+- Why is this base class abstract?
+  Dropping WeaponBase_UMFOSS directly on a GameObject would give you a
+  weapon with no fire, swing, or charge behaviour. Making the class
+  abstract turns that mistake into a compile-time error.
+
+- Why composition (interfaces) instead of baking Fire/Reload into the
+  base?
+  Not every weapon needs every capability. A beam weapon does not
+  reload; a melee weapon does not have ammo. Baking every capability
+  into the base would force every weapon to carry dead methods. The
+  capability interfaces (IWeaponFirable, IWeaponReloadable,
+  IWeaponChargeable) let each concrete weapon declare exactly what it
+  supports, and input/UI code uses `as` casts to query each capability.
+
+- Why are all the fields private with protected accessors?
+  Protecting the fields prevents subclasses from mutating base state in
+  ways the base class did not anticipate. Reads are safe, writes are
+  not — the base class owns the lifecycle of its own data.
+
+- Why must base.OnEquip() be called LAST in overrides?
+  The event fires from base.OnEquip(). If a subclass mutates state
+  (initializes counters, resets timers) AFTER the base call, subscribers
+  that read the weapon state on the event would see stale values.
+  Calling base last guarantees the event reflects the fully-set-up
+  weapon.

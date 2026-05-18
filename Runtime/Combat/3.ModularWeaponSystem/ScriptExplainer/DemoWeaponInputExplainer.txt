@@ -1,0 +1,142 @@
+====================================================
+SCRIPT: DemoWeaponInput.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+A demo-only input forwarder. Holds a reference to a single weapon and
+forwards Fire / StopFire / Reload to it based on key input. Crucially,
+it talks to the weapon exclusively through its capability interfaces
+(IWeaponFirable, IWeaponReloadable), so the same script drops into a
+scene with any weapon type — bullet, melee, or chargeable — without
+modification. One scene = one weapon = one DemoWeaponInput.
+
+----------------------------------------------------
+
+Code    : // Author: Aditya Jaiswal, Atharv S. Jain
+Explain : Contributor attribution.
+
+Code    : using UnityEngine;
+Explain : Required for MonoBehaviour, KeyCode, Input, Debug, etc.
+
+Code    : namespace GameplayMechanicsUMFOSS.Combat
+Explain : Places the demo input in the Combat feature group alongside
+          the weapons it drives.
+
+Code    : public class DemoWeaponInput : MonoBehaviour
+Explain : Standard MonoBehaviour so it can be attached to a
+          GameObject in the demo scene. Note the name lacks the
+          _UMFOSS suffix because it is a demo helper, not part of the
+          core framework API.
+
+Code    : [Header("Weapon")]
+Explain : Inspector grouping for the weapon reference.
+
+Code    : [Tooltip("Drag the weapon GameObject (or any component on it) here.")]
+Explain : Inline tooltip helping designers wire the scene.
+
+Code    : [SerializeField] private WeaponBase_UMFOSS weapon;
+Explain : Reference to the weapon component. Typed as the abstract
+          base class so any concrete weapon (Standard, Melee,
+          Unorthodox) can be dropped in.
+
+Code    : [Header("Input")]
+Explain : Inspector grouping for the input key bindings.
+
+Code    : [SerializeField] private KeyCode fireKey = KeyCode.Mouse0;
+Explain : Default to left mouse for fire. Serialized so designers can
+          rebind without touching code.
+
+Code    : [SerializeField] private KeyCode reloadKey = KeyCode.R;
+Explain : Default to R for reload, matching common FPS convention.
+
+Code    : [SerializeField] private bool equipOnStart = true;
+Explain : When true, the script calls weapon.OnEquip() in Start so
+          the weapon goes through its equipped lifecycle without
+          requiring a separate inventory manager. Disable this if an
+          external system is handling equip/unequip.
+
+Code    : private IWeaponFirable firable;
+Explain : Cached cast of the weapon to the firable interface.
+          Populated once in Start so Update does not pay the cast
+          cost every frame.
+
+Code    : private IWeaponReloadable reloadable;
+Explain : Cached cast to the reloadable interface. Null for weapons
+          that do not support reload (like MeleeWeapon).
+
+Code    : private void Start()
+Explain : Unity lifecycle callback called once before the first Update.
+          Used here for the one-time equip and cast setup so Awake
+          runs first for all weapon components.
+
+Code    : if (weapon == null) { Debug.LogWarning($"[DemoWeaponInput] No weapon assigned on {name}."); return; }
+Explain : Fails loudly rather than NullReferenceException later. The
+          warning includes the GameObject name so designers can find
+          the unwired object in the scene.
+
+Code    : firable = weapon as IWeaponFirable;
+Explain : Safe cast using `as`. If the weapon does not implement
+          IWeaponFirable, the variable becomes null instead of
+          throwing. The null is checked in Update before use.
+
+Code    : reloadable = weapon as IWeaponReloadable;
+Explain : Same safe-cast pattern for the reload capability. This is
+          the core design idea of the framework: query each
+          capability separately and only drive the ones the weapon
+          actually supports.
+
+Code    : if (equipOnStart) { weapon.OnEquip(); }
+Explain : Kicks off the equip lifecycle so the weapon raises its
+          equipped event and any UI (charge bar, ammo counter)
+          initializes with a clean baseline.
+
+Code    : private void Update()
+Explain : Unity lifecycle callback called every frame. Polls input
+          and forwards the result to the weapon interfaces.
+
+Code    : if (firable != null)
+Explain : Only forwards fire input if the weapon actually supports
+          firing. A non-firable weapon (if any ever exists) would
+          have firable == null and this whole block is skipped.
+
+Code    : if (Input.GetKeyDown(fireKey)) { firable.Fire(); }
+Explain : GetKeyDown is true only on the frame the key is first
+          pressed. This matches semi-auto fire semantics and also
+          correctly triggers the "start charge" path on
+          UnorthodoxWeapon.
+
+Code    : else if (Input.GetKeyUp(fireKey)) { firable.StopFire(); }
+Explain : GetKeyUp is true only on the frame the key is released.
+          Using `else if` prevents both branches from running if the
+          player presses and releases in the same frame (rare but
+          possible on very long frames). StopFire is the "release
+          charge" path on UnorthodoxWeapon, and a no-op on Standard
+          and Melee.
+
+Code    : if (reloadable != null && Input.GetKeyDown(reloadKey)) { reloadable.Reload(); }
+Explain : Forwards reload only when the weapon supports it and the
+          player pressed the key this frame. Short-circuit evaluation
+          means reloadable.Reload() is never called on a null
+          reference.
+
+----------------------------------------------------
+
+DESIGN NOTES:
+
+- Why cache the interface casts instead of casting every frame?
+  `as` casts are cheap but not free. Doing them once in Start is
+  both faster and more readable — the reader can immediately see
+  which capabilities the input forwarder cares about.
+
+- Why use KeyCode instead of the Input System package?
+  This script is deliberately scoped as a demo forwarder. Using
+  legacy Input keeps it zero-dependency so any UMF consumer can
+  drop it in without importing the Input System package first.
+
+- Why is DemoWeaponInput separate from the weapons?
+  Separation keeps the weapons pure — they have no concept of
+  "player input" or "mouse button". A real game would replace this
+  script with its own input handler, and the weapons would not
+  need to change at all.

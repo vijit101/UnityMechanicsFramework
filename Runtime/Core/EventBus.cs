@@ -1,42 +1,77 @@
+// Author: Aditya Jaiswal, Atharv S. Jain
 using System;
 using System.Collections.Generic;
 
-/// <summary>
-/// Decoupled event communication system. Mechanics publish events without
-/// knowing who listens. Subscribers react without knowing who publishes.
-/// </summary>
-public static class EventBus
+namespace GameplayMechanicsUMFOSS.Core
 {
-    private static readonly Dictionary<Type, List<Delegate>> subscribers = new();
-
-    public static void Subscribe<T>(Action<T> handler)
+    /// <summary>
+    /// Lightweight type-keyed event bus for decoupled runtime messaging.
+    /// </summary>
+    public static class EventBus
     {
-        var type = typeof(T);
-        if (!subscribers.ContainsKey(type))
-            subscribers[type] = new List<Delegate>();
-        subscribers[type].Add(handler);
-    }
+        private static readonly Dictionary<Type, Delegate> subscribers = new Dictionary<Type, Delegate>();
 
-    public static void Unsubscribe<T>(Action<T> handler)
-    {
-        var type = typeof(T);
-        if (subscribers.ContainsKey(type))
-            subscribers[type].Remove(handler);
-    }
-
-    public static void Publish<T>(T eventData)
-    {
-        var type = typeof(T);
-        if (!subscribers.ContainsKey(type)) return;
-        for (int i = subscribers[type].Count - 1; i >= 0; i--)
+        /// <summary>
+        /// Subscribes a handler to events of type T.
+        /// </summary>
+        /// <typeparam name="T">The event data type.</typeparam>
+        /// <param name="handler">The callback to invoke when the event is published.</param>
+        public static void Subscribe<T>(Action<T> handler)
         {
-            if (subscribers[type][i] is Action<T> action)
-                action.Invoke(eventData);
-        }
-    }
+            var type = typeof(T);
 
-    public static void Clear()
-    {
-        subscribers.Clear();
+            if (!subscribers.TryGetValue(type, out var existingDelegate))
+            {
+                subscribers[type] = handler;
+                return;
+            }
+
+            subscribers[type] = Delegate.Combine(existingDelegate, handler);
+        }
+
+        /// <summary>
+        /// Unsubscribes a handler from events of type T.
+        /// </summary>
+        /// <typeparam name="T">The event data type.</typeparam>
+        /// <param name="handler">The callback to remove from the event chain.</param>
+        public static void Unsubscribe<T>(Action<T> handler)
+        {
+            var type = typeof(T);
+
+            if (!subscribers.TryGetValue(type, out var existingDelegate))
+            {
+                return;
+            }
+
+            var updatedDelegate = Delegate.Remove(existingDelegate, handler);
+
+            if (updatedDelegate == null)
+            {
+                subscribers.Remove(type);
+                return;
+            }
+
+            subscribers[type] = updatedDelegate;
+        }
+
+        /// <summary>
+        /// Publishes an event of type T to all subscribers.
+        /// </summary>
+        /// <typeparam name="T">The event data type.</typeparam>
+        /// <param name="eventData">The payload to pass to subscribers.</param>
+        public static void Publish<T>(T eventData)
+        {
+            var type = typeof(T);
+
+            if (!subscribers.TryGetValue(type, out var existingDelegate))
+            {
+                return;
+            }
+
+            if (existingDelegate is Action<T> callback)
+            {
+                callback.Invoke(eventData);
+            }
+        }
     }
 }

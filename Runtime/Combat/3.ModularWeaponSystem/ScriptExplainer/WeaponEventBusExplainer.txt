@@ -1,0 +1,201 @@
+====================================================
+SCRIPT: WeaponEventBus.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+Defines the combat event payload structs (HitData + all the
+Weapon*Event types) and a thin static wrapper around the framework's
+generic EventBus. Every weapon raises state changes through this
+wrapper, and every listener (HUD, audio, VFX, UI) subscribes through
+it. The wrapper exists so callers never type `EventBus.Publish<...>`
+generics directly — they call `WeaponEventBus.RaiseWeaponFired(data)`
+and get a typed, discoverable API in their IDE. All storage and
+dispatch is delegated to EventBus; this file just adds the combat
+vocabulary on top of it.
+
+----------------------------------------------------
+
+Code    : // Author: Aditya Jaiswal, Atharv S. Jain
+Explain : Contributor attribution comment.
+
+Code    : using System;
+Explain : Needed for Action<T>, the delegate type used for event
+          handlers.
+
+Code    : using UnityEngine;
+Explain : Needed for Vector3 (in HitData) and GameObject (in HitData).
+
+Code    : using GameplayMechanicsUMFOSS.Core;
+Explain : Imports the generic EventBus from the framework's Core
+          namespace. All actual pub/sub goes through that class — this
+          file is a typed facade.
+
+Code    : namespace GameplayMechanicsUMFOSS.Combat
+Explain : Places the bus and all combat event types in the Combat
+          feature group so a single `using` brings in the full combat
+          event vocabulary.
+
+Code    : [System.Serializable] public struct HitData
+Explain : Value-type payload describing a single hit. Struct (not class)
+          keeps event dispatch allocation-free. Serializable so it can
+          appear in the Inspector if any MonoBehaviour holds a HitData
+          field directly.
+
+Code    : public float damage;
+Explain : The damage amount the receiver should apply. Copied from the
+          weapon at the moment of the hit so modifiers (like the charge
+          multiplier on UnorthodoxWeapon) propagate correctly.
+
+Code    : public Vector3 hitPoint;
+Explain : World-space impact point. Used by VFX to spawn particle
+          effects at the correct location and by damage numbers to
+          anchor floating text.
+
+Code    : public GameObject hitObject;
+Explain : The GameObject that was hit. Listeners compare this against
+          their own `gameObject` (see DemoTarget2D_UMFOSS) to decide
+          whether the hit applies to them.
+
+Code    : public struct WeaponEquippedEvent { public WeaponData data; }
+Explain : Event type raised when a weapon is equipped. Wraps the
+          WeaponData snapshot so subscribers get all of the weapon's
+          identity and stats in one package. The framework's generic
+          EventBus dispatches on type, so each event type must be a
+          distinct struct.
+
+Code    : public struct WeaponUnequippedEvent { public WeaponData data; }
+Explain : Unequip counterpart. Used by HUDs to hide weapon UI elements.
+
+Code    : public struct WeaponFiredEvent { public WeaponData data; }
+Explain : Raised on every successful Fire(). VFX, muzzle flash, camera
+          shake, and audio systems subscribe here.
+
+Code    : public struct WeaponHitEvent { public HitData hitData; }
+Explain : Raised when a hitbox or projectile contacts something.
+          Listeners apply damage, play reaction effects, and spawn
+          impact particles.
+
+Code    : public struct WeaponReloadStartEvent { public WeaponData data; }
+Explain : Raised when a reload coroutine begins. UI uses this to play
+          a reload animation or show a progress spinner.
+
+Code    : public struct WeaponReloadCompleteEvent { public WeaponData data; }
+Explain : Raised when a reload coroutine finishes. Split from the
+          ammo-changed event so UI can distinguish "reload finished"
+          from a generic ammo update (for chamber sounds, etc.).
+
+Code    : public struct AmmoChangedEvent { public int current; public int reserve; }
+Explain : Raised whenever the magazine or reserve count changes.
+          Subscribers redraw ammo counters from the values in the
+          payload directly.
+
+Code    : public struct ChargeChangedEvent { public float percent; }
+Explain : Raised every frame a chargeable weapon's charge percent
+          changes. ChargeBarUI_UMFOSS listens to this and drives a
+          filled Image's fillAmount.
+
+Code    : public static class WeaponEventBus
+Explain : Static because there is only one combat event stream in a
+          game. Making it static removes any need for a singleton
+          instance and lets any script anywhere call
+          WeaponEventBus.Raise... without a lookup.
+
+Code    : public static void RaiseWeaponEquipped(WeaponData data)
+Explain : Typed wrapper that constructs the WeaponEquippedEvent struct
+          and forwards it to EventBus.Publish. The wrapper hides the
+          generic syntax and gives the caller an IDE-autocomplete entry
+          point.
+
+Code    : EventBus.Publish(new WeaponEquippedEvent { data = data });
+Explain : Delegates the actual dispatch to the generic EventBus.
+          EventBus infers the type parameter from the argument, walks
+          its subscriber list for that event type, and invokes each
+          handler.
+
+Code    : public static void RaiseWeaponUnequipped(WeaponData data)
+Explain : Mirrors RaiseWeaponEquipped. One Raise method per event type
+          keeps the API flat and predictable.
+
+Code    : public static void RaiseWeaponFired(WeaponData data)
+Explain : Called from every weapon's Fire() method on a successful
+          shot. Subscribers cover SFX, VFX, animation, and HUD.
+
+Code    : public static void RaiseWeaponHit(HitData hitData)
+Explain : Called from projectiles and hitboxes on contact. The HitData
+          payload carries all the information a listener needs to apply
+          damage or play a reaction.
+
+Code    : public static void RaiseWeaponReloadStart(WeaponData data)
+Explain : Called at the top of a reload coroutine, before the wait.
+
+Code    : public static void RaiseWeaponReloadComplete(WeaponData data)
+Explain : Called after the reload wait and ammo transfer complete.
+
+Code    : public static void RaiseAmmoChanged(int current, int reserve)
+Explain : Accepts the two ammo values directly (rather than a struct)
+          so callers can raise it without constructing a temporary —
+          reflecting that this event fires frequently and should be as
+          cheap as possible.
+
+Code    : public static void RaiseChargeChanged(float percent)
+Explain : Called every frame by a charging weapon's coroutine. Accepts
+          the raw percent to keep allocations to zero.
+
+Code    : public static void OnWeaponEquipped(Action<WeaponEquippedEvent> handler)
+Explain : Typed subscribe wrapper. Forwards to EventBus.Subscribe and
+          keeps the generic off the caller's code, matching the naming
+          convention used by OnX / RaiseX in the rest of the framework.
+
+Code    : EventBus.Subscribe(handler);
+Explain : The actual subscribe call. EventBus infers the event type
+          from the handler's Action<T> generic parameter.
+
+Code    : public static void OnWeaponUnequipped(Action<WeaponUnequippedEvent> handler)
+Explain : Same pattern as OnWeaponEquipped for the unequip event.
+
+Code    : public static void OnWeaponFired(Action<WeaponFiredEvent> handler)
+Explain : Subscribe helper for fire events. Used by the melee swing
+          animator and any VFX system that reacts to shots.
+
+Code    : public static void OnWeaponHit(Action<WeaponHitEvent> handler)
+Explain : Subscribe helper for hit events. Used by DemoTarget2D_UMFOSS
+          and any damage-receiver script.
+
+Code    : public static void OnWeaponReloadStart(Action<WeaponReloadStartEvent> handler)
+Explain : Subscribe helper for reload-start events.
+
+Code    : public static void OnWeaponReloadComplete(Action<WeaponReloadCompleteEvent> handler)
+Explain : Subscribe helper for reload-complete events.
+
+Code    : public static void OnAmmoChanged(Action<AmmoChangedEvent> handler)
+Explain : Subscribe helper for ammo-changed events. Used by ammo HUD.
+
+Code    : public static void OnChargeChanged(Action<ChargeChangedEvent> handler)
+Explain : Subscribe helper for charge-changed events. Used by the
+          charge bar UI.
+
+----------------------------------------------------
+
+DESIGN NOTES:
+
+- Why a wrapper around EventBus instead of using EventBus directly?
+  Callers that type `EventBus.Publish<WeaponFiredEvent>(...)` or
+  `EventBus.Subscribe<WeaponFiredEvent>(...)` have to remember each
+  event type and the generic syntax. The typed wrapper gives IDE
+  autocomplete (`WeaponEventBus.Raise...`), prevents typos, and
+  centralises the combat event vocabulary in one file.
+
+- Why one struct per event instead of one enum + shared payload?
+  The generic EventBus dispatches on type. Using distinct structs
+  means the compiler checks that each subscriber handles the correct
+  payload, and adding a new event type cannot accidentally be routed
+  to the wrong handler.
+
+- Why is there no Unsubscribe helper?
+  The framework's EventBus exposes Unsubscribe directly with the same
+  generic signature, and listeners that subscribed through a typed On
+  helper can unsubscribe with `EventBus.Unsubscribe<T>(handler)`.
+  Duplicating every Unsubscribe method would double the surface area
+  of this file for no functional gain.

@@ -1,0 +1,213 @@
+====================================================
+SCRIPT: DemoTarget2D_UMFOSS.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+A demo-only hit target. Subscribes to WeaponHitEvent, and when the
+reported hitObject matches its own GameObject, plays a brief flash +
+punch-scale reaction before destroying itself. Stays fully decoupled
+from the projectile/hitbox — the target reacts through the event bus,
+and the projectile self-destructs through its own OnTriggerEnter2D.
+Neither side holds a reference to the other, which is exactly the
+pattern new contributors should learn from.
+
+----------------------------------------------------
+
+Code    : // Author: Aditya Jaiswal, Atharv S. Jain
+Explain : Contributor attribution.
+
+Code    : using System.Collections;
+Explain : Needed for IEnumerator, the return type of the reaction
+          coroutine.
+
+Code    : using UnityEngine;
+Explain : Required for MonoBehaviour, SpriteRenderer, Color,
+          Vector3, etc.
+
+Code    : using GameplayMechanicsUMFOSS.Core;
+Explain : Brings in the generic EventBus so OnDisable can unsubscribe.
+
+Code    : namespace GameplayMechanicsUMFOSS.Combat
+Explain : Places this demo component in the Combat feature group.
+
+Code    : public class DemoTarget2D_UMFOSS : MonoBehaviour
+Explain : Standard MonoBehaviour, attached to any sprite GameObject
+          the demo scene uses as a target.
+
+Code    : [Header("Hit Reaction")]
+Explain : Inspector grouping for the reaction settings.
+
+Code    : [Tooltip("How long the flash + scale punch plays before the target is destroyed.")]
+Explain : Inline tooltip so designers know what the number controls
+          without reading the code.
+
+Code    : [SerializeField] private float reactionDuration = 0.15f;
+Explain : Duration of the reaction animation in seconds. Short by
+          default so the demo feels punchy.
+
+Code    : [Tooltip("Color flashed onto the sprite during the reaction.")]
+Explain : Tooltip explaining the flash color field.
+
+Code    : [SerializeField] private Color flashColor = Color.white;
+Explain : The color the sprite flashes to on hit. White works well as
+          a default because it reads as "impact" on any sprite color.
+
+Code    : [Tooltip("Peak scale multiplier at the start of the punch.")]
+Explain : Tooltip for the punch scale field.
+
+Code    : [SerializeField] private float punchScale = 1.3f;
+Explain : Multiplier applied to the transform scale at the start of
+          the reaction — the sprite pops to 130% of its rest size,
+          then lerps back to 100%.
+
+Code    : private SpriteRenderer spriteRenderer;
+Explain : Cached reference to the sprite renderer so the reaction
+          coroutine does not GetComponent every frame.
+
+Code    : private Color baseColor;
+Explain : The sprite's color at Awake, used as the end value of the
+          flash lerp so the sprite returns to its original tint rather
+          than pure white.
+
+Code    : private Vector3 baseScale;
+Explain : The transform's scale at Awake, used as the reference for
+          the punch-scale multiplier so non-uniform scales on the
+          target still animate correctly.
+
+Code    : private bool isReacting;
+Explain : Guard flag that prevents the reaction coroutine from being
+          launched twice if a target somehow receives two hits in one
+          frame.
+
+Code    : private void Awake()
+Explain : Unity lifecycle callback called once when the GameObject
+          loads. Used here to cache the renderer, color, and scale.
+
+Code    : spriteRenderer = GetComponent<SpriteRenderer>();
+Explain : Caches the sprite renderer. If the target has no sprite
+          renderer, the variable stays null and the reaction code
+          gracefully skips the flash.
+
+Code    : if (spriteRenderer != null) { baseColor = spriteRenderer.color; }
+Explain : Snapshots the sprite's rest color so the lerp has a
+          destination. Null-checked to handle non-sprite targets.
+
+Code    : baseScale = transform.localScale;
+Explain : Snapshots the rest scale. Using localScale (not
+          lossyScale) keeps the math simple and independent of any
+          parent scaling.
+
+Code    : private void OnEnable()
+Explain : Subscription goes in OnEnable so the subscription lifecycle
+          matches the component lifecycle.
+
+Code    : WeaponEventBus.OnWeaponHit(HandleWeaponHit);
+Explain : Subscribes through the typed wrapper so the caller does not
+          have to spell out the generic.
+
+Code    : private void OnDisable()
+Explain : Paired cleanup. Unsubscribe AND reset visuals so a
+          mid-reaction disable does not leave the sprite stuck
+          flashed or scaled up.
+
+Code    : EventBus.Unsubscribe<WeaponHitEvent>(HandleWeaponHit);
+Explain : Removes the handler. Uses the generic unsubscribe because
+          the typed wrapper only covers subscribe.
+
+Code    : StopAllCoroutines();
+Explain : Cancels the running reaction coroutine if any, so the
+          "snap visuals back" block below is not immediately
+          overwritten.
+
+Code    : isReacting = false;
+Explain : Clears the guard flag so a re-enable cleanly accepts the
+          next hit.
+
+Code    : if (spriteRenderer != null) { spriteRenderer.color = baseColor; }
+Explain : Restores the original sprite color. Without this, a
+          mid-flash disable would freeze the sprite at an arbitrary
+          partly-white tint.
+
+Code    : transform.localScale = baseScale;
+Explain : Restores the rest scale so a disable during the punch
+          animation does not leave the target oversized.
+
+Code    : private void HandleWeaponHit(WeaponHitEvent evt)
+Explain : The WeaponHitEvent handler. Fires for every hit the bus
+          publishes, so the first thing it does is filter.
+
+Code    : if (isReacting || evt.hitData.hitObject != gameObject) { return; }
+Explain : Two-part filter: skip if already mid-reaction, and skip if
+          the reported hit object is not this GameObject. The second
+          check is what makes a single event bus work for multiple
+          targets in the same scene.
+
+Code    : isReacting = true;
+Explain : Flips the guard flag so a second hit event in the same
+          frame is ignored.
+
+Code    : StartCoroutine(ReactAndDie());
+Explain : Kicks off the reaction+destroy coroutine.
+
+Code    : private IEnumerator ReactAndDie()
+Explain : Private coroutine that handles the flash/punch animation
+          and the final Destroy call.
+
+Code    : float elapsed = 0f;
+Explain : Local timer used to compute the 0..1 interpolation value.
+
+Code    : while (elapsed < reactionDuration)
+Explain : Runs the animation loop until the reaction duration elapses.
+
+Code    : float t = elapsed / reactionDuration;
+Explain : Normalized animation time. 0 at the start, 1 at the end.
+
+Code    : if (spriteRenderer != null) { spriteRenderer.color = Color.Lerp(flashColor, baseColor, t); }
+Explain : Lerps the sprite color from flashColor back to baseColor
+          across the reaction. At t=0 the sprite is pure flashColor;
+          at t=1 it is the original tint.
+
+Code    : float scaleT = Mathf.Lerp(punchScale, 1f, t);
+Explain : Lerps a scale multiplier from punchScale back to 1.0 —
+          the reverse direction of the typical "scale up" so the
+          pop happens immediately and the target settles back toward
+          its rest size.
+
+Code    : transform.localScale = baseScale * scaleT;
+Explain : Applies the multiplier to the saved rest scale. Using
+          baseScale (not the current localScale) guarantees
+          non-uniform scales on the target animate correctly.
+
+Code    : elapsed += Time.deltaTime;
+Explain : Advances the local timer using scaled game time so
+          slow-motion extends the reaction.
+
+Code    : yield return null;
+Explain : Waits one frame before continuing the loop.
+
+Code    : Destroy(gameObject);
+Explain : Destroys the target once the reaction is done. The target
+          is one-shot by design.
+
+----------------------------------------------------
+
+DESIGN NOTES:
+
+- Why filter on evt.hitData.hitObject == gameObject?
+  The event bus publishes to every subscriber. If three targets were
+  in the scene and each reacted to every hit, shooting target A
+  would also explode B and C. The filter is what isolates each
+  instance.
+
+- Why an isReacting guard?
+  Event order is not guaranteed — a projectile and a hitbox could
+  both contact the same target in the same frame. The guard
+  prevents two reactions from stacking on the same GameObject.
+
+- Why reset visuals in OnDisable?
+  If the target is pooled or temporarily toggled (pause menu,
+  scene transition) mid-flash, the visuals would stick. Snapping
+  back to baseline on disable makes the script pool- and
+  scene-transition-safe.

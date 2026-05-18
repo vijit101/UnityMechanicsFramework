@@ -1,0 +1,210 @@
+====================================================
+SCRIPT: MeleeSwingAnimator2D_UMFOSS.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+A demo-only swing animator. Listens for WeaponFiredEvent and rotates a
+target Transform through an arc to visualise a melee strike. Stays
+fully decoupled from MeleeWeapon_UMFOSS via the event bus — drop it on
+any GameObject, point it at a sword sprite, and it will animate
+whenever a matching melee weapon fires. An optional weapon-name filter
+lets a single scene hold multiple melee weapons without them all
+swinging together.
+
+----------------------------------------------------
+
+Code    : // Author: Aditya Jaiswal, Atharv S. Jain
+Explain : Contributor attribution.
+
+Code    : using System.Collections;
+Explain : Needed for IEnumerator, the return type of the swing
+          coroutine.
+
+Code    : using UnityEngine;
+Explain : Required for MonoBehaviour, Transform, Quaternion, Mathf,
+          Time, etc.
+
+Code    : using GameplayMechanicsUMFOSS.Core;
+Explain : Brings in the generic EventBus so OnDisable can unsubscribe.
+
+Code    : namespace GameplayMechanicsUMFOSS.Combat
+Explain : Places this demo animator in the Combat feature group
+          alongside the event it listens to.
+
+Code    : public class MeleeSwingAnimator2D_UMFOSS : MonoBehaviour
+Explain : Standard MonoBehaviour attached to a GameObject that holds
+          (or has access to) a sword visual.
+
+Code    : [Header("Visual")]
+Explain : Inspector grouping for the visual-reference field.
+
+Code    : [Tooltip("Transform that will be rotated during the swing — typically a child holding the sword sprite.")]
+Explain : Tells designers exactly what to drag into this slot.
+
+Code    : [SerializeField] private Transform swordVisual;
+Explain : Reference to the transform that should rotate during the
+          swing. Kept as a Transform (not a SpriteRenderer) because
+          the animation only rotates — anything with a Transform can
+          be driven.
+
+Code    : [Header("Swing Arc")]
+Explain : Inspector grouping for the rotation arc fields.
+
+Code    : [Tooltip("Local Z rotation at the start of the swing (degrees).")]
+Explain : Tooltip so designers know the field is a Z-axis degree
+          value, not a world position.
+
+Code    : [SerializeField] private float startAngle = 60f;
+Explain : Z-rotation at the start of the swing. Defaults to +60
+          degrees, which places a right-handed sword overhead-right.
+
+Code    : [Tooltip("Local Z rotation at the end of the swing (degrees).")]
+Explain : Tooltip for the end-angle field.
+
+Code    : [SerializeField] private float endAngle = -60f;
+Explain : Z-rotation at the end of the swing. Defaults to -60, which
+          gives a 120-degree swing arc from start to end.
+
+Code    : [Tooltip("Total swing duration in seconds. Should match MeleeWeapon swingDuration for a tight feel.")]
+Explain : Reminds designers to keep this value in sync with the
+          matching weapon setting for the best game-feel.
+
+Code    : [SerializeField] private float swingDuration = 0.2f;
+Explain : How long the arc animation takes to complete.
+
+Code    : [Header("Filter")]
+Explain : Inspector grouping for the weapon-name filter.
+
+Code    : [Tooltip("Only animate when the fired weapon's name matches this. Leave blank to react to any fired weapon.")]
+Explain : Explains both the filter behaviour and the "blank means
+          all" escape hatch.
+
+Code    : [SerializeField] private string weaponNameFilter = "";
+Explain : Optional filter string. Empty by default so a quickly-
+          configured scene works without any setup; set to a specific
+          weapon name when multiple weapons in the scene could fire.
+
+Code    : private Coroutine activeSwing;
+Explain : Handle on the currently-running swing coroutine so it can
+          be stopped cleanly (on rapid re-fire, disable, etc.).
+
+Code    : private void OnEnable()
+Explain : Unity lifecycle callback. Subscription goes here so the
+          subscription lifecycle tracks component enable/disable.
+
+Code    : WeaponEventBus.OnWeaponFired(HandleWeaponFired);
+Explain : Subscribes the handler through the typed wrapper.
+
+Code    : private void OnDisable()
+Explain : Paired cleanup. Unsubscribe AND snap the sword back to
+          the rest pose so a mid-swing disable does not freeze the
+          visual at an arbitrary angle.
+
+Code    : EventBus.Unsubscribe<WeaponFiredEvent>(HandleWeaponFired);
+Explain : Removes the handler via the generic unsubscribe API.
+
+Code    : if (activeSwing != null) { StopCoroutine(activeSwing); activeSwing = null; }
+Explain : Cancels the in-flight swing so it cannot keep ticking on
+          a disabled GameObject. Clearing the handle prevents stale
+          references if the component is re-enabled.
+
+Code    : if (swordVisual != null) { swordVisual.localRotation = Quaternion.Euler(0f, 0f, startAngle); }
+Explain : Snaps the visual back to the start pose. Essential so a
+          disable mid-arc does not leave the sword stuck pointing
+          somewhere random.
+
+Code    : private void Start()
+Explain : Unity lifecycle callback. Used here to place the sword at
+          the rest pose when the scene loads, before any hit.
+
+Code    : if (swordVisual != null) { swordVisual.localRotation = Quaternion.Euler(0f, 0f, startAngle); }
+Explain : Sets the initial pose. Same call as the OnDisable reset to
+          keep the behaviour symmetric.
+
+Code    : private void HandleWeaponFired(WeaponFiredEvent evt)
+Explain : The fired-event handler. Runs for every weapon fire the
+          bus publishes, so the first responsibility is filtering.
+
+Code    : if (swordVisual == null) { return; }
+Explain : Fail gracefully if no visual is wired. The event still
+          dispatched to other subscribers — this one just does
+          nothing.
+
+Code    : if (!string.IsNullOrEmpty(weaponNameFilter) && evt.data.name != weaponNameFilter) { return; }
+Explain : Applies the optional name filter. When the filter is
+          empty, every fire event triggers the swing; when set,
+          only events whose weapon name matches trigger the swing.
+
+Code    : if (activeSwing != null) { StopCoroutine(activeSwing); }
+Explain : Cancels any swing still in progress so a rapid re-fire
+          restarts the animation from the top instead of stacking
+          two coroutines on the same transform.
+
+Code    : activeSwing = StartCoroutine(SwingRoutine());
+Explain : Launches the swing routine and stores the handle.
+
+Code    : private IEnumerator SwingRoutine()
+Explain : The private coroutine that drives the rotation each frame.
+
+Code    : float elapsed = 0f;
+Explain : Local timer used to compute the 0..1 animation parameter.
+
+Code    : while (elapsed < swingDuration)
+Explain : Runs the animation loop until the swing duration elapses.
+
+Code    : float t = elapsed / swingDuration;
+Explain : Normalized time across the swing, 0 at start, 1 at end.
+
+Code    : float eased = 1f - (1f - t) * (1f - t);
+Explain : Quadratic ease-out curve. At t=0 the output is 0, at t=1
+          it is 1, and the curve moves fast early and slows down —
+          which gives the swing a "snap forward then settle" feel
+          rather than a mechanical linear arc.
+
+Code    : float angle = Mathf.Lerp(startAngle, endAngle, eased);
+Explain : Lerps the rotation angle between start and end using the
+          eased parameter, producing the curved feel.
+
+Code    : swordVisual.localRotation = Quaternion.Euler(0f, 0f, angle);
+Explain : Applies the rotation as a pure Z-axis quaternion, which is
+          all that matters for a 2D sword sprite.
+
+Code    : elapsed += Time.deltaTime;
+Explain : Advances the local timer using scaled game time so
+          slow-motion correctly extends the animation.
+
+Code    : yield return null;
+Explain : Waits one frame before continuing.
+
+Code    : swordVisual.localRotation = Quaternion.Euler(0f, 0f, startAngle);
+Explain : Snaps back to the start pose once the arc completes, so
+          the next swing has somewhere to swing from.
+
+Code    : activeSwing = null;
+Explain : Clears the handle so HandleWeaponFired can tell the
+          coroutine has finished naturally.
+
+----------------------------------------------------
+
+DESIGN NOTES:
+
+- Why listen through the event bus instead of referencing the melee
+  weapon?
+  Decoupling. The animator has zero knowledge of which weapon
+  instance fired. Drop it in any scene, wire a sword sprite, and it
+  works without editing the animator to point at the weapon
+  component.
+
+- Why an ease-out curve instead of linear Lerp?
+  Linear motion looks lifeless on combat animations. The quadratic
+  ease-out snaps forward at the start and settles at the end,
+  producing a recognisable "strike" feel with zero assets or
+  Animator state machines.
+
+- Why a name filter?
+  A scene could have multiple melee weapons (player + enemy). Without
+  the filter, the player's sword would swing whenever the enemy
+  attacks. The filter lets each animator pick exactly which weapon's
+  events it should react to.

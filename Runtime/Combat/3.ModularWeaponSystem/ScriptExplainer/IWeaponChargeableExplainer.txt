@@ -1,0 +1,43 @@
+====================================================
+SCRIPT: IWeaponChargeable.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+Declares the capability contract for any weapon that builds up a charge
+over time before releasing its effect. Separating "chargeable" from
+"firable" lets UI (like the charge bar) ask a weapon for its charge
+percent without knowing whether it is also firable, reloadable, or
+something else entirely.
+
+----------------------------------------------------
+
+Code    : // Author: Aditya Jaiswal, Atharv S. Jain
+Explain : Contributor attribution comment.
+
+Code    : namespace GameplayMechanicsUMFOSS.Combat
+Explain : Places the interface in the Combat feature group, consistent
+          with the other weapon capability interfaces.
+
+Code    : public interface IWeaponChargeable
+Explain : The interface declaration. A weapon becomes "chargeable" purely
+          by implementing this — no base class required.
+
+Code    : void StartCharge();
+Explain : Begins accumulating charge. Typically called on trigger-down.
+          Separate from Fire() so the same interface pattern works
+          whether a weapon uses Fire/StopFire semantics or its own
+          charge-specific API.
+
+Code    : void ReleaseCharge();
+Explain : Releases the accumulated charge, producing the weapon's effect
+          and resetting internal charge state. Typically called on
+          trigger-up.
+
+Code    : float GetChargePercent();
+Explain : Returns a normalized 0–1 value representing how full the
+          charge is. The charge bar UI and any listener on
+          ChargeChangedEvent use this value directly to fill a bar or
+          drive VFX intensity, so it must be clamped and monotonic
+          within a single charge cycle.

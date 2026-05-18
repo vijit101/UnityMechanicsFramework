@@ -1,0 +1,51 @@
+====================================================
+SCRIPT: IWeaponFirable.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+Declares the capability contract that any "firable" weapon must satisfy.
+Splitting fire capability into its own interface means a player controller
+or input handler can call Fire() on anything that implements IWeaponFirable
+without knowing if it shoots bullets, swings a sword, or begins a charge.
+The concrete weapon decides what "fire" means.
+
+----------------------------------------------------
+
+Code    : // Author: Aditya Jaiswal, Atharv S. Jain
+Explain : Attribution comment. Keeps contributor credit inside the file
+          itself, independent of git history.
+
+Code    : namespace GameplayMechanicsUMFOSS.Combat
+Explain : Places the interface in the Combat feature group. Weapon
+          interfaces live alongside the concrete weapons that implement
+          them so that one `using` statement brings in the whole combat
+          API surface.
+
+Code    : public interface IWeaponFirable
+Explain : Declares the interface. Interfaces only define *what* a type
+          can do, not *how*. Using an interface here (instead of an
+          abstract base method) lets a weapon mix fire capability with
+          other capabilities (reload, charge) without forcing a deep
+          inheritance chain.
+
+Code    : void Fire();
+Explain : The primary "pull the trigger" action. Deliberately left
+          parameterless so every weapon type can implement it uniformly —
+          any extra data (charge level, aim direction) is pulled from the
+          weapon's own state rather than from the caller.
+
+Code    : void StopFire();
+Explain : The "release the trigger" action. For instantaneous weapons
+          (bullet, melee swing) this is a no-op. For held-fire weapons
+          (charge shot, beam weapon) this is what actually releases the
+          effect. Putting both Fire and StopFire on the interface lets
+          input code map mouse-down -> Fire and mouse-up -> StopFire
+          without caring which weapon is equipped.
+
+Code    : bool CanFire();
+Explain : Query used by UI and AI to check whether calling Fire() would
+          actually do something. Exposing this as a separate method lets
+          a HUD grey out the fire button in real time and lets AI wait
+          for a valid window without side effects.

@@ -72,8 +72,14 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # Additional junk files
-.DS_Store
 *.ini
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Vim swap files
+*.swp
 
 # Video stitching workspace (raw takes are local-only, never committed)
 **/raw-takes/

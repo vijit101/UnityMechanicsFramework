@@ -1,0 +1,349 @@
+====================================================
+SCRIPTS: MeleeWeapon_UMFOSS.cs, HitboxSystem_UMFOSS.cs,
+         MeleeSwingAnimator2D_UMFOSS.cs, DemoTarget2D_UMFOSS.cs,
+         DemoWeaponInput.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+DEMO SCENE: Assets/Scene/MeeleWeaponSystemDemo.unity
+====================================================
+
+PURPOSE:
+MeleeWeapon_UMFOSS is the melee specialization of WeaponBase_UMFOSS. It
+implements IWeaponFirable so the same input layer that drives ranged and
+charged weapons also drives melee — one Fire() call, a different runtime
+behavior. "Firing" here means activating a hitbox for a fixed swing
+duration, gated by an attack cooldown, and raising a WeaponFired event.
+
+HitboxSystem_UMFOSS is the dumb tool the weapon swings. It owns a
+Collider2D that starts disabled, flips on for the swing window, and
+reports contacts through WeaponEventBus.RaiseWeaponHit. It never reaches
+into another system to apply damage — listeners do that.
+
+MeleeSwingAnimator2D_UMFOSS and DemoTarget2D_UMFOSS are decoupled
+visualizers. The animator rotates a sword sprite through an arc whenever
+any melee weapon fires; the target flashes, punch-scales, and destroys
+itself when it is the hit object. Neither script has a hard reference to
+the weapon or the hitbox — both communicate only through the event bus.
+
+DemoWeaponInput is the scene's input forwarder. It holds one weapon and
+forwards Fire / StopFire / Reload based on KeyCodes. Because it talks
+through the capability interfaces (IWeaponFirable, IWeaponReloadable),
+the same script drops unchanged into the standard, melee, or unorthodox
+demo scenes.
+
+----------------------------------------------------
+MELEEWEAPON_UMFOSS.CS
+----------------------------------------------------
+
+Code    : public class MeleeWeapon_UMFOSS : WeaponBase_UMFOSS, IWeaponFirable
+Explain : Inherits identity/stats/lifecycle from the shared base and
+          layers the IWeaponFirable capability on top. Capability is
+          expressed through an interface, not the base class, so weapons
+          that cannot fire (e.g. a shield) do not inherit an empty Fire.
+
+Code    : [SerializeField] private float attackCooldown = DEFAULT_ATTACK_COOLDOWN;
+Explain : The default is a named const instead of a literal 0.5 so the
+          meaning ("default attack cooldown") lives in source, not in the
+          inspector. Designers can still override per-instance.
+
+Code    : [SerializeField] private float swingDuration = 0.2f;
+Explain : The window the hitbox stays enabled for. Should match the
+          MeleeSwingAnimator2D swingDuration so the visual arc and the
+          damage window start and end together — any drift here creates
+          hits that land before or after the sword visibly swings.
+
+Code    : [SerializeField] private HitboxSystem_UMFOSS hitbox;
+Explain : The hitbox is wired through the inspector rather than looked
+          up via GetComponentInChildren so a designer can point a weapon
+          at any hitbox (tip vs full blade) without a code change.
+
+Code    : private const float DEFAULT_ATTACK_COOLDOWN = 0.5f;
+Explain : Named constant rather than a magic number so the value is
+          greppable and self-documenting. Section 9.3 of CONTRIBUTING
+          forbids bare literals in tuning code for exactly this reason.
+
+Code    : public bool CanFire() { return Time.time >= lastAttackTime + attackCooldown; }
+Explain : Melee uses a simple elapsed-time check instead of a fire-rate
+          division because there is no concept of rate-of-fire for a
+          swing — each attack is gated by an explicit recovery window,
+          which reads more naturally and avoids unit conversion.
+
+Code    : if (!CanFire()) { return; }
+Explain : Fire() guards with the same CanFire() predicate that external
+          callers (UI, AI) use. Sharing one predicate means a button
+          greyed out by CanFire() can never get into a state where it
+          still triggers a swing — the check cannot drift from the gate.
+
+Code    : hitbox.Activate(Damage, swingDuration);
+Explain : Damage is read from the inherited base property and passed
+          into the hitbox at activation time. The weapon owns its damage
+          value; the hitbox is a reusable tool. One hitbox prefab can be
+          swung by weapons with wildly different damage tuning.
+
+Code    : lastAttackTime = Time.time;
+Explain : Stamped after the hitbox is activated so the cooldown measures
+          from the moment the swing starts, not from the moment input
+          arrived. Matters when multiple input events can arrive in the
+          same frame.
+
+Code    : WeaponEventBus.RaiseWeaponFired(GetData());
+Explain : Publishes the fired event AFTER state changes are committed
+          so any listener (swing animator, SFX, UI) that queries the
+          weapon during the callback sees the post-swing state.
+
+Code    : public void StopFire() { }
+Explain : Melee attacks are instantaneous — there is no held state to
+          release. StopFire exists only to satisfy IWeaponFirable. This
+          is the interface contract at work: every firable weapon must
+          expose StopFire, even when it is a meaningful no-op, so the
+          caller never has to branch on weapon type.
+
+Code    : public override WeaponData GetData() { return BuildWeaponData(); }
+Explain : Concrete weapons are forced to override GetData() because it
+          is abstract on the base. Every melee weapon today returns
+          BuildWeaponData() verbatim — that duplication is intentional.
+          It keeps the extension point visible for the day a subclass
+          wants to add a melee-specific field to the snapshot.
+
+Code    : public override void OnEquip() { base.OnEquip(); }
+Explain : base.OnEquip() is the LAST line so any subclass setup runs
+          before the equipped event fires. Listeners that query the
+          weapon during the equipped callback always see the final,
+          fully-initialized state — CONTRIBUTING calls this the
+          "base call last" rule.
+
+----------------------------------------------------
+HITBOXSYSTEM_UMFOSS.CS
+----------------------------------------------------
+
+Code    : [RequireComponent(typeof(Collider2D))]
+Explain : Enforces the Collider2D dependency at author time so the
+          hitbox is never attached to a GameObject that cannot collide.
+          Prevents a class of "works in the editor, null at runtime"
+          bugs by refusing to compile the component without its tool.
+
+Code    : private Collider2D hitboxCollider;
+Explain : Cached once in Awake. GetComponent<Collider2D>() is never
+          called again — repeated lookups on a hot code path (a fast
+          attacker could swing several times a second) are wasted work.
+
+Code    : private void Awake() { hitboxCollider = GetComponent<Collider2D>(); hitboxCollider.enabled = false; }
+Explain : The collider starts disabled so the hitbox cannot register
+          stray contacts before the first swing. Combined with
+          RequireComponent, this guarantees the hitbox is always present
+          but inert until Activate() runs — never "accidentally on".
+
+Code    : public void Activate(float damage, float duration)
+Explain : Activate takes damage and duration as parameters instead of
+          reading them from serialized fields so one hitbox prefab can
+          be reused by weapons with completely different tuning. The
+          hitbox owns nothing designers need to configure per-weapon.
+
+Code    : storedDamage = damage; hitboxCollider.enabled = true; StartCoroutine(DeactivateAfter(duration));
+Explain : Activation is fire-and-forget: enable the collider, start a
+          self-scheduled deactivation coroutine, return. The caller does
+          not manage timing, which means MeleeWeapon.Fire() cannot leak
+          a permanently-on hitbox even if it errors out after this call.
+
+Code    : private IEnumerator DeactivateAfter(float duration) { yield return new WaitForSeconds(duration); hitboxCollider.enabled = false; }
+Explain : Deactivation is a coroutine instead of a per-frame Update
+          timer so the hitbox does zero work between swings. The
+          WaitForSeconds allocation is acceptable because swings are
+          infrequent compared to per-frame work.
+
+Code    : private void OnTriggerEnter2D(Collider2D other)
+Explain : Unity's physics callback fires only when the collider is
+          enabled, so the hitbox is effectively "deaf" outside the
+          swing window. No extra isActive flag is needed — the enabled
+          state of the collider IS the active flag.
+
+Code    : Vector3 hitPoint = other.ClosestPoint(transform.position);
+Explain : ClosestPoint gives the surface point on the hit collider
+          nearest the hitbox origin, which is far more useful than
+          transform.position for spawning impact VFX or computing
+          knockback direction. Computing it here means every listener
+          gets the same answer without duplicating geometry math.
+
+Code    : WeaponEventBus.RaiseWeaponHit(new HitData { damage = storedDamage, hitPoint = hitPoint, hitObject = other.gameObject });
+Explain : Publishes a hit event instead of calling other.GetComponent
+          <IDamageable>().TakeDamage(). The hitbox has no opinion about
+          what a "hit" means — listeners that care (health, VFX, SFX,
+          achievements) subscribe independently. This is the single
+          decision that keeps the combat system decoupled.
+
+----------------------------------------------------
+MELEESWINGANIMATOR2D_UMFOSS.CS
+----------------------------------------------------
+
+Code    : [SerializeField] private Transform swordVisual;
+Explain : The animator rotates a Transform reference, not a hardcoded
+          child. This means one animator can drive any visual — a
+          sprite, a 3D model, an empty parent of a particle system —
+          without the animator knowing anything about rendering.
+
+Code    : [SerializeField] private float startAngle = 60f;
+Code    : [SerializeField] private float endAngle = -60f;
+Explain : Arc endpoints are exposed as degrees so designers tune the
+          swing shape directly in the inspector. Storing local Z
+          rotations (not world) means the swing works correctly no
+          matter which direction the weapon faces.
+
+Code    : [SerializeField] private string weaponNameFilter = "";
+Explain : Optional filter so one animator can react to a specific named
+          weapon when multiple weapons exist in the scene. Empty string
+          means "react to any fired weapon" — the default behavior for
+          a single-weapon demo.
+
+Code    : private void OnEnable() { WeaponEventBus.OnWeaponFired(HandleWeaponFired); }
+Code    : private void OnDisable() { EventBus.Unsubscribe<WeaponFiredEvent>(HandleWeaponFired); }
+Explain : Subscribe on enable, unsubscribe on disable. This is the
+          safe pairing for event-bus listeners — disabling or destroying
+          the animator cleanly removes it from the bus so no stale
+          delegate is ever invoked on a dead GameObject.
+
+Code    : if (!string.IsNullOrEmpty(weaponNameFilter) && evt.data.name != weaponNameFilter) { return; }
+Explain : Early-out when the filter is set and does not match. Putting
+          the filter check first keeps the hot path (no filter, many
+          weapons) branch-free.
+
+Code    : if (activeSwing != null) { StopCoroutine(activeSwing); }
+Explain : A second Fire() arriving before the previous swing finished
+          cancels the old arc and starts a fresh one. Without this, two
+          overlapping coroutines would fight for swordVisual.localRotation
+          and produce visible jitter.
+
+Code    : float eased = 1f - (1f - t) * (1f - t);
+Explain : Ease-out curve (1 - (1-t)^2). The sword snaps forward fast
+          at the start and settles toward the end — gives the swing a
+          "punch" feel instead of a linear pivot. One multiplication,
+          no Mathf.Sin call.
+
+Code    : swordVisual.localRotation = Quaternion.Euler(0f, 0f, startAngle);
+Explain : Snaps back to the rest pose after the swing completes so
+          the next swing always starts from a known angle. Without the
+          reset, rapid swings would drift because an interrupted swing
+          would leave the sword at an arbitrary angle.
+
+----------------------------------------------------
+DEMOTARGET2D_UMFOSS.CS
+----------------------------------------------------
+
+Code    : private SpriteRenderer spriteRenderer;
+Code    : private Color baseColor;
+Explain : The renderer and its original color are cached in Awake so
+          the reaction can Lerp from flashColor back to baseColor
+          without re-reading the material on every frame of the coroutine.
+
+Code    : private void OnEnable() { WeaponEventBus.OnWeaponHit(HandleWeaponHit); }
+Code    : private void OnDisable() { EventBus.Unsubscribe<WeaponHitEvent>(HandleWeaponHit); }
+Explain : Same enable/disable subscription pattern as the animator.
+          Critical here because the target destroys itself at the end
+          of its reaction — an un-paired subscription would leak a
+          delegate pointing at a destroyed GameObject.
+
+Code    : if (isReacting || evt.hitData.hitObject != gameObject) { return; }
+Explain : Two guards. The first prevents a second hit from restarting
+          the reaction mid-flash. The second is what makes event-bus
+          routing work: every target receives every hit event, but
+          only reacts when the event's hitObject reference equals its
+          own gameObject. No per-weapon wiring needed.
+
+Code    : spriteRenderer.color = Color.Lerp(flashColor, baseColor, t);
+Explain : Lerps the color from the flash toward the original over the
+          reaction duration. At t=0 the sprite is fully flashed; at t=1
+          it is back to normal just as the target is destroyed, which
+          hides the transition at its least visible moment.
+
+Code    : float scaleT = Mathf.Lerp(punchScale, 1f, t);
+Code    : transform.localScale = baseScale * scaleT;
+Explain : Punch-scale starts big and shrinks back to normal. Combined
+          with the color flash, it reads as a physical "thump" instead
+          of a visual flicker — two cheap effects composed to feel
+          more impactful than either alone.
+
+Code    : Destroy(gameObject);
+Explain : The target removes itself at the end of the reaction. The
+          OnDisable unsubscribe runs automatically as part of Destroy,
+          so no manual cleanup is needed — Unity's component lifecycle
+          handles it.
+
+----------------------------------------------------
+DEMOWEAPONINPUT.CS
+----------------------------------------------------
+
+Code    : [SerializeField] private WeaponBase_UMFOSS weapon;
+Explain : The inspector slot accepts the base type, not a concrete
+          weapon class, so the same component drops into the melee,
+          standard, or unorthodox demo scenes without a code change.
+          This is the Liskov substitution principle at the component
+          level.
+
+Code    : [SerializeField] private KeyCode fireKey = KeyCode.Mouse0;
+Code    : [SerializeField] private KeyCode reloadKey = KeyCode.R;
+Explain : Keybinds are serialized so a designer can rebind without
+          touching code. Defaults (left-click to swing, R to reload)
+          match the controls the video walkthrough references.
+
+Code    : private IWeaponFirable firable;
+Code    : private IWeaponReloadable reloadable;
+Explain : Input talks to the weapon through capability interfaces,
+          never through the concrete class. A melee weapon assigned to
+          this component resolves 'firable' to the same MeleeWeapon_UMFOSS
+          instance but casts 'reloadable' to null — the Update loop
+          simply skips reload handling, no branching on type.
+
+Code    : firable = weapon as IWeaponFirable;
+Code    : reloadable = weapon as IWeaponReloadable;
+Explain : 'as' casts return null on failure instead of throwing, which
+          is exactly the desired behavior for optional capabilities.
+          A weapon that cannot reload silently disables its reload path.
+
+Code    : if (equipOnStart) { weapon.OnEquip(); }
+Explain : Auto-equip on Start so pressing Play in the demo scene "just
+          works" — no manual equip step, no missing initial state.
+          Section 12.2 of CONTRIBUTING requires the demo scene to run
+          immediately on Play with zero manual setup, and this line is
+          how the weapon satisfies that rule.
+
+Code    : if (Input.GetKeyDown(fireKey)) { firable.Fire(); } else if (Input.GetKeyUp(fireKey)) { firable.StopFire(); }
+Explain : Press and release are both forwarded even though MeleeWeapon
+          ignores StopFire. The forwarder does not know or care which
+          weapon handles the release — that is the whole point of
+          routing everything through the interface.
+
+Code    : if (reloadable != null && Input.GetKeyDown(reloadKey)) { reloadable.Reload(); }
+Explain : Reload is only wired when the weapon actually implements
+          IWeaponReloadable. For the melee demo, reloadable is null and
+          this branch is dead — the R key produces no call, not a
+          NullReferenceException.
+
+----------------------------------------------------
+DEMO SCENE EVENT FLOW
+----------------------------------------------------
+
+Player presses left mouse button
+    -> DemoWeaponInput.Update detects GetKeyDown(fireKey)
+    -> firable.Fire() on the IWeaponFirable interface
+    -> MeleeWeapon_UMFOSS.Fire() checks CanFire()
+    -> hitbox.Activate(Damage, swingDuration)
+        - HitboxSystem enables its Collider2D
+        - Starts DeactivateAfter(swingDuration) coroutine
+    -> WeaponEventBus.RaiseWeaponFired(GetData())
+        - MeleeSwingAnimator2D.HandleWeaponFired rotates swordVisual
+          through its arc over swingDuration seconds
+
+During the swing window, any Collider2D overlapping the hitbox
+    -> HitboxSystem.OnTriggerEnter2D
+    -> WeaponEventBus.RaiseWeaponHit(HitData)
+        - DemoTarget2D.HandleWeaponHit matches evt.hitObject to self
+        - Starts ReactAndDie coroutine (flash + punch + Destroy)
+
+After swingDuration seconds
+    -> HitboxSystem.DeactivateAfter disables the collider
+    -> Weapon is ready to swing again once attackCooldown elapses
+
+Note: no script in this flow holds a direct reference to another
+script beyond MeleeWeapon -> HitboxSystem. Every other link is an
+event-bus subscription, which is why you can delete the animator or
+the target from the scene and the rest of the system continues to
+function without error.

@@ -1,0 +1,170 @@
+====================================================
+SCRIPT: Projectile2D_UMFOSS.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+A self-contained 2D projectile. It launches itself forward on spawn,
+reports hits through the WeaponEventBus, and despawns on contact or
+after a fixed lifetime. Designed to be dropped onto a prefab and
+assigned to the projectilePrefab slot of StandardWeapon_UMFOSS or
+UnorthodoxWeapon_UMFOSS. Movement is routed through the framework's
+IPhysicsAdapter so the same script can be repurposed for 3D by
+swapping only the adapter component.
+
+----------------------------------------------------
+
+Code    : // Author: Aditya Jaiswal, Atharv S. Jain
+Explain : Contributor attribution.
+
+Code    : using UnityEngine;
+Explain : Required for MonoBehaviour, Collider2D, Vector2, etc.
+
+Code    : using GameplayMechanicsUMFOSS.Physics;
+Explain : Brings in IPhysicsAdapter, the framework's abstraction over
+          Rigidbody2D / Rigidbody. The contributing guide forbids
+          direct Rigidbody2D references — all physics calls must go
+          through the adapter.
+
+Code    : namespace GameplayMechanicsUMFOSS.Combat
+Explain : Places this class in the Combat feature group, alongside
+          the weapons that spawn it.
+
+Code    : [RequireComponent(typeof(Collider2D))]
+Explain : Unity attribute that automatically adds a Collider2D when the
+          component is added to a GameObject, and prevents the
+          Collider2D from being removed while this script is attached.
+          Fail-loud at setup time instead of NullReferenceException at
+          runtime.
+
+Code    : public class Projectile2D_UMFOSS : MonoBehaviour
+Explain : A regular MonoBehaviour so it can be attached to a prefab
+          and spawned with Instantiate.
+
+Code    : [Header("Flight")]
+Explain : Inspector grouping for the movement-related fields.
+
+Code    : [SerializeField] private float speed = 12f;
+Explain : Launch speed in units per second. Applied once in Start via
+          the physics adapter.
+
+Code    : [SerializeField] private float lifetime = 3f;
+Explain : Maximum time the projectile can live before auto-destruct.
+          Prevents stray bullets from accumulating in the scene when
+          they miss everything.
+
+Code    : [Header("Damage")]
+Explain : Inspector grouping for the damage field.
+
+Code    : [Tooltip("Fallback damage used when the spawner does not call Initialize.")]
+Explain : Tells designers in-Inspector that this value is only a
+          safety net — the real damage comes from the weapon at spawn
+          time.
+
+Code    : [SerializeField] private float damage = 10f;
+Explain : The fallback damage value. Weapons override this via
+          Initialize, but the field exists so the prefab still has a
+          sane value if used standalone.
+
+Code    : private IPhysicsAdapter physics;
+Explain : Cached reference to whatever physics adapter is on this
+          GameObject. Populated in Awake so Start can use it without a
+          second GetComponent lookup.
+
+Code    : public void Initialize(float damageOverride)
+Explain : Public setup method called by the spawning weapon right
+          after Instantiate. Using an Initialize method (instead of
+          constructor-style parameters) is the standard Unity pattern
+          for components — MonoBehaviours cannot take constructor
+          arguments.
+
+Code    : damage = damageOverride;
+Explain : Overwrites the fallback with the weapon's current damage at
+          the moment of firing. This is how UnorthodoxWeapon's
+          charge-multiplied damage reaches the projectile.
+
+Code    : private void Awake()
+Explain : Unity lifecycle callback called once when the GameObject is
+          first loaded. Used here to cache references before Start
+          runs.
+
+Code    : physics = GetComponent<IPhysicsAdapter>();
+Explain : Looks up the physics adapter component. Note the interface
+          type — GetComponent can fetch by interface, which means the
+          same Projectile script works with Physics2DAdapter,
+          Physics3DAdapter, or any future adapter implementation.
+
+Code    : Collider2D col = GetComponent<Collider2D>();
+Explain : Grabs the collider so we can configure it.
+
+Code    : col.isTrigger = true;
+Explain : Forces the collider into trigger mode. A trigger collider
+          fires OnTriggerEnter2D without physically pushing the target
+          — the projectile passes through and reports the hit via
+          event, which is exactly what we want for a hitscan-style
+          feel.
+
+Code    : private void Start()
+Explain : Unity lifecycle callback called once after Awake, just
+          before the first frame. Used here for launch and lifetime
+          because the physics adapter may need Awake of its own to
+          finish first.
+
+Code    : physics.SetVelocity((Vector2)(transform.right * speed));
+Explain : Launches the projectile at its configured speed along its
+          local +X axis (transform.right). This matches the firePoint
+          rotation handed to Instantiate in StandardWeapon, so the
+          projectile always flies in the direction the muzzle points.
+          The cast to Vector2 drops the Z component for 2D physics.
+
+Code    : Destroy(gameObject, lifetime);
+Explain : Schedules the projectile for destruction `lifetime` seconds
+          from now. Unity's Destroy with a delay is fire-and-forget —
+          no coroutine needed, and the projectile self-cleans whether
+          it hits something or not.
+
+Code    : private void OnTriggerEnter2D(Collider2D other)
+Explain : Physics callback fired when the projectile's trigger
+          collider enters another collider. This is the hit entry
+          point.
+
+Code    : Vector3 hitPoint = other.ClosestPoint(transform.position);
+Explain : Computes a reasonable impact position by asking the other
+          collider for the nearest point to the projectile's centre.
+          More accurate than using transform.position alone, because
+          the projectile may have overshot slightly into the target
+          before the physics engine fired this callback.
+
+Code    : WeaponEventBus.RaiseWeaponHit(new HitData { damage = damage, hitPoint = hitPoint, hitObject = other.gameObject });
+Explain : Publishes a WeaponHitEvent with the computed hit info.
+          Targets (like DemoTarget2D) subscribe to this event and
+          apply the reaction. The projectile NEVER reaches into the
+          target directly — it only broadcasts.
+
+Code    : Destroy(gameObject);
+Explain : Destroys the projectile on contact. This is what makes the
+          projectile single-use — piercing bullets would skip this
+          line or decrement a pierce count instead.
+
+----------------------------------------------------
+
+DESIGN NOTES:
+
+- Why events instead of calling a Damageable component?
+  Event-driven decoupling — the projectile has zero knowledge of what
+  it just hit. Any listener can react (HUD damage numbers, floor text,
+  VFX) without the projectile holding references. A coupled design
+  would force every target type to share a base class.
+
+- Why RequireComponent on Collider2D but not on an adapter?
+  The collider is mandatory at compile/setup time — the projectile is
+  useless without one. The adapter is a design requirement enforced
+  by convention (and the contributing guide), but RequireComponent
+  only works with concrete types, not interfaces.
+
+- Why trigger instead of a physical collider?
+  A physical collider would apply impulse to the target, pushing it
+  on contact. Triggers fire the callback without that side-effect,
+  which is the correct behaviour for a damage-dealing hit — the
+  reaction is controlled by the target's event handler.

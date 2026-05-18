@@ -1,0 +1,107 @@
+====================================================
+SCRIPT: ChargeBarUI_UMFOSS.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+Drives a filled UI Image from the ChargeChangedEvent. Drop this on a
+Canvas object, point it at a child Image whose Image Type is set to
+Filled, and the bar will track any chargeable weapon's current charge
+percent through the event bus — no direct reference to the weapon
+needed. This is the canonical example of why the framework uses
+EventBus: swap weapons, swap scenes, even spawn a chargeable weapon at
+runtime, and the bar keeps working.
+
+----------------------------------------------------
+
+Code    : // Author: Aditya Jaiswal, Atharv S. Jain
+Explain : Contributor attribution.
+
+Code    : using UnityEngine;
+Explain : Required for MonoBehaviour and SerializeField.
+
+Code    : using UnityEngine.UI;
+Explain : Required for the Image type. The bar is a UI element, so
+          pulling in the UI namespace is necessary.
+
+Code    : using GameplayMechanicsUMFOSS.Core;
+Explain : Brings in the generic EventBus so we can call
+          EventBus.Unsubscribe in OnDisable. Subscribe goes through
+          the typed WeaponEventBus helper, but unsubscribe uses the
+          generic API directly to avoid duplicating every On* helper
+          into an Off* helper.
+
+Code    : namespace GameplayMechanicsUMFOSS.Combat
+Explain : Places the UI class in the Combat feature group alongside
+          the ChargeChangedEvent it listens to.
+
+Code    : public class ChargeBarUI_UMFOSS : MonoBehaviour
+Explain : A regular MonoBehaviour, attached to a Canvas or any UI
+          object in the scene.
+
+Code    : [Tooltip("UI Image with Image Type set to Filled. Its fillAmount is driven by charge percent.")]
+Explain : Inline tooltip visible in the Inspector so designers know
+          exactly how to configure the Image component this script
+          drives.
+
+Code    : [SerializeField] private Image fillImage;
+Explain : Reference to the child Image the bar will drive. Private +
+          [SerializeField] so it is editable in the Inspector without
+          being publicly mutable from other scripts.
+
+Code    : private void OnEnable()
+Explain : Unity lifecycle callback fired every time the component is
+          enabled. Subscribing to events in OnEnable (not Awake) is
+          the correct pattern — it pairs with OnDisable so the
+          subscription lifecycle matches the component lifecycle.
+
+Code    : WeaponEventBus.OnChargeChanged(HandleChargeChanged);
+Explain : Subscribes the handler through the typed wrapper. The
+          wrapper forwards to EventBus.Subscribe<ChargeChangedEvent>
+          under the hood.
+
+Code    : private void OnDisable()
+Explain : Paired cleanup — every subscription in OnEnable must be
+          released in OnDisable so disabled components do not
+          continue to receive events. This prevents stale references
+          and the "why is this disabled object still running code"
+          class of bug.
+
+Code    : EventBus.Unsubscribe<ChargeChangedEvent>(HandleChargeChanged);
+Explain : Removes the handler from the event bus. Calls the generic
+          Unsubscribe directly because WeaponEventBus does not expose
+          a typed Off wrapper.
+
+Code    : private void HandleChargeChanged(ChargeChangedEvent evt)
+Explain : The event handler. Receives the payload as a value type so
+          no boxing or allocation occurs.
+
+Code    : if (fillImage != null) { fillImage.fillAmount = evt.percent; }
+Explain : Null-check first — the bar should fail gracefully rather
+          than throw if a designer forgets to wire the Image. Sets
+          fillAmount directly to the percent value from the event.
+          Image.fillAmount expects a 0–1 value, which matches what
+          GetChargePercent and RaiseChargeChanged produce.
+
+----------------------------------------------------
+
+DESIGN NOTES:
+
+- Why subscribe in OnEnable, not Awake?
+  OnEnable/OnDisable pair correctly when a GameObject is toggled
+  active/inactive at runtime. Subscribing in Awake would leak
+  subscriptions if the GameObject is ever disabled and re-enabled,
+  since Awake only fires once.
+
+- Why no direct reference to the weapon?
+  The bar would have to be rewired every time the weapon changes,
+  every new scene, every spawned weapon instance. Going through the
+  event bus means one placement works for every chargeable weapon in
+  every scene forever.
+
+- Why not cache evt.percent in a field and lerp toward it?
+  The charge coroutine already publishes every frame, so a cached-
+  and-lerp approach would just add latency. Writing the value
+  directly produces a perfectly smooth bar because the source
+  updates are already continuous.

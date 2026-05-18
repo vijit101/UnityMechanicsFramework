@@ -1,0 +1,146 @@
+====================================================
+SCRIPT: HitboxSystem_UMFOSS.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+A stub hitbox component used by melee weapons (and potentially traps,
+area effects, etc.). It wraps a Collider2D that is normally disabled;
+Activate() enables it for a fixed duration and stores the damage value
+that should be reported when contact occurs. On contact, it raises a
+WeaponHitEvent — it never applies damage itself. Damage application is
+the listener's job, which keeps this component free of coupling to any
+specific damage system.
+
+----------------------------------------------------
+
+Code    : // Author: Aditya Jaiswal, Atharv S. Jain
+Explain : Contributor attribution.
+
+Code    : using System.Collections;
+Explain : Needed for IEnumerator, the return type of the deactivation
+          coroutine.
+
+Code    : using UnityEngine;
+Explain : Required for MonoBehaviour, Collider2D, WaitForSeconds, etc.
+
+Code    : namespace GameplayMechanicsUMFOSS.Combat
+Explain : Places this component in the Combat feature group.
+
+Code    : [RequireComponent(typeof(Collider2D))]
+Explain : Automatically adds a Collider2D when the component is added
+          to a GameObject, and prevents removal while this script is
+          attached. The hitbox is useless without a collider — this
+          turns a runtime NullReferenceException into a compile-time
+          guarantee.
+
+Code    : public class HitboxSystem_UMFOSS : MonoBehaviour
+Explain : A standard MonoBehaviour so the hitbox can live on a child
+          GameObject of the weapon or character.
+
+Code    : private Collider2D hitboxCollider;
+Explain : Cached reference to the collider so Activate does not have
+          to call GetComponent on every swing.
+
+Code    : private float storedDamage;
+Explain : Damage value to include in the event payload when contact
+          occurs. Stored at Activate time so the weapon's current
+          damage value propagates to hits that happen later in the
+          swing window.
+
+Code    : private void Awake()
+Explain : Unity lifecycle callback used here to cache the collider and
+          disable it. Starting disabled is essential — an always-on
+          melee collider would trigger on everything it overlapped at
+          spawn time.
+
+Code    : hitboxCollider = GetComponent<Collider2D>();
+Explain : Caches the collider reference.
+
+Code    : hitboxCollider.enabled = false;
+Explain : Starts the collider disabled. The hitbox only becomes live
+          when Activate() is called.
+
+Code    : public void Activate(float damage, float duration)
+Explain : The weapon's single entry point for "swing now". Takes the
+          damage to report and how long the window should stay open.
+
+Code    : storedDamage = damage;
+Explain : Stashes the damage value so OnTriggerEnter2D can read it
+          when a contact occurs.
+
+Code    : hitboxCollider.enabled = true;
+Explain : Flips the collider on. From this point until the coroutine
+          disables it, any overlap will fire OnTriggerEnter2D.
+
+Code    : StartCoroutine(DeactivateAfter(duration));
+Explain : Schedules the collider to turn back off after `duration`
+          seconds. Using a coroutine keeps the deactivation state
+          local instead of spreading timer logic into Update.
+
+Code    : private IEnumerator DeactivateAfter(float duration)
+Explain : Private coroutine that waits and then disables the collider.
+
+Code    : yield return new WaitForSeconds(duration);
+Explain : Pauses the coroutine for `duration` seconds in scaled game
+          time so slow-motion correctly lengthens the active window.
+
+Code    : hitboxCollider.enabled = false;
+Explain : Turns the hitbox off once the swing window expires.
+
+Code    : private void OnDisable()
+Explain : Unity lifecycle callback fired when the component or its
+          GameObject is deactivated. Required so that a mid-swing
+          disable cannot leave the collider stuck enabled the next
+          time the component is re-enabled.
+
+Code    : StopAllCoroutines();
+Explain : Cancels any in-flight DeactivateAfter coroutine. Without
+          this, a disable-and-reenable cycle would queue a stale
+          deactivation on top of whatever the next swing is doing.
+
+Code    : if (hitboxCollider != null) { hitboxCollider.enabled = false; }
+Explain : Hard-resets the collider to disabled. Null-checked because
+          OnDisable can theoretically fire before Awake in some
+          unlikely edit-mode paths.
+
+Code    : private void OnTriggerEnter2D(Collider2D other)
+Explain : Physics callback fired when the active collider enters
+          another collider.
+
+Code    : Vector3 hitPoint = other.ClosestPoint(transform.position);
+Explain : Computes a reasonable impact position by asking the other
+          collider for its nearest point to the hitbox's centre. More
+          accurate than using transform.position alone because the
+          hitbox and target may have overlapped slightly by the time
+          the event fires.
+
+Code    : WeaponEventBus.RaiseWeaponHit(new HitData { damage = storedDamage, hitPoint = hitPoint, hitObject = other.gameObject });
+Explain : Broadcasts the hit with the stored damage, computed hit
+          point, and the target GameObject. This is the ONLY side
+          effect the hitbox produces — no direct damage application,
+          no state mutation on the target. Listeners decide what to do.
+
+----------------------------------------------------
+
+DESIGN NOTES:
+
+- Why store damage at Activate time instead of looking it up later?
+  The weapon's damage could change mid-swing (buffs, powerups). By
+  snapshotting it at the moment of activation, the hitbox reports the
+  correct damage for the swing that was actually requested — not
+  whatever the weapon happens to hold when the collision fires.
+
+- Why a coroutine for deactivation instead of a timer in Update?
+  A coroutine keeps the deactivation state completely local to
+  Activate's lifetime. There is no timer field to manage, no "active"
+  flag to toggle, and the component automatically cleans up when the
+  GameObject is disabled (via OnDisable + StopAllCoroutines).
+
+- Why does this never apply damage itself?
+  Coupling the hitbox to a damage system would force every game using
+  the framework to use that same system. By raising an event instead,
+  any health system — the one from the target's own script, a central
+  HealthManager, a ScriptableObject-based one — can listen and apply
+  damage in its own way.

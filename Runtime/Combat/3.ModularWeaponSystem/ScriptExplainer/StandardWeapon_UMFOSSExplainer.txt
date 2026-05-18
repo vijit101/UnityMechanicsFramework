@@ -1,0 +1,321 @@
+====================================================
+SCRIPT: StandardWeapon_UMFOSS.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+A standard projectile weapon controller for 2D/3D games. It fires a prefab
+from a configurable fire point on a rate-limited cadence, tracks a magazine
+and a reserve ammo pool, and supports a timed reload. It plugs into the
+WeaponBase_UMFOSS framework by implementing IWeaponFirable and
+IWeaponReloadable, and publishes all of its state changes through the
+WeaponEventBus so HUDs, audio, and VFX can react without being coupled to
+the weapon itself.
+
+----------------------------------------------------
+
+Code    : // Author: Aditya Jaiswal, Atharv S. Jain
+Explain : Attribution comment at the very top of the file. Keeps credit for
+          the contributors visible in-source even if the file is copied out
+          of context.
+
+Code    : using System.Collections;
+Explain : Needed for IEnumerator, which is the return type of the reload
+          coroutine. Unity coroutines are iterators under the hood, so this
+          import is required whenever a script uses StartCoroutine with a
+          yield-based method.
+
+Code    : using UnityEngine;
+Explain : Imports the core Unity engine types (MonoBehaviour, GameObject,
+          Transform, SerializeField, Instantiate, Time, WaitForSeconds).
+          Every runtime Unity script needs this.
+
+Code    : namespace GameplayMechanicsUMFOSS.Combat
+Explain : Places the class inside the Combat feature group of the framework's
+          namespace hierarchy, as required by the UMFOSS namespace rules.
+          Combat is the correct bucket because this is a damage-dealing
+          weapon mechanic.
+
+Code    : public class StandardWeapon_UMFOSS : WeaponBase_UMFOSS, IWeaponFirable, IWeaponReloadable
+Explain : Declares the weapon class. It extends WeaponBase_UMFOSS so it
+          inherits shared weapon state (damage, weapon name, equip hooks,
+          BuildWeaponData helper). It also implements two interfaces:
+          IWeaponFirable (CanFire, Fire, StopFire) and IWeaponReloadable
+          (CanReload, Reload, ammo getters). Splitting capability into
+          interfaces lets other systems (UI, input) talk to any weapon that
+          can fire or reload without caring about the concrete class.
+
+Code    : [Header("Fire Settings")]
+Explain : Groups the serialized fields below under a labelled section in
+          the Inspector. Purely cosmetic but makes the weapon much easier
+          to configure for designers.
+
+Code    : [SerializeField] private float fireRate = 2f;
+Explain : Shots per second. Kept private with [SerializeField] so it is
+          editable in the Inspector but not exposed to other scripts. The
+          cooldown between shots is computed as (1f / fireRate), so 2f
+          means one shot every 0.5 seconds.
+
+Code    : [SerializeField] private int magazineSize = 12;
+Explain : Maximum rounds the magazine can hold. Used both to cap reloads
+          and as the initial value for currentAmmo in Awake.
+
+Code    : [SerializeField] private float reloadDuration = 1.5f;
+Explain : Time in seconds the reload coroutine waits before transferring
+          rounds from the reserve into the magazine. Designers can tune
+          this to balance weapon feel.
+
+Code    : [SerializeField] private GameObject projectilePrefab;
+Explain : The prefab that is spawned on each shot. Using a GameObject
+          reference (not a hardcoded name) keeps the weapon agnostic about
+          which projectile it fires, so the same weapon class can be
+          reused for bullets, arrows, plasma bolts, etc.
+
+Code    : [SerializeField] private Transform firePoint;
+Explain : The transform whose position and rotation define where the
+          projectile spawns and which direction it faces. Usually a child
+          transform at the muzzle of the weapon. Kept as a Transform
+          (rather than Vector3) so it can follow the weapon as it rotates.
+
+Code    : private const int RESERVE_MULTIPLIER = 3;
+Explain : Named constant that sets reserveAmmo = magazineSize * 3 at start.
+          Replaces a magic number so that the intent ("three spare mags")
+          is obvious in code, and so it can be changed in one place later.
+
+Code    : private int currentAmmo;
+Explain : Rounds currently loaded in the magazine. Decremented per shot
+          and refilled by the reload coroutine.
+
+Code    : private int reserveAmmo;
+Explain : Rounds left in the player's reserve pool. A reload moves rounds
+          from here into currentAmmo.
+
+Code    : private bool isReloading;
+Explain : Gate flag that prevents firing during a reload and prevents two
+          reloads from overlapping. Set to true at the start of
+          ReloadCoroutine and cleared when it completes.
+
+Code    : private float lastFireTime;
+Explain : The Time.time value recorded on the most recent successful shot.
+          Used by CanFire() to enforce the fire-rate cooldown without
+          needing a running timer in Update().
+
+Code    : private void Awake()
+Explain : Unity lifecycle method called once when the GameObject is first
+          loaded. Runs before Start() and before any other script calls
+          methods on this one, which makes it the right place to seed
+          initial ammo counts.
+
+Code    : currentAmmo = magazineSize;
+Explain : Starts the weapon with a full magazine so the first shot works
+          immediately without requiring the player to reload first.
+
+Code    : reserveAmmo = magazineSize * RESERVE_MULTIPLIER;
+Explain : Gives the player three spare magazines on spawn. Computed from
+          magazineSize so changing magazineSize in the Inspector
+          automatically scales the reserve too.
+
+Code    : public bool CanFire()
+Explain : Public predicate used by input and AI systems to check whether
+          pulling the trigger should produce a shot. Keeping this separate
+          from Fire() lets UI code grey out the fire button, and lets AI
+          wait for a valid window without consuming ammo.
+
+Code    : return currentAmmo > 0 && !isReloading && Time.time >= lastFireTime + (1f / fireRate);
+Explain : Three conditions must all hold: there must be ammo loaded, a
+          reload must not be in progress, and enough real time must have
+          passed since the last shot. The (1f / fireRate) expression
+          converts "shots per second" into "seconds between shots".
+
+Code    : public void Fire()
+Explain : The main entry point for firing. Safe to call every frame:
+          it begins with a CanFire() guard so repeated calls while on
+          cooldown simply do nothing.
+
+Code    : if (!CanFire()) { return; }
+Explain : Early-out guard. Returning here instead of throwing or logging
+          keeps input handlers simple — they can blindly call Fire() on
+          every mouse click without worrying about cooldowns.
+
+Code    : GameObject spawned = Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
+Explain : Creates an instance of the projectile prefab at the fire point's
+          world position and rotation. Using firePoint's transform (rather
+          than transform.position) means the projectile always matches the
+          muzzle no matter how the weapon is oriented.
+
+Code    : if (spawned.TryGetComponent(out Projectile2D_UMFOSS projectile)) { projectile.Initialize(Damage); }
+Explain : TryGetComponent is the allocation-free version of GetComponent —
+          it returns false instead of throwing if the component is missing.
+          If the spawned object has a Projectile2D_UMFOSS, the weapon
+          forwards its Damage value (inherited from WeaponBase_UMFOSS) so
+          the projectile knows how much damage to deal on impact.
+
+Code    : currentAmmo--;
+Explain : Consumes one round from the magazine. Happens only after a
+          successful spawn, so a failed shot never costs ammo.
+
+Code    : lastFireTime = Time.time;
+Explain : Records the shot timestamp so the next CanFire() call enforces
+          the cooldown correctly.
+
+Code    : WeaponEventBus.RaiseWeaponFired(GetData());
+Explain : Broadcasts a "weapon fired" event with a snapshot of this
+          weapon's data. Using an EventBus keeps SFX, VFX, camera shake,
+          and recoil systems completely decoupled from the weapon — they
+          subscribe to the event instead of holding a reference to this
+          class.
+
+Code    : WeaponEventBus.RaiseAmmoChanged(currentAmmo, reserveAmmo);
+Explain : Notifies HUD and ammo counters that the ammo values just
+          changed. Raising this here (rather than having the UI poll
+          every frame) is cheaper and avoids stale reads.
+
+Code    : public void StopFire() { }
+Explain : Empty implementation that exists purely to satisfy
+          IWeaponFirable. StandardWeapon is semi-auto (one shot per
+          trigger pull), so there is nothing to stop. Left as a hook so a
+          future automatic-fire variant can start/stop a repeating
+          coroutine from the same interface methods.
+
+Code    : public bool CanReload()
+Explain : Predicate used by UI and input to ask whether a reload is
+          currently meaningful. Keeping this as a public method means the
+          reload button can grey itself out exactly when Reload() would
+          be a no-op.
+
+Code    : return !isReloading && reserveAmmo > 0 && currentAmmo < magazineSize;
+Explain : Reloading is only allowed when there is no reload already in
+          progress, there is something in reserve to load, and the
+          magazine is not already full. Checking currentAmmo < magazineSize
+          prevents wasting rounds by "topping up" a full mag.
+
+Code    : public void Reload()
+Explain : The entry point for triggering a reload. Like Fire(), it is
+          idempotent when the action is not valid — callers can spam it
+          without worrying about double-reloads.
+
+Code    : if (!CanReload()) { return; }
+Explain : Guard that skips the coroutine when the reload conditions are
+          not met. Returning silently is a deliberate design choice:
+          Unity scripts should not log warnings for user actions that
+          were simply ignored.
+
+Code    : StartCoroutine(ReloadCoroutine());
+Explain : Starts the reload as a coroutine so the wait time does not
+          block the main thread or Update(). The weapon remains responsive
+          to other calls (like CanFire() returning false) while the
+          coroutine is running.
+
+Code    : public int GetCurrentAmmo() { return currentAmmo; }
+Explain : Read-only accessor for the magazine count. Exposed as a method
+          (not a public field) so the internal field can stay private and
+          the weapon controls how its state is exposed.
+
+Code    : public int GetReserveAmmo() { return reserveAmmo; }
+Explain : Read-only accessor for the reserve count. Same reasoning as
+          GetCurrentAmmo — preserves encapsulation.
+
+Code    : public override WeaponData GetData()
+Explain : Override of the base class's GetData. WeaponData is a lightweight
+          snapshot struct/class used when raising events, so systems that
+          receive the event do not need a reference to the weapon itself.
+
+Code    : return BuildWeaponData();
+Explain : Delegates to the helper defined in WeaponBase_UMFOSS. Keeps the
+          data-packing logic in one place across every weapon subclass, so
+          adding a field to WeaponData only requires editing the base.
+
+Code    : public override void OnEquip() { base.OnEquip(); }
+Explain : Equip hook. Calls the base implementation so any shared equip
+          behaviour (event raising, state reset) still runs. The comment
+          in the original file notes that base.OnEquip() must remain the
+          LAST call — future subclass logic should be added above it.
+
+Code    : public override void OnUnequip() { base.OnUnequip(); }
+Explain : Same pattern as OnEquip. An override exists here so this class
+          can easily add unequip logic (e.g. cancelling an in-progress
+          reload) later without touching the base class.
+
+Code    : private IEnumerator ReloadCoroutine()
+Explain : The coroutine that performs the timed reload. Private because
+          only Reload() should start it, and only after a CanReload()
+          check.
+
+Code    : isReloading = true;
+Explain : Locks out both firing and further reloads for the duration of
+          the coroutine. Set before any yield so the gate is active on
+          the very next frame.
+
+Code    : WeaponEventBus.RaiseWeaponReloadStart(GetData());
+Explain : Broadcasts the start of the reload so UI can play a reload
+          animation and audio can play a reload sound, all without any
+          direct reference to this weapon.
+
+Code    : yield return new WaitForSeconds(reloadDuration);
+Explain : Pauses the coroutine for reloadDuration seconds in scaled game
+          time. Using WaitForSeconds (not WaitForSecondsRealtime) means
+          the reload slows down correctly when Time.timeScale is lowered
+          (slow-mo, hit-stop, pause menus).
+
+Code    : int needed = magazineSize - currentAmmo;
+Explain : Calculates how many rounds it would take to completely fill
+          the magazine from its current state. Supports partial reloads
+          correctly — reloading a half-full mag only pulls the rounds
+          actually needed.
+
+Code    : int taken = Mathf.Min(needed, reserveAmmo);
+Explain : Clamps the transfer to whatever the reserve can actually supply.
+          If reserveAmmo is smaller than needed, the player gets a partial
+          reload instead of magically extra rounds.
+
+Code    : currentAmmo += taken;
+Explain : Fills the magazine with the rounds that were successfully
+          pulled from the reserve.
+
+Code    : reserveAmmo -= taken;
+Explain : Deducts the same amount from the reserve so no ammo is
+          duplicated or lost in the transfer.
+
+Code    : isReloading = false;
+Explain : Releases the fire/reload lock so the weapon can be used again.
+          Done before raising the completion event so any subscriber that
+          immediately calls Fire() or CanFire() sees the updated state.
+
+Code    : WeaponEventBus.RaiseWeaponReloadComplete(GetData());
+Explain : Notifies listeners (HUD, audio) that the reload has finished.
+          Split from RaiseAmmoChanged so UI can distinguish "reload done"
+          (play a chamber sound) from a generic ammo update.
+
+Code    : WeaponEventBus.RaiseAmmoChanged(currentAmmo, reserveAmmo);
+Explain : Pushes the final ammo values out to any listener so the HUD
+          redraws with the post-reload counts in the same frame the
+          coroutine finishes.
+
+----------------------------------------------------
+
+DESIGN NOTES:
+
+- Why a coroutine for reload instead of a Update() timer?
+  A coroutine keeps all reload state local to a single method, which is
+  easier to read and impossible to accidentally tick twice per frame.
+  It also automatically stops if the GameObject is disabled or destroyed.
+
+- Why EventBus instead of UnityEvents on this component?
+  UnityEvents create tight coupling through the Inspector — every listener
+  has to be wired by hand in every scene. The WeaponEventBus is a static
+  pub/sub channel, so HUDs, audio managers, and VFX can subscribe once at
+  startup and work with any weapon that raises the event, including
+  weapons spawned at runtime.
+
+- Why is StopFire() empty?
+  The IWeaponFirable interface has to work for both semi-auto and full-auto
+  weapons. A semi-auto weapon has nothing to stop because each call to Fire()
+  produces exactly one shot. Implementing the method as a no-op satisfies the
+  interface contract without pretending to do more than the weapon actually
+  does.
+
+- Why a RESERVE_MULTIPLIER constant?
+  The contributing guide forbids magic numbers. Naming the "3 spare
+  magazines" decision lets a reader understand the intent at a glance and
+  centralises the tuning value.

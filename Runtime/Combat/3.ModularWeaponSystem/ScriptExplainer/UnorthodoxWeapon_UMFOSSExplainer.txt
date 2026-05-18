@@ -1,0 +1,284 @@
+====================================================
+SCRIPT: UnorthodoxWeapon_UMFOSS.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+A chargeable projectile weapon that ramps damage between a min and max
+multiplier based on how long the player holds the trigger. It exists
+specifically to demonstrate that the same IWeaponFirable interface can
+drive completely different mechanics — when the player presses fire,
+this weapon begins a charge; when they release, it shoots. The input
+code does not need to know the weapon is chargeable; it just calls
+Fire() on press and StopFire() on release like every other weapon.
+
+----------------------------------------------------
+
+Code    : // Author: Aditya Jaiswal, Atharv S. Jain
+Explain : Contributor attribution.
+
+Code    : using System.Collections;
+Explain : Needed for IEnumerator, the return type of ChargeCoroutine.
+
+Code    : using UnityEngine;
+Explain : Required for MonoBehaviour, Mathf, Debug, Instantiate, and
+          Time.
+
+Code    : namespace GameplayMechanicsUMFOSS.Combat
+Explain : Places this weapon in the Combat feature group.
+
+Code    : public class UnorthodoxWeapon_UMFOSS : WeaponBase_UMFOSS, IWeaponFirable, IWeaponChargeable
+Explain : Inherits from the base class and implements BOTH IWeaponFirable
+          and IWeaponChargeable. Implementing both interfaces is what
+          lets the weapon be driven by Fire()/StopFire() input code
+          while also exposing its charge percent to UI (the charge bar).
+
+Code    : [Header("Charge Settings")]
+Explain : Inspector section label.
+
+Code    : [SerializeField] private float maxChargeTime = 3f;
+Explain : Seconds to reach full charge. The charge coroutine clamps
+          currentChargeTime to this value.
+
+Code    : [SerializeField] private float minDamageMultiplier = 0.5f;
+Explain : Damage multiplier applied when the shot is released at 0%
+          charge. Set below 1 so tapping is weaker than waiting.
+
+Code    : [SerializeField] private float maxDamageMultiplier = 3f;
+Explain : Damage multiplier applied at 100% charge. Set above 1 so
+          fully-charged shots are meaningfully stronger than a tap.
+
+Code    : [Header("Plasma Shot")]
+Explain : Inspector section label for the projectile references.
+
+Code    : [SerializeField] private GameObject projectilePrefab;
+Explain : The prefab spawned on release. Keeping this generic (not
+          hardcoded) means designers can swap the visual without
+          changing code.
+
+Code    : [SerializeField] private Transform firePoint;
+Explain : Transform defining spawn position and facing for the
+          projectile.
+
+Code    : private float currentChargeTime;
+Explain : How long the trigger has been held this cycle. Reset to 0
+          when the shot is released or when the weapon is disabled.
+
+Code    : private bool isCharging;
+Explain : Gate flag preventing a second StartCharge() from launching
+          another coroutine on top of the running one.
+
+Code    : private Coroutine chargeCoroutine;
+Explain : Handle on the running coroutine so we can stop it cleanly on
+          release, unequip, or disable.
+
+Code    : private void OnDisable()
+Explain : Unity lifecycle callback fired when the component or
+          GameObject is deactivated. The contributing guide explicitly
+          requires that OnDisable restores any state the script
+          modified, which is what this method does.
+
+Code    : if (chargeCoroutine != null) { StopCoroutine(chargeCoroutine); chargeCoroutine = null; }
+Explain : Cancels the in-flight coroutine so it cannot keep ticking on
+          a disabled GameObject. Setting the handle to null prevents a
+          stale reference if the weapon is re-enabled later.
+
+Code    : if (isCharging) { isCharging = false; currentChargeTime = 0f; WeaponEventBus.RaiseChargeChanged(0f); }
+Explain : Zeroes out state and tells any listeners (charge bar, HUD)
+          to snap back to 0. Without this broadcast, the charge bar
+          would freeze at whatever percentage was showing at the
+          moment the weapon was disabled.
+
+Code    : public void StartCharge()
+Explain : Public entry point for beginning a charge. Called either
+          directly or through Fire() — both routes behave the same.
+
+Code    : if (isCharging) { return; }
+Explain : Guard against stacking multiple charges. A second call while
+          already charging silently does nothing.
+
+Code    : isCharging = true;
+Explain : Flips the gate flag before StartCoroutine so the guard above
+          works on the very next frame.
+
+Code    : chargeCoroutine = StartCoroutine(ChargeCoroutine());
+Explain : Launches the coroutine and stores the handle so OnDisable
+          and ReleaseCharge can stop it cleanly.
+
+Code    : public void ReleaseCharge()
+Explain : Public entry point for releasing the charge and firing the
+          shot. Called either directly or through StopFire().
+
+Code    : if (!isCharging) { return; }
+Explain : Guard: releasing when nothing was charging should be a
+          silent no-op, not an error.
+
+Code    : StopCoroutine(chargeCoroutine);
+Explain : Stops the charge tick before reading the final charge time,
+          so currentChargeTime cannot advance one more frame while the
+          damage is being computed.
+
+Code    : float finalDamage = Mathf.Lerp(Damage * minDamageMultiplier, Damage * maxDamageMultiplier, GetChargePercent());
+Explain : Interpolates between min and max damage based on charge
+          percent. Mathf.Lerp clamps t to [0,1] automatically, so a
+          tap produces exactly Damage * minDamageMultiplier and a full
+          charge produces exactly Damage * maxDamageMultiplier.
+
+Code    : Debug.Log($"[{WeaponName}] Released charged shot — final damage: {finalDamage}");
+Explain : Debug log for quick in-editor verification of the damage
+          ramp. Harmless in production and easy to strip if needed.
+
+Code    : if (projectilePrefab != null && firePoint != null)
+Explain : Null-checks the serialized references before spawning. This
+          prevents a hard crash if a designer forgets to assign a
+          prefab in the Inspector — the weapon still raises its fired
+          event, just without a visual.
+
+Code    : GameObject spawned = Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
+Explain : Spawns the projectile at the fire point, same pattern as
+          StandardWeapon.
+
+Code    : if (spawned.TryGetComponent(out Projectile2D_UMFOSS projectile)) { projectile.Initialize(finalDamage); }
+Explain : Hands the computed final damage to the projectile so it
+          reports the correct (possibly multiplied) damage on hit.
+          TryGetComponent is the allocation-free variant of
+          GetComponent.
+
+Code    : WeaponEventBus.RaiseWeaponFired(GetData());
+Explain : Broadcasts the shot. Note that the payload's damage is the
+          base damage, not the multiplied value — subscribers that
+          want the actual damage dealt should listen for the hit event
+          instead.
+
+Code    : currentChargeTime = 0f; isCharging = false; WeaponEventBus.RaiseChargeChanged(0f);
+Explain : Resets charge state and tells the charge bar to drain back
+          to empty. Raising the event here is essential — without it
+          the bar would stay full until the next charge started.
+
+Code    : public float GetChargePercent()
+Explain : Returns the normalized 0–1 charge value, matching the
+          IWeaponChargeable contract. Used both internally (for the
+          damage lerp) and externally (by the charge bar UI).
+
+Code    : return Mathf.Clamp01(currentChargeTime / maxChargeTime);
+Explain : Clamp01 guarantees the output never exceeds 1, even if
+          currentChargeTime overshoots slightly due to frame timing.
+
+Code    : public void Fire()
+Explain : IWeaponFirable.Fire implementation. Chains to StartCharge.
+          This routing is the whole point of the script: generic input
+          code mapped to Fire()/StopFire() automatically drives the
+          charge lifecycle.
+
+Code    : StartCharge();
+Explain : Delegates to the chargeable API. Separating the two lets
+          other callers (AI, scripted events) pick whichever vocabulary
+          feels natural.
+
+Code    : public void StopFire()
+Explain : IWeaponFirable.StopFire implementation. Chains to
+          ReleaseCharge so trigger-release fires the shot.
+
+Code    : ReleaseCharge();
+Explain : Delegates to the chargeable API, mirroring Fire ->
+          StartCharge.
+
+Code    : public bool CanFire()
+Explain : Returns true only when no charge is in progress — starting a
+          new charge while one is running would produce undefined
+          behaviour.
+
+Code    : return !isCharging;
+Explain : Single-flag check. Simple and cheap.
+
+Code    : public override WeaponData GetData()
+Explain : Abstract base method override. Returns a snapshot of this
+          weapon's identity and stats.
+
+Code    : return BuildWeaponData();
+Explain : Delegates to the shared helper in WeaponBase_UMFOSS.
+
+Code    : public override void OnEquip()
+Explain : Equip lifecycle hook. Performs the weapon-specific listener
+          seeding before calling base.
+
+Code    : WeaponEventBus.RaiseChargeChanged(0f);
+Explain : Broadcasts a 0% charge the instant the weapon is equipped so
+          the charge bar UI and any EventLogger display a clean
+          baseline before the player first pulls the trigger. Without
+          this, the charge bar would either show stale values from the
+          previous weapon or nothing at all until the first charge
+          starts.
+
+Code    : base.OnEquip();
+Explain : Must remain the LAST call — base raises WeaponEquippedEvent
+          which subscribers expect to see after the subclass has
+          finished initializing.
+
+Code    : public override void OnUnequip()
+Explain : Unequip lifecycle hook. Resets charge state so a half-held
+          charge cannot survive across a weapon swap.
+
+Code    : isCharging = false; currentChargeTime = 0f;
+Explain : Zeroes the charge state. The running coroutine (if any) is
+          handled by OnDisable or the player manager; this block just
+          ensures the flags reflect the cleared state even if the
+          component is not being disabled.
+
+Code    : base.OnUnequip();
+Explain : Must remain the LAST call so the unequipped event fires
+          after teardown.
+
+Code    : private IEnumerator ChargeCoroutine()
+Explain : The coroutine that ticks currentChargeTime every frame.
+          Private because only StartCharge should launch it.
+
+Code    : while (true)
+Explain : Infinite loop — the coroutine runs until it is explicitly
+          stopped by ReleaseCharge() or OnDisable(). This is safer than
+          an "exit when full" loop because even at full charge the
+          player may still be holding the trigger, and the bar should
+          stay pinned at 100%.
+
+Code    : currentChargeTime += Time.deltaTime;
+Explain : Accumulates charge time using deltaTime, which scales with
+          Time.timeScale. That means slow-motion correctly slows the
+          charge.
+
+Code    : currentChargeTime = Mathf.Min(currentChargeTime, maxChargeTime);
+Explain : Clamps the charge time at the max so the percent computation
+          never exceeds 1.
+
+Code    : WeaponEventBus.RaiseChargeChanged(GetChargePercent());
+Explain : Pushes the current charge percent to any listener each frame.
+          Listeners animate smoothly because they receive a value
+          every tick, not just on state transitions.
+
+Code    : yield return null;
+Explain : Yields until the next frame. `yield return null` is the
+          cheapest way to tick a coroutine once per frame — it is
+          exactly equivalent to an Update method but keeps the state
+          local.
+
+----------------------------------------------------
+
+DESIGN NOTES:
+
+- Why route Fire()/StopFire() to StartCharge()/ReleaseCharge()?
+  The framework's input code always calls Fire/StopFire. Routing to
+  the charge API internally means the same input adapter works for
+  bullet weapons, melee weapons, and this charge weapon with zero
+  changes — pure polymorphism.
+
+- Why clamp currentChargeTime instead of breaking out of the loop?
+  Breaking out would end the coroutine and the listeners would stop
+  receiving ChargeChangedEvents. Keeping the loop alive at 100%
+  charge means the charge bar stays full and any pulsing "ready"
+  VFX continues to fire.
+
+- Why reset via RaiseChargeChanged(0f) in OnDisable AND ReleaseCharge?
+  The charge bar needs to snap to 0 whenever the logical charge is
+  gone, regardless of the reason. OnDisable handles "weapon turned
+  off mid-charge" and ReleaseCharge handles "shot fired normally".
+  Both paths publish the same event so the UI behaves identically.

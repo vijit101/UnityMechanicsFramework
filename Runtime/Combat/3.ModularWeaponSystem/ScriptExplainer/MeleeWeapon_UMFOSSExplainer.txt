@@ -1,0 +1,153 @@
+====================================================
+SCRIPT: MeleeWeapon_UMFOSS.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+An instantaneous melee weapon. "Firing" this weapon activates a hitbox
+for a short swing duration, gated by an attack cooldown. Because it
+implements IWeaponFirable (and NOT IWeaponReloadable), input code can
+drive a sword with the exact same Fire() / StopFire() API it uses for a
+projectile weapon — one of the clearest demonstrations of why the
+framework splits capability into interfaces.
+
+----------------------------------------------------
+
+Code    : // Author: Aditya Jaiswal, Atharv S. Jain
+Explain : Contributor attribution.
+
+Code    : using UnityEngine;
+Explain : Required for MonoBehaviour, Time, and SerializeField.
+
+Code    : namespace GameplayMechanicsUMFOSS.Combat
+Explain : Combat feature group, same as every other weapon in the
+          framework.
+
+Code    : public class MeleeWeapon_UMFOSS : WeaponBase_UMFOSS, IWeaponFirable
+Explain : Inherits from WeaponBase_UMFOSS for shared stats/identity and
+          implements IWeaponFirable for the fire capability.
+          Deliberately does NOT implement IWeaponReloadable — a sword
+          has no ammo — so any UI that queries for reload support will
+          correctly skip this weapon.
+
+Code    : [Header("Melee Settings")]
+Explain : Inspector section label for the melee-specific fields.
+
+Code    : [SerializeField] private float attackCooldown = DEFAULT_ATTACK_COOLDOWN;
+Explain : Time in seconds between consecutive swings. Using the named
+          constant as the default keeps the "magic number" out of the
+          field declaration.
+
+Code    : [SerializeField] private float swingDuration = 0.2f;
+Explain : How long the hitbox stays active during a single swing.
+          Shorter swings feel snappy, longer swings feel committed.
+
+Code    : [SerializeField] private HitboxSystem_UMFOSS hitbox;
+Explain : Reference to the collider-based hitbox that actually does the
+          hit detection. Kept as a typed reference (not a generic
+          Collider2D) so the weapon can call the Activate method
+          directly.
+
+Code    : private const float DEFAULT_ATTACK_COOLDOWN = 0.5f;
+Explain : Named constant used as the default value for attackCooldown.
+          Compliant with the contributing guide's rule against magic
+          numbers — 0.5 on its own means nothing, but
+          DEFAULT_ATTACK_COOLDOWN documents the intent.
+
+Code    : private float lastAttackTime;
+Explain : Timestamp of the most recent successful swing. Used by
+          CanFire() to enforce the cooldown without a running timer.
+
+Code    : public bool CanFire()
+Explain : Returns true when enough real time has passed since the last
+          attack. Exposed publicly so UI code can grey out the attack
+          button during cooldown.
+
+Code    : return Time.time >= lastAttackTime + attackCooldown;
+Explain : Compares Time.time (scaled game time) against the last attack
+          plus the cooldown. Time.time respects Time.timeScale, so
+          slow-motion correctly extends the cooldown wall-clock time.
+
+Code    : public void Fire()
+Explain : The main entry point for swinging. Safe to spam — begins
+          with a CanFire() guard so extra calls during cooldown do
+          nothing.
+
+Code    : if (!CanFire()) { return; }
+Explain : Early-out guard. Silent rather than logging because "button
+          mashed during cooldown" is a normal player action, not an
+          error.
+
+Code    : hitbox.Activate(Damage, swingDuration);
+Explain : Delegates hit detection to the HitboxSystem. The weapon does
+          not do any collision work itself — it just tells the hitbox
+          "be live for this long with this damage value". That keeps
+          the weapon focused on game logic and the hitbox focused on
+          physics.
+
+Code    : lastAttackTime = Time.time;
+Explain : Records the swing time so the next CanFire() call enforces
+          the cooldown.
+
+Code    : WeaponEventBus.RaiseWeaponFired(GetData());
+Explain : Broadcasts the "weapon fired" event. The MeleeSwingAnimator
+          and any audio/camera-shake systems react to this without
+          holding a reference to this weapon.
+
+Code    : public void StopFire() { }
+Explain : Intentionally empty. A melee swing is instantaneous — there
+          is nothing to stop mid-swing. The method exists purely to
+          satisfy the IWeaponFirable interface. The docstring on this
+          method explicitly states that the empty body is deliberate,
+          so a future maintainer does not mistake it for a forgotten
+          TODO.
+
+Code    : public override WeaponData GetData()
+Explain : Override of the abstract base method. Returns the data
+          snapshot so event payloads and UI can read this weapon's
+          identity and stats without holding a reference to the
+          component.
+
+Code    : return BuildWeaponData();
+Explain : Delegates to the base class helper that packs the serialized
+          fields into a WeaponData struct. Defined once in the base to
+          keep every weapon's packing consistent.
+
+Code    : public override void OnEquip()
+Explain : Equip lifecycle hook. Present even though there is no
+          subclass-specific equip logic, so the abstract base method
+          runs and the equipped event is raised.
+
+Code    : base.OnEquip();
+Explain : Must remain the LAST call in the override — the base method
+          raises WeaponEquippedEvent, and subscribers expect the
+          subclass to be fully initialized before that event fires.
+
+Code    : public override void OnUnequip()
+Explain : Unequip lifecycle hook. Same pattern as OnEquip.
+
+Code    : base.OnUnequip();
+Explain : Must remain the LAST call so the unequipped event fires
+          after any subclass teardown.
+
+----------------------------------------------------
+
+DESIGN NOTES:
+
+- Why is the hitbox a separate component instead of being baked in?
+  Separation means the same HitboxSystem_UMFOSS can be used by any
+  melee weapon, trap, or hazard. The weapon only knows WHEN the hitbox
+  should be live, and the hitbox only knows HOW to report contact.
+
+- Why doesn't this weapon implement IWeaponReloadable?
+  A sword has no ammo, so implementing the interface would force
+  dead GetCurrentAmmo/GetReserveAmmo methods. Leaving it unimplemented
+  lets UI code ask "does this weapon support reload?" with
+  `(weapon as IWeaponReloadable)?.Reload()`, and the melee case
+  correctly returns null.
+
+- Why use a cooldown timer instead of a "can attack" bool flag?
+  A timer using Time.time is a single-source-of-truth approach — there
+  is no separate state to toggle, no coroutine to schedule, and nothing
+  to reset. Fewer moving parts means fewer bugs.

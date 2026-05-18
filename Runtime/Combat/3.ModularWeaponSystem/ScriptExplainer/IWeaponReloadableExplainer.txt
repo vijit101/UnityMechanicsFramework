@@ -1,0 +1,50 @@
+====================================================
+SCRIPT: IWeaponReloadable.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+Declares the capability contract for any weapon that tracks ammo with a
+magazine and a reserve pool, and can be reloaded. Splitting reload into
+its own interface (separate from IWeaponFirable) means weapons that do
+not use ammo (melee, beam) can ignore this contract entirely, while HUD
+and input code can ask any weapon "do you support reloading?" with a
+single `as` cast.
+
+----------------------------------------------------
+
+Code    : // Author: Aditya Jaiswal, Atharv S. Jain
+Explain : Contributor attribution comment.
+
+Code    : namespace GameplayMechanicsUMFOSS.Combat
+Explain : Places the interface in the Combat feature group alongside the
+          concrete weapons and the WeaponEventBus, so all combat types
+          are imported together.
+
+Code    : public interface IWeaponReloadable
+Explain : The interface declaration. A weapon is "reloadable" if and only
+          if it implements this contract — no inheritance required, just
+          a promise to provide these four methods.
+
+Code    : void Reload();
+Explain : The entry point that begins the reload sequence. The caller
+          does not need to know whether the reload is instant, timed, or
+          animation-driven; the concrete weapon handles all of that.
+
+Code    : bool CanReload();
+Explain : Query used by UI to grey out the reload button and by input
+          code to suppress duplicate reload requests. Putting this on
+          the interface (instead of making Reload() silently fail) lets
+          listeners react to "reload is valid now" without polling.
+
+Code    : int GetCurrentAmmo();
+Explain : Returns the rounds currently loaded in the magazine. Using a
+          method rather than a property keeps the interface consistent
+          with the rest of the framework and avoids exposing backing
+          fields.
+
+Code    : int GetReserveAmmo();
+Explain : Returns the rounds held in the player's reserve pool. The HUD
+          reads both values every time an AmmoChangedEvent is raised so
+          the counter always reflects post-reload state.

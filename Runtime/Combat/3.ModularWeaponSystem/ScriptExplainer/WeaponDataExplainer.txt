@@ -1,0 +1,63 @@
+====================================================
+SCRIPT: WeaponData.cs
+AUTHOR: Aditya Jaiswal, Atharv S. Jain
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+====================================================
+
+PURPOSE:
+A plain data snapshot of a weapon's identity and stats. Passed through
+the WeaponEventBus instead of passing the weapon MonoBehaviour itself,
+so event listeners (HUD, audio, VFX) can read weapon info without ever
+holding a reference to the weapon component. Declared as a struct to
+keep event dispatch allocation-free.
+
+----------------------------------------------------
+
+Code    : // Author: Aditya Jaiswal, Atharv S. Jain
+Explain : Contributor attribution comment.
+
+Code    : using UnityEngine;
+Explain : Required because WeaponData holds a Sprite reference, which
+          lives in the UnityEngine namespace.
+
+Code    : namespace GameplayMechanicsUMFOSS.Combat
+Explain : Places the struct in the Combat feature group, alongside the
+          weapon classes and events that use it.
+
+Code    : [System.Serializable]
+Explain : Marks the struct as serializable so Unity can display it in
+          the Inspector (useful when a ScriptableObject or another
+          MonoBehaviour holds a WeaponData field directly) and so it
+          survives any serialized-state pipelines.
+
+Code    : public struct WeaponData
+Explain : A struct (value type), not a class. Value types are passed by
+          copy and live on the stack in most cases, meaning raising a
+          WeaponFiredEvent every shot does not create garbage-collector
+          pressure. For a type this small (five fields) the copy cost is
+          trivial compared to the GC cost of a class.
+
+Code    : public string name;
+Explain : The weapon's display name, used by UI (HUD label) and filters
+          (MeleeSwingAnimator's weaponNameFilter). Kept as a public
+          field rather than a property to match Unity's idiomatic
+          pattern for serializable data containers.
+
+Code    : public Sprite skin;
+Explain : The weapon's icon or skin sprite. Passed with the data so a
+          HUD can swap icons on weapon equip without looking up the
+          weapon component.
+
+Code    : public float damage;
+Explain : The weapon's base damage. Included in the snapshot so damage
+          numbers and tooltips can read it from the event payload
+          instead of the live weapon.
+
+Code    : public float range;
+Explain : The weapon's effective range. Primarily consumed by UI and
+          tooltips.
+
+Code    : public float weight;
+Explain : The weapon's weight stat. Reserved for future systems like
+          movement slowdown or inventory limits — present here so every
+          weapon carries the field without each subclass re-declaring it.
