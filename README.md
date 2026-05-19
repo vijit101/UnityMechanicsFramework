@@ -183,6 +183,7 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 
 | # | Mechanic | Author | Category | Video |
 |---|---|---|---|---|
+| 11 | [Robust Audio Manager (#11)](#11-robust-audio-manager-11) | [Mayank Gupta](https://github.com/mayank1365) & [Suswetha](https://github.com/Suswetha6) | Systems / Audio | [▶ Watch](Samples~/AudioManager/AudioManagerVideo.zip) |
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
 | 3 | [Spawner System](#3-spawner-system) | [Satish Rathod](https://github.com/satish-rathod) | World / Spawning | [▶ Watch](Sample/SpawnerSystem/SpawnerSystemVideos.zip) |
@@ -686,6 +687,57 @@ EventBus.Subscribe<GameResumedEvent>(e => aiController.SetInputEnabled(true));
 - Store-and-restore `timeScale` pattern — bullet time and slow motion survive pause/resume with zero extra code
 - Configurable pause key, optional focus-loss auto-pause, and per-project audio toggle via Inspector
 - Demonstrates the Singleton and EventBus patterns — pause state is globally accessible and fully decoupled from every system that reacts to it
+
+---
+
+### 11. Robust Audio Manager (#11)
+
+| | |
+|---|---|
+| **Author** | [Mayank Gupta](https://github.com/mayank1365) & [Suswetha](https://github.com/Suswetha6) | 
+| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
+| **Location** | `Runtime/Systems/AudioManager/Scripts/AudioManager_UMFOSS.cs` |
+| **Category** | Systems / Audio |
+| **Demo Scene** | `Samples~/AudioManager/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](Samples~/AudioManager/AudioManagerVideo.zip) |
+
+**What it does**
+
+A centralized, pool-based audio management system for handling:
+- 2D/3D sound effects  
+- Crossfaded music transitions  
+- Looping ambient audio  
+
+Removes hardcoded references by using:
+- Event-driven architecture (EventBus)  
+- ScriptableObject-based configurations  
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Core;
+using GameplayMechanicsUMFOSS.Systems;
+
+// Step 1: Play SFX
+EventBus.Publish(new PlaySFXEvent { key = "Explosion", position = transform.position });
+
+// Step 2: Crossfade music
+EventBus.Publish(new PlayMusicEvent { key = "BattleTheme", fadeIn = true });
+
+// Step 3: Adjust global volume
+EventBus.Publish(new SetVolumeEvent { category = AudioCategory.SFX, volume = 0.8f });
+```
+
+**Highlights**
+
+- **Pool-Driven SFX**  
+  Pre-instantiates AudioSources to avoid runtime allocation spikes  
+
+- **Decoupled Architecture**  
+  Uses EventBus for communication, preventing tight coupling  
+
+- **Design-Centric Workflow**  
+  ScriptableObjects allow designers to tweak audio without code  
 
 ---
 

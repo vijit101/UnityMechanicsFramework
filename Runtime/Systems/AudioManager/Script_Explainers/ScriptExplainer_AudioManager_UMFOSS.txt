@@ -1,0 +1,58 @@
+====================================================
+SCRIPT: AudioManager_UMFOSS.cs
+AUTHOR: [Mayank Gupta](https://github.com/mayank1365) & [Suswetha](https://github.com/Suswetha6) 
+ISSUE: #11
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+====================================================
+
+PURPOSE:
+A central manager for dynamically handling 2D/3D SFX object pooling, crossfaded 
+music management, and ambient sounds without hardcoded scene dependencies through
+the usage of ScriptableObjects and an EventBus pattern.
+
+----------------------------------------------------
+
+Code    : public class AudioManager_UMFOSS : MonoSingletonGeneric<AudioManager_UMFOSS>
+Explain : Inherits from the base generic Singleton provided in the Runtime/Core folder.
+          Ensures only one instance of the audio manager ever exists per session and
+          can be accessed anywhere persistently without needing FindObjectOfType.
+
+Code    : public AudioConfig_UMFOSS audioConfig;
+Explain : The core data container holding all volume, pitch, and clip mappings. 
+          Using a ScriptableObject allows designers to easily swap out audio banks 
+          (like changing from Forest sounds to Cave sounds) without touching code.
+
+Code    : [SerializeField] private int sfxPoolSize = 10;
+Explain : Configures the size of the initial AudioSource pool at startup so we
+          avoid expensive dynamic engine Instantiate() calls at runtime which could
+          cause lag spikes when multiple SFX are requested at once.
+
+Code    : private class SFXSourceData { ... }
+Explain : A private tracking struct that allows us to monitor the exact age and
+          busy state of each AudioSource in the pool. This prevents overlapping 
+          sounds from brutally cutting each other off unless mathematically necessary.
+
+Code    : protected override void Awake()
+Explain : Initiates the object pool manually by generating nested GameObjects within
+          the Manager immediately. Follows up by loading cached volume scalars
+          saved from PlayerPrefs so the user experiences consistent settings on Boot.
+
+Code    : private void OnEnable() { EventBus.Subscribe... }
+Explain : Subscribes to the EventBus struct signals. This prevents direct class 
+          coupling. A player script can fire a sound without ever needing a reference
+          to the AudioManager component.
+
+Code    : public void PlaySFX(string key, Vector3 worldPosition)
+Explain : Attempts to pull a free AudioSource from the pool, binds the configuration
+          data (like Random Pitch Variance), assigns the spatial blend based on
+          the target Vector3, and finally triggers its direct Play().
+
+Code    : private IEnumerator MusicCrossfadeCoroutine(MusicEntry newEntry, bool fadeIn)
+Explain : Evaluates if background music is already playing. If it is, fades the 
+          source Volume linearly down to 0 using Time.deltaTime. Once silent, instantly
+          swaps the clip and fades linearly up to the target config volume.
+
+Code    : public void MuteAll()
+Explain : Takes a snapshot of the current 4 distinct volume metrics and caches them 
+          in memory. Drops runtime volumes to 0 so the scene is silent, but strictly
+          blocks writing to PlayerPrefs so a user isn't stuck at 0 volume next reboot.

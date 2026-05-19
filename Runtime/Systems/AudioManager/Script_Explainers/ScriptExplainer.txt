@@ -1,0 +1,13 @@
+Audio Manager Mechanics Explanation
+
+Pool Approach
+Instead of repeatedly instantiating and destroying AudioSources (which creates garbage collection spikes) or using `PlayOneShot` (which offers no control after playback starts), the Audio Manager uses an SFX Pool. During Awake, it creates a fixed number of AudioSources. When an SFX is requested, the manager finds an idle source. If all sources are busy, it steals the oldest playing source. This guarantees a bounded performance footprint and ensures sounds are never silently dropped—only the least important (oldest) sound gives way.
+
+Pitch Variance
+Hearing the exact same sound repeatedly (like footsteps or gunshots) quickly becomes repetitive and unnatural. The system applies a random pitch adjustment based on a configured `pitchVariance`. The variance is added to the `basePitch` before playing. This subtle randomization makes identical audio clips feel distinct each time they play, preventing auditory fatigue.
+
+Crossfade Coroutine
+When switching music tracks, an abrupt cut is jarring. The Audio Manager uses a dedicated `MusicCrossfadeCoroutine` to handle smooth transitions. It first fades out the currently playing track over a specified duration, swaps the clip to the new track, and then fades it in. This happens asynchronously, respecting the global and specific volume settings dynamically throughout the fade.
+
+EventBus vs. Direct Calls
+Tightly coupling every script in the game to the `AudioManager_UMFOSS` creates a messy dependency graph and makes refactoring harder. By using the `EventBus`, systems like `HealthSystem` or `GameManager` just broadcast events (e.g., `PlaySFXEvent`, `PlayMusicEvent`). They don't need to know if the audio manager exists. The audio manager simply listens for these events and responds. This keeps the architecture modular and prevents null reference exceptions if the audio manager is temporarily removed or missing.

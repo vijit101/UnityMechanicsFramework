@@ -1,0 +1,34 @@
+====================================================
+SCRIPT: AudioConfig_UMFOSS.cs
+AUTHOR: [Mayank Gupta](https://github.com/mayank1365) & [Suswetha](https://github.com/Suswetha6) 
+ISSUE: #11
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+====================================================
+
+PURPOSE:
+A ScriptableObject-based configuration system that stores all audio asset references
+(SFX, Music, Ambient) and their associated parameters (volume, pitch variance, 
+spatial blend). This allows for easy data-driven audio management without code changes.
+
+----------------------------------------------------
+
+Code    : [CreateAssetMenu(fileName = "AudioConfig", menuName = "UMF/Audio/Audio Config")]
+Explain : Attributes that allow creating new instances of this config asset directly
+          from the Unity Project window (Right-click -> Create).
+
+Code    : public List<SFXEntry> sfxEntries;
+Explain : A list of serializable SFX entries that map string keys to AudioClips.
+          Allows the AudioManager to look up sounds by name.
+
+Code    : public float spatialBlend = 0f; // 0 = 2D, 1 = 3D
+Explain : Defines whether the sound is played in 2D (global) or 3D (spatialized) space.
+          Essential for immersive audio positioning in world environments.
+
+Code    : public float GetRandomPitch() => 1f + UnityEngine.Random.Range(-pitchRandomness, pitchRandomness);
+Explain : A helper method that calculates a slight pitch variation based on a 
+          randomness range. This prevents "machine-gunning" (repetitive sound fatigue)
+          when the same SFX is played rapidly.
+
+Code    : public List<MusicEntry> musicEntries;
+Explain : Stores background music tracks. The manager uses these entries to 
+          handle crossfading between different themes.
