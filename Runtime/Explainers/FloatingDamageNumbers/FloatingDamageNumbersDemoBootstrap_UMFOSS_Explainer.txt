@@ -1,0 +1,1217 @@
+Script: FloatingDamageNumbersDemoBootstrap_UMFOSS.cs
+Location: Samples~/FloatingDamageNumbers/Assets/Scripts/FloatingDamageNumbersDemoBootstrap_UMFOSS.cs
+
+Line 1: ﻿using System.Collections;
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 2: using GameplayMechanicsUMFOSS.Combat;
+Explanation: Imports `GameplayMechanicsUMFOSS.Combat` so the script can use those types without fully qualifying every reference.
+
+Line 3: using GameplayMechanicsUMFOSS.UI;
+Explanation: Imports `GameplayMechanicsUMFOSS.UI` so the script can use those types without fully qualifying every reference.
+
+Line 4: using GameplayMechanicsUMFOSS.Utils;
+Explanation: Imports `GameplayMechanicsUMFOSS.Utils` so the script can use those types without fully qualifying every reference.
+
+Line 5: using TMPro;
+Explanation: Imports `TMPro` so the script can use those types without fully qualifying every reference.
+
+Line 6: using UnityEngine;
+Explanation: Imports `UnityEngine` so the script can use those types without fully qualifying every reference.
+
+Line 7: using UnityEngine.EventSystems;
+Explanation: Imports `UnityEngine.EventSystems` so the script can use those types without fully qualifying every reference.
+
+Line 8: using UnityEngine.InputSystem.UI;
+Explanation: Imports `UnityEngine.InputSystem.UI` so the script can use those types without fully qualifying every reference.
+
+Line 9: using UnityEngine.UI;
+Explanation: Imports `UnityEngine.UI` so the script can use those types without fully qualifying every reference.
+
+Line 10:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 11: namespace GameplayMechanicsUMFOSS.Samples.FloatingDamageNumbers
+Explanation: Places the types in `GameplayMechanicsUMFOSS.Samples.FloatingDamageNumbers` so the mechanic follows the framework namespace structure and avoids naming collisions.
+
+Line 12: {
+Explanation: Opens the current code scope.
+
+Line 13:     /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 14:     /// Builds a fully playable floating damage number demo scene at runtime from one bootstrap object.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 15:     /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 16:     public class FloatingDamageNumbersDemoBootstrap_UMFOSS : MonoBehaviour
+Explanation: Declares class `FloatingDamageNumbersDemoBootstrap_UMFOSS`, which encapsulates part of the floating damage number feature.
+
+Line 17:     {
+Explanation: Opens the current code scope.
+
+Line 18:         private const float PanelWidth = 380f;
+Explanation: Declares `PanelWidth`, storing state or references needed by the mechanic.
+
+Line 19:         private const float ButtonHeight = 40f;
+Explanation: Declares `ButtonHeight`, storing state or references needed by the mechanic.
+
+Line 20:         private const float ButtonSpacing = 8f;
+Explanation: Declares `ButtonSpacing`, storing state or references needed by the mechanic.
+
+Line 21:         private const float EntityY = 1f;
+Explanation: Declares `EntityY`, storing state or references needed by the mechanic.
+
+Line 22:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 23:         private FloatingDamageNumbers_UMFOSS manager;
+Explanation: Declares `manager`, storing state or references needed by the mechanic.
+
+Line 24:         private HealthSystem_UMFOSS playerHealth;
+Explanation: Declares `playerHealth`, storing state or references needed by the mechanic.
+
+Line 25:         private HealthSystem_UMFOSS enemyHealth;
+Explanation: Declares `enemyHealth`, storing state or references needed by the mechanic.
+
+Line 26:         private HealthSystem_UMFOSS chestHealth;
+Explanation: Declares `chestHealth`, storing state or references needed by the mechanic.
+
+Line 27:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 28:         private TextMeshProUGUI poolUsageLabel;
+Explanation: Declares `poolUsageLabel`, storing state or references needed by the mechanic.
+
+Line 29:         private TextMeshProUGUI combineStateLabel;
+Explanation: Declares `combineStateLabel`, storing state or references needed by the mechanic.
+
+Line 30:         private TextMeshProUGUI curveStateLabel;
+Explanation: Declares `curveStateLabel`, storing state or references needed by the mechanic.
+
+Line 31:         private TextMeshProUGUI playerHealthLabel;
+Explanation: Declares `playerHealthLabel`, storing state or references needed by the mechanic.
+
+Line 32:         private TextMeshProUGUI enemyHealthLabel;
+Explanation: Declares `enemyHealthLabel`, storing state or references needed by the mechanic.
+
+Line 33:         private TextMeshProUGUI chestHealthLabel;
+Explanation: Declares `chestHealthLabel`, storing state or references needed by the mechanic.
+
+Line 34:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 35:         private string currentCurveName = "Smooth";
+Explanation: Declares `currentCurveName`, storing state or references needed by the mechanic.
+
+Line 36:         private bool isBuilt;
+Explanation: Declares `isBuilt`, storing state or references needed by the mechanic.
+
+Line 37:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 38:         private void Start()
+Explanation: Declares `Start`, one of the callable behaviors used by this mechanic.
+
+Line 39:         {
+Explanation: Opens the current code scope.
+
+Line 40:             if (isBuilt)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 41:             {
+Explanation: Opens the current code scope.
+
+Line 42:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 43:             }
+Explanation: Closes the current code scope.
+
+Line 44:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 45:             BuildDemo();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 46:         }
+Explanation: Closes the current code scope.
+
+Line 47:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 48:         private void Update()
+Explanation: Declares `Update`, one of the callable behaviors used by this mechanic.
+
+Line 49:         {
+Explanation: Opens the current code scope.
+
+Line 50:             if (manager == null || poolUsageLabel == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 51:             {
+Explanation: Opens the current code scope.
+
+Line 52:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 53:             }
+Explanation: Closes the current code scope.
+
+Line 54:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 55:             ObjectPoolManager_UMFOSS.PoolStats stats = manager.GetPoolStats();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 56:             poolUsageLabel.text = "Pool Usage: " + stats.ActiveCount + " / " + stats.TotalCount;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 57:             combineStateLabel.text = "Combine Rapid: " + (manager.CombineRapid ? "ON" : "OFF") + "  Window: " + manager.RapidWindow.ToString("F2") + "s";
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 58:             curveStateLabel.text = "Curve Preset: " + currentCurveName;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 59:             RefreshHealthLabels();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 60:         }
+Explanation: Closes the current code scope.
+
+Line 61:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 62:         private void BuildDemo()
+Explanation: Declares `BuildDemo`, one of the callable behaviors used by this mechanic.
+
+Line 63:         {
+Explanation: Opens the current code scope.
+
+Line 64:             isBuilt = true;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 65:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 66:             EnsureMainCamera();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 67:             EnsureDirectionalLight();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 68:             EnsureEventSystem();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 69:             CreateEnvironment();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 70:             CreateManager();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 71:             CreateOverlayUi();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 72:             ApplySmoothCurve();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 73:         }
+Explanation: Closes the current code scope.
+
+Line 74:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 75:         private void EnsureMainCamera()
+Explanation: Declares `EnsureMainCamera`, one of the callable behaviors used by this mechanic.
+
+Line 76:         {
+Explanation: Opens the current code scope.
+
+Line 77:             if (Camera.main != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 78:             {
+Explanation: Opens the current code scope.
+
+Line 79:                 Camera.main.transform.position = new Vector3(0f, 3.5f, -12f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 80:                 Camera.main.transform.rotation = Quaternion.Euler(12f, 0f, 0f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 81:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 82:             }
+Explanation: Closes the current code scope.
+
+Line 83:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 84:             GameObject cameraObject = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener));
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 85:             cameraObject.tag = "MainCamera";
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 86:             cameraObject.transform.position = new Vector3(0f, 3.5f, -12f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 87:             cameraObject.transform.rotation = Quaternion.Euler(12f, 0f, 0f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 88:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 89:             Camera cameraComponent = cameraObject.GetComponent<Camera>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 90:             cameraComponent.backgroundColor = new Color(0.08f, 0.1f, 0.14f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 91:             cameraComponent.clearFlags = CameraClearFlags.SolidColor;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 92:         }
+Explanation: Closes the current code scope.
+
+Line 93:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 94:         private void EnsureDirectionalLight()
+Explanation: Declares `EnsureDirectionalLight`, one of the callable behaviors used by this mechanic.
+
+Line 95:         {
+Explanation: Opens the current code scope.
+
+Line 96:             if (FindObjectOfType<Light>() != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 97:             {
+Explanation: Opens the current code scope.
+
+Line 98:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 99:             }
+Explanation: Closes the current code scope.
+
+Line 100:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 101:             GameObject lightObject = new GameObject("Directional Light", typeof(Light));
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 102:             lightObject.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 103:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 104:             Light lightComponent = lightObject.GetComponent<Light>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 105:             lightComponent.type = LightType.Directional;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 106:             lightComponent.intensity = 1.2f;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 107:         }
+Explanation: Closes the current code scope.
+
+Line 108:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 109:         private void EnsureEventSystem()
+Explanation: Declares `EnsureEventSystem`, one of the callable behaviors used by this mechanic.
+
+Line 110:         {
+Explanation: Opens the current code scope.
+
+Line 111:             if (FindObjectOfType<EventSystem>() != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 112:             {
+Explanation: Opens the current code scope.
+
+Line 113:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 114:             }
+Explanation: Closes the current code scope.
+
+Line 115:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 116:             GameObject eventSystemObject = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 117:             DontDestroyOnLoad(eventSystemObject);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 118:         }
+Explanation: Closes the current code scope.
+
+Line 119:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 120:         private void CreateEnvironment()
+Explanation: Declares `CreateEnvironment`, one of the callable behaviors used by this mechanic.
+
+Line 121:         {
+Explanation: Opens the current code scope.
+
+Line 122:             GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 123:             floor.name = "DemoFloor";
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 124:             floor.transform.position = Vector3.zero;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 125:             floor.transform.localScale = new Vector3(2.4f, 1f, 1.4f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 126:             floor.GetComponent<Renderer>().material.color = new Color(0.18f, 0.21f, 0.24f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 127:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 128:             playerHealth = CreateEntity("Player", PrimitiveType.Capsule, new Vector3(-4f, EntityY, 4f), new Color(0.42f, 0.77f, 1f));
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 129:             enemyHealth = CreateEntity("Enemy", PrimitiveType.Cube, new Vector3(0f, EntityY, 6f), new Color(1f, 0.52f, 0.35f));
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 130:             chestHealth = CreateEntity("Chest", PrimitiveType.Cylinder, new Vector3(4f, 0.8f, 4.5f), new Color(0.84f, 0.66f, 0.32f));
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 131:         }
+Explanation: Closes the current code scope.
+
+Line 132:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 133:         private void CreateManager()
+Explanation: Declares `CreateManager`, one of the callable behaviors used by this mechanic.
+
+Line 134:         {
+Explanation: Opens the current code scope.
+
+Line 135:             GameObject managerObject = new GameObject("FloatingDamageNumbersManager");
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 136:             manager = managerObject.AddComponent<FloatingDamageNumbers_UMFOSS>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 137:             manager.CombineRapid = false;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 138:             manager.RapidWindow = 0.1f;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 139:             manager.DecimalPlaces = 0;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 140:         }
+Explanation: Closes the current code scope.
+
+Line 141:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 142:         private void CreateOverlayUi()
+Explanation: Declares `CreateOverlayUi`, one of the callable behaviors used by this mechanic.
+
+Line 143:         {
+Explanation: Opens the current code scope.
+
+Line 144:             GameObject canvasObject = new GameObject("DemoUI", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 145:             Canvas canvas = canvasObject.GetComponent<Canvas>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 146:             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 147:             canvas.sortingOrder = 1000;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 148:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 149:             CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 150:             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 151:             scaler.referenceResolution = new Vector2(1920f, 1080f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 152:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 153:             RectTransform panel = CreatePanel(canvas.transform);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 154:             CreateLabel(panel, "Floating Damage Numbers Demo", 30, FontStyles.Bold);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 155:             CreateLabel(panel, "One manager listens to EventBus events. Player, Enemy, and Chest only have HealthSystem_UMFOSS.", 18, FontStyles.Normal);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 156:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 157:             poolUsageLabel = CreateLabel(panel, "Pool Usage: 0 / 0", 18, FontStyles.Bold);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 158:             combineStateLabel = CreateLabel(panel, "Combine Rapid: OFF", 18, FontStyles.Bold);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 159:             curveStateLabel = CreateLabel(panel, "Curve Preset: Smooth", 18, FontStyles.Bold);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 160:             playerHealthLabel = CreateLabel(panel, "Player HP: 100 / 100", 18, FontStyles.Bold);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 161:             enemyHealthLabel = CreateLabel(panel, "Enemy HP: 100 / 100", 18, FontStyles.Bold);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 162:             chestHealthLabel = CreateLabel(panel, "Chest HP: 100 / 100", 18, FontStyles.Bold);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 163:             RefreshHealthLabels();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 164:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 165:             CreateButton(panel, "Deal 25 Damage To Player", () => playerHealth.ApplyDamage(25f, DamagePresentation.DamageTaken));
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 166:             CreateButton(panel, "Deal 100 Damage To Player", () => playerHealth.ApplyDamage(100f, DamagePresentation.DamageTaken));
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 167:             CreateButton(panel, "Heal Player 30", () => playerHealth.Heal(30f));
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 168:             CreateButton(panel, "Deal 15 Damage To Enemy", () => enemyHealth.ApplyDamage(15f, DamagePresentation.Damage));
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 169:             CreateButton(panel, "Critical Hit Enemy 80", () => enemyHealth.ApplyCriticalDamage(80f));
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 170:             CreateButton(panel, "Miss Enemy", () => enemyHealth.RegisterMiss());
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 171:             CreateButton(panel, "Shield Block Player 20", () => playerHealth.BlockDamage(20f));
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 172:             CreateButton(panel, "Poison Tick Chest 12", () => chestHealth.ApplyDamage(12f, DamagePresentation.PoisonDamage));
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 173:             CreateButton(panel, "Gain 40 XP", () => playerHealth.GainExperience(40f));
+Explanation: Uses an expression-bodied member to return or forward a small piece of logic concisely.
+
+Line 174:             CreateButton(panel, "Rapid Fire (5 x 10)", () =>
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 175:             {
+Explanation: Opens the current code scope.
+
+Line 176:                 manager.CombineRapid = false;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 177:                 StartCoroutine(RapidFireRoutine(false));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 178:             });
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 179:             CreateButton(panel, "Enable Combine + Rapid Fire", () =>
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 180:             {
+Explanation: Opens the current code scope.
+
+Line 181:                 manager.CombineRapid = true;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 182:                 StartCoroutine(RapidFireRoutine(true));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 183:             });
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 184:             CreateButton(panel, "Curve Preset: Smooth", ApplySmoothCurve);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 185:             CreateButton(panel, "Curve Preset: Bounce", ApplyBounceCurve);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 186:             CreateButton(panel, "Curve Preset: Elastic", ApplyElasticCurve);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 187:             CreateButton(panel, "Reset Health", ResetAllHealth);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 188:         }
+Explanation: Closes the current code scope.
+
+Line 189:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 190:         private HealthSystem_UMFOSS CreateEntity(string entityName, PrimitiveType primitiveType, Vector3 position, Color colour)
+Explanation: Declares `CreateEntity`, one of the callable behaviors used by this mechanic.
+
+Line 191:         {
+Explanation: Opens the current code scope.
+
+Line 192:             GameObject entityObject = GameObject.CreatePrimitive(primitiveType);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 193:             entityObject.name = entityName;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 194:             entityObject.transform.position = position;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 195:             entityObject.GetComponent<Renderer>().material.color = colour;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 196:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 197:             if (primitiveType == PrimitiveType.Cube)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 198:             {
+Explanation: Opens the current code scope.
+
+Line 199:                 entityObject.transform.localScale = new Vector3(1.5f, 2f, 1.2f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 200:             }
+Explanation: Closes the current code scope.
+
+Line 201:             else if (primitiveType == PrimitiveType.Cylinder)
+Explanation: Handles the next conditional branch when the previous condition was not met.
+
+Line 202:             {
+Explanation: Opens the current code scope.
+
+Line 203:                 entityObject.transform.localScale = new Vector3(1.2f, 0.8f, 1.2f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 204:             }
+Explanation: Closes the current code scope.
+
+Line 205:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 206:             GameObject labelObject = new GameObject(entityName + "_Label", typeof(TextMeshPro));
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 207:             labelObject.transform.SetParent(entityObject.transform, false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 208:             labelObject.transform.localPosition = Vector3.up * 1.6f;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 209:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 210:             TextMeshPro labelText = labelObject.GetComponent<TextMeshPro>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 211:             labelText.text = entityName;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 212:             labelText.fontSize = 4f;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 213:             labelText.alignment = TextAlignmentOptions.Center;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 214:             labelText.color = Color.white;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 215:             if (TMP_Settings.defaultFontAsset != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 216:             {
+Explanation: Opens the current code scope.
+
+Line 217:                 labelText.font = TMP_Settings.defaultFontAsset;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 218:             }
+Explanation: Closes the current code scope.
+
+Line 219:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 220:             HealthSystem_UMFOSS healthSystem = entityObject.AddComponent<HealthSystem_UMFOSS>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 221:             return healthSystem;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 222:         }
+Explanation: Closes the current code scope.
+
+Line 223:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 224:         private RectTransform CreatePanel(Transform parent)
+Explanation: Declares `CreatePanel`, one of the callable behaviors used by this mechanic.
+
+Line 225:         {
+Explanation: Opens the current code scope.
+
+Line 226:             GameObject panelObject = new GameObject("ControlPanel", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 227:             panelObject.transform.SetParent(parent, false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 228:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 229:             Image panelImage = panelObject.GetComponent<Image>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 230:             panelImage.color = new Color(0.08f, 0.1f, 0.12f, 0.84f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 231:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 232:             RectTransform rectTransform = panelObject.GetComponent<RectTransform>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 233:             rectTransform.anchorMin = new Vector2(0f, 1f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 234:             rectTransform.anchorMax = new Vector2(0f, 1f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 235:             rectTransform.pivot = new Vector2(0f, 1f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 236:             rectTransform.anchoredPosition = new Vector2(20f, -20f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 237:             rectTransform.sizeDelta = new Vector2(PanelWidth, 0f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 238:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 239:             VerticalLayoutGroup layoutGroup = panelObject.GetComponent<VerticalLayoutGroup>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 240:             layoutGroup.padding = new RectOffset(16, 16, 16, 16);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 241:             layoutGroup.spacing = ButtonSpacing;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 242:             layoutGroup.childAlignment = TextAnchor.UpperLeft;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 243:             layoutGroup.childControlWidth = true;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 244:             layoutGroup.childControlHeight = true;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 245:             layoutGroup.childForceExpandHeight = false;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 246:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 247:             ContentSizeFitter fitter = panelObject.GetComponent<ContentSizeFitter>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 248:             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 249:             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 250:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 251:             return rectTransform;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 252:         }
+Explanation: Closes the current code scope.
+
+Line 253:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 254:         private TextMeshProUGUI CreateLabel(RectTransform parent, string text, float fontSize, FontStyles fontStyle)
+Explanation: Declares `CreateLabel`, one of the callable behaviors used by this mechanic.
+
+Line 255:         {
+Explanation: Opens the current code scope.
+
+Line 256:             GameObject labelObject = new GameObject(text.Replace(" ", string.Empty) + "_Label", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 257:             labelObject.transform.SetParent(parent, false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 258:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 259:             LayoutElement layoutElement = labelObject.GetComponent<LayoutElement>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 260:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 261:             TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 262:             label.text = text;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 263:             label.fontSize = fontSize;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 264:             label.fontStyle = fontStyle;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 265:             label.textWrappingMode = TextWrappingModes.Normal;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 266:             label.overflowMode = TextOverflowModes.Overflow;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 267:             label.color = Color.white;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 268:             label.alignment = TextAlignmentOptions.Left;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 269:             if (TMP_Settings.defaultFontAsset != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 270:             {
+Explanation: Opens the current code scope.
+
+Line 271:                 label.font = TMP_Settings.defaultFontAsset;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 272:             }
+Explanation: Closes the current code scope.
+
+Line 273:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 274:             float preferredHeight = label.GetPreferredValues(text, PanelWidth - 32f, 0f).y;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 275:             layoutElement.preferredHeight = Mathf.Ceil(preferredHeight) + 8f;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 276:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 277:             return label;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 278:         }
+Explanation: Closes the current code scope.
+
+Line 279:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 280:         private void CreateButton(RectTransform parent, string label, UnityEngine.Events.UnityAction action)
+Explanation: Declares `CreateButton`, one of the callable behaviors used by this mechanic.
+
+Line 281:         {
+Explanation: Opens the current code scope.
+
+Line 282:             GameObject buttonObject = new GameObject(label.Replace(" ", string.Empty) + "_Button", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 283:             buttonObject.transform.SetParent(parent, false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 284:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 285:             Image buttonImage = buttonObject.GetComponent<Image>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 286:             buttonImage.color = new Color(0.18f, 0.32f, 0.42f, 0.95f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 287:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 288:             LayoutElement layoutElement = buttonObject.GetComponent<LayoutElement>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 289:             layoutElement.preferredHeight = ButtonHeight;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 290:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 291:             Button button = buttonObject.GetComponent<Button>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 292:             button.onClick.AddListener(action);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 293:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 294:             RectTransform buttonRect = buttonObject.GetComponent<RectTransform>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 295:             buttonRect.sizeDelta = new Vector2(PanelWidth - 32f, ButtonHeight);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 296:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 297:             GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 298:             labelObject.transform.SetParent(buttonObject.transform, false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 299:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 300:             RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 301:             labelRect.anchorMin = Vector2.zero;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 302:             labelRect.anchorMax = Vector2.one;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 303:             labelRect.offsetMin = Vector2.zero;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 304:             labelRect.offsetMax = Vector2.zero;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 305:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 306:             TextMeshProUGUI buttonLabel = labelObject.GetComponent<TextMeshProUGUI>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 307:             buttonLabel.text = label;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 308:             buttonLabel.fontSize = 18f;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 309:             buttonLabel.color = Color.white;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 310:             buttonLabel.alignment = TextAlignmentOptions.Center;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 311:             if (TMP_Settings.defaultFontAsset != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 312:             {
+Explanation: Opens the current code scope.
+
+Line 313:                 buttonLabel.font = TMP_Settings.defaultFontAsset;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 314:             }
+Explanation: Closes the current code scope.
+
+Line 315:         }
+Explanation: Closes the current code scope.
+
+Line 316:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 317:         private IEnumerator RapidFireRoutine(bool keepCombineEnabled)
+Explanation: Declares `RapidFireRoutine`, one of the callable behaviors used by this mechanic.
+
+Line 318:         {
+Explanation: Opens the current code scope.
+
+Line 319:             for (int hitIndex = 0; hitIndex < 5; hitIndex++)
+Explanation: Loops through a sequence of values so repeated setup or processing can happen in order.
+
+Line 320:             {
+Explanation: Opens the current code scope.
+
+Line 321:                 enemyHealth.ApplyDamage(10f, DamagePresentation.Damage);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 322:                 yield return new WaitForSecondsRealtime(0.02f);
+Explanation: Pauses the coroutine until the yielded condition finishes, letting the animation progress over multiple frames.
+
+Line 323:             }
+Explanation: Closes the current code scope.
+
+Line 324:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 325:             if (!keepCombineEnabled)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 326:             {
+Explanation: Opens the current code scope.
+
+Line 327:                 manager.CombineRapid = false;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 328:             }
+Explanation: Closes the current code scope.
+
+Line 329:         }
+Explanation: Closes the current code scope.
+
+Line 330:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 331:         private void ApplySmoothCurve()
+Explanation: Declares `ApplySmoothCurve`, one of the callable behaviors used by this mechanic.
+
+Line 332:         {
+Explanation: Opens the current code scope.
+
+Line 333:             ApplyCurvePreset("Smooth", AnimationCurve.EaseInOut(0f, 0f, 1f, 1f));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 334:         }
+Explanation: Closes the current code scope.
+
+Line 335:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 336:         private void ApplyBounceCurve()
+Explanation: Declares `ApplyBounceCurve`, one of the callable behaviors used by this mechanic.
+
+Line 337:         {
+Explanation: Opens the current code scope.
+
+Line 338:             AnimationCurve bounceCurve = new AnimationCurve(
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 339:                 new Keyframe(0f, 0f, 0f, 2.4f),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 340:                 new Keyframe(0.72f, 1.14f, 0f, 0f),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 341:                 new Keyframe(1f, 1f, -1.2f, 0f));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 342:             ApplyCurvePreset("Bounce", bounceCurve);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 343:         }
+Explanation: Closes the current code scope.
+
+Line 344:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 345:         private void ApplyElasticCurve()
+Explanation: Declares `ApplyElasticCurve`, one of the callable behaviors used by this mechanic.
+
+Line 346:         {
+Explanation: Opens the current code scope.
+
+Line 347:             AnimationCurve elasticCurve = new AnimationCurve(
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 348:                 new Keyframe(0f, 0f, 0f, 3f),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 349:                 new Keyframe(0.55f, 1.2f, 0f, 0f),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 350:                 new Keyframe(0.82f, 0.94f, 0f, 0f),
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 351:                 new Keyframe(1f, 1f, 0.4f, 0f));
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 352:             ApplyCurvePreset("Elastic", elasticCurve);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 353:         }
+Explanation: Closes the current code scope.
+
+Line 354:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 355:         private void ApplyCurvePreset(string presetName, AnimationCurve movementCurve)
+Explanation: Declares `ApplyCurvePreset`, one of the callable behaviors used by this mechanic.
+
+Line 356:         {
+Explanation: Opens the current code scope.
+
+Line 357:             currentCurveName = presetName;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 358:             if (manager == null || manager.Config == null || manager.Config.animations == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 359:             {
+Explanation: Opens the current code scope.
+
+Line 360:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 361:             }
+Explanation: Closes the current code scope.
+
+Line 362:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 363:             for (int index = 0; index < manager.Config.animations.Length; index++)
+Explanation: Loops through a sequence of values so repeated setup or processing can happen in order.
+
+Line 364:             {
+Explanation: Opens the current code scope.
+
+Line 365:                 FloatingNumberConfig_UMFOSS.AnimationStyle animationStyle = manager.Config.animations[index];
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 366:                 animationStyle.movementCurve = new AnimationCurve(movementCurve.keys);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 367:                 animationStyle.fadeCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 368:             }
+Explanation: Closes the current code scope.
+
+Line 369:         }
+Explanation: Closes the current code scope.
+
+Line 370:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 371:         private void ResetAllHealth()
+Explanation: Declares `ResetAllHealth`, one of the callable behaviors used by this mechanic.
+
+Line 372:         {
+Explanation: Opens the current code scope.
+
+Line 373:             playerHealth.ResetHealth();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 374:             enemyHealth.ResetHealth();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 375:             chestHealth.ResetHealth();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 376:             RefreshHealthLabels();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 377:         }
+Explanation: Closes the current code scope.
+
+Line 378:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 379:         private void RefreshHealthLabels()
+Explanation: Declares `RefreshHealthLabels`, one of the callable behaviors used by this mechanic.
+
+Line 380:         {
+Explanation: Opens the current code scope.
+
+Line 381:             if (playerHealthLabel != null && playerHealth != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 382:             {
+Explanation: Opens the current code scope.
+
+Line 383:                 playerHealthLabel.text = "Player HP: " + FormatHealth(playerHealth);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 384:             }
+Explanation: Closes the current code scope.
+
+Line 385:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 386:             if (enemyHealthLabel != null && enemyHealth != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 387:             {
+Explanation: Opens the current code scope.
+
+Line 388:                 enemyHealthLabel.text = "Enemy HP: " + FormatHealth(enemyHealth);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 389:             }
+Explanation: Closes the current code scope.
+
+Line 390:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 391:             if (chestHealthLabel != null && chestHealth != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 392:             {
+Explanation: Opens the current code scope.
+
+Line 393:                 chestHealthLabel.text = "Chest HP: " + FormatHealth(chestHealth);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 394:             }
+Explanation: Closes the current code scope.
+
+Line 395:         }
+Explanation: Closes the current code scope.
+
+Line 396:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 397:         private static string FormatHealth(HealthSystem_UMFOSS healthSystem)
+Explanation: Declares `FormatHealth`, one of the callable behaviors used by this mechanic.
+
+Line 398:         {
+Explanation: Opens the current code scope.
+
+Line 399:             return Mathf.RoundToInt(healthSystem.CurrentHealth) + " / " + Mathf.RoundToInt(healthSystem.MaxHealth);
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 400:         }
+Explanation: Closes the current code scope.
+
+Line 401:     }
+Explanation: Closes the current code scope.
+
+Line 402: }
+Explanation: Closes the current code scope.
+
+Line 403:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 404:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 405:
+Explanation: This blank line separates logical sections so the script stays readable.

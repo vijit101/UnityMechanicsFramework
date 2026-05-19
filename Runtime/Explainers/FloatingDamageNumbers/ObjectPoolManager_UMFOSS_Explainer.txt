@@ -1,0 +1,905 @@
+Script: ObjectPoolManager_UMFOSS.cs
+Location: Runtime/Utils/ObjectPoolManager_UMFOSS.cs
+
+Line 1: using System.Collections.Generic;
+Explanation: Imports `System.Collections.Generic` so the script can use those types without fully qualifying every reference.
+
+Line 2: using UnityEngine;
+Explanation: Imports `UnityEngine` so the script can use those types without fully qualifying every reference.
+
+Line 3:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 4: namespace GameplayMechanicsUMFOSS.Utils
+Explanation: Places the types in `GameplayMechanicsUMFOSS.Utils` so the mechanic follows the framework namespace structure and avoids naming collisions.
+
+Line 5: {
+Explanation: Opens the current code scope.
+
+Line 6:     /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 7:     /// Manages reusable GameObject pools and avoids gameplay-time allocations after prewarm.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 8:     /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 9:     public class ObjectPoolManager_UMFOSS : MonoBehaviour
+Explanation: Declares class `ObjectPoolManager_UMFOSS`, which encapsulates part of the floating damage number feature.
+
+Line 10:     {
+Explanation: Opens the current code scope.
+
+Line 11:         public struct PoolStats
+Explanation: Declares struct `PoolStats`, which encapsulates part of the floating damage number feature.
+
+Line 12:         {
+Explanation: Opens the current code scope.
+
+Line 13:             public PoolStats(int activeCount, int availableCount, int totalCount)
+Explanation: Declares `PoolStats`, one of the callable behaviors used by this mechanic.
+
+Line 14:             {
+Explanation: Opens the current code scope.
+
+Line 15:                 ActiveCount = activeCount;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 16:                 AvailableCount = availableCount;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 17:                 TotalCount = totalCount;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 18:             }
+Explanation: Closes the current code scope.
+
+Line 19:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 20:             public int ActiveCount { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 21:             public int AvailableCount { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 22:             public int TotalCount { get; }
+Explanation: Declares `get`, storing state or references needed by the mechanic.
+
+Line 23:         }
+Explanation: Closes the current code scope.
+
+Line 24:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 25:         private sealed class PoolData
+Explanation: Declares class `PoolData`, which encapsulates part of the floating damage number feature.
+
+Line 26:         {
+Explanation: Opens the current code scope.
+
+Line 27:             public GameObject prefab;
+Explanation: Declares `prefab`, storing state or references needed by the mechanic.
+
+Line 28:             public Transform container;
+Explanation: Declares `container`, storing state or references needed by the mechanic.
+
+Line 29:             public readonly Queue<GameObject> available = new Queue<GameObject>();
+Explanation: Declares `this method`, one of the callable behaviors used by this mechanic.
+
+Line 30:             public readonly HashSet<GameObject> availableLookup = new HashSet<GameObject>();
+Explanation: Declares `this method`, one of the callable behaviors used by this mechanic.
+
+Line 31:             public readonly LinkedList<GameObject> activeOrder = new LinkedList<GameObject>();
+Explanation: Declares `this method`, one of the callable behaviors used by this mechanic.
+
+Line 32:             public readonly Dictionary<GameObject, LinkedListNode<GameObject>> activeLookup = new Dictionary<GameObject, LinkedListNode<GameObject>>();
+Explanation: Declares `this method`, one of the callable behaviors used by this mechanic.
+
+Line 33:             public readonly List<GameObject> allInstances = new List<GameObject>();
+Explanation: Declares `this method`, one of the callable behaviors used by this mechanic.
+
+Line 34:         }
+Explanation: Closes the current code scope.
+
+Line 35:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 36:         private static ObjectPoolManager_UMFOSS instance;
+Explanation: Declares `instance`, storing state or references needed by the mechanic.
+
+Line 37:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 38:         private readonly Dictionary<int, PoolData> poolsByPrefabId = new Dictionary<int, PoolData>();
+Explanation: Declares `this method`, one of the callable behaviors used by this mechanic.
+
+Line 39:         private readonly Dictionary<int, PoolData> poolsByInstanceId = new Dictionary<int, PoolData>();
+Explanation: Declares `this method`, one of the callable behaviors used by this mechanic.
+
+Line 40:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 41:         public static ObjectPoolManager_UMFOSS Instance
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 42:         {
+Explanation: Opens the current code scope.
+
+Line 43:             get
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 44:             {
+Explanation: Opens the current code scope.
+
+Line 45:                 if (instance == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 46:                 {
+Explanation: Opens the current code scope.
+
+Line 47:                     instance = FindObjectOfType<ObjectPoolManager_UMFOSS>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 48:                 }
+Explanation: Closes the current code scope.
+
+Line 49:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 50:                 if (instance == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 51:                 {
+Explanation: Opens the current code scope.
+
+Line 52:                     GameObject managerObject = new GameObject("ObjectPoolManager_UMFOSS");
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 53:                     instance = managerObject.AddComponent<ObjectPoolManager_UMFOSS>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 54:                 }
+Explanation: Closes the current code scope.
+
+Line 55:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 56:                 return instance;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 57:             }
+Explanation: Closes the current code scope.
+
+Line 58:         }
+Explanation: Closes the current code scope.
+
+Line 59:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 60:         private void Awake()
+Explanation: Declares `Awake`, one of the callable behaviors used by this mechanic.
+
+Line 61:         {
+Explanation: Opens the current code scope.
+
+Line 62:             if (instance != null && instance != this)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 63:             {
+Explanation: Opens the current code scope.
+
+Line 64:                 Destroy(gameObject);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 65:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 66:             }
+Explanation: Closes the current code scope.
+
+Line 67:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 68:             instance = this;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 69:             DontDestroyOnLoad(gameObject);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 70:         }
+Explanation: Closes the current code scope.
+
+Line 71:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 72:         private void OnDestroy()
+Explanation: Declares `OnDestroy`, one of the callable behaviors used by this mechanic.
+
+Line 73:         {
+Explanation: Opens the current code scope.
+
+Line 74:             if (instance == this)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 75:             {
+Explanation: Opens the current code scope.
+
+Line 76:                 instance = null;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 77:             }
+Explanation: Closes the current code scope.
+
+Line 78:         }
+Explanation: Closes the current code scope.
+
+Line 79:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 80:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 81:         /// Pre-instantiates a fixed number of pooled instances for a prefab.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 82:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 83:         public void Prewarm(GameObject prefab, int count, Transform parent = null)
+Explanation: Declares `Prewarm`, one of the callable behaviors used by this mechanic.
+
+Line 84:         {
+Explanation: Opens the current code scope.
+
+Line 85:             if (prefab == null || count <= 0)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 86:             {
+Explanation: Opens the current code scope.
+
+Line 87:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 88:             }
+Explanation: Closes the current code scope.
+
+Line 89:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 90:             PoolData pool = GetOrCreatePool(prefab, parent);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 91:             while (pool.allInstances.Count < count)
+Explanation: Keeps running the enclosed logic while the condition remains true.
+
+Line 92:             {
+Explanation: Opens the current code scope.
+
+Line 93:                 GameObject instanceObject = CreateInstance(pool);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 94:                 ReturnToAvailable(pool, instanceObject, false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 95:             }
+Explanation: Closes the current code scope.
+
+Line 96:         }
+Explanation: Closes the current code scope.
+
+Line 97:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 98:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 99:         /// Borrows an instance from the pool. When exhausted, the oldest active instance is reused.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 100:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 101:         public GameObject Get(GameObject prefab, Transform parent = null)
+Explanation: Declares `Get`, one of the callable behaviors used by this mechanic.
+
+Line 102:         {
+Explanation: Opens the current code scope.
+
+Line 103:             if (prefab == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 104:             {
+Explanation: Opens the current code scope.
+
+Line 105:                 return null;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 106:             }
+Explanation: Closes the current code scope.
+
+Line 107:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 108:             PoolData pool = GetOrCreatePool(prefab, parent);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 109:             if (pool.available.Count == 0)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 110:             {
+Explanation: Opens the current code scope.
+
+Line 111:                 if (pool.activeOrder.First != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 112:                 {
+Explanation: Opens the current code scope.
+
+Line 113:                     Return(pool.activeOrder.First.Value);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 114:                 }
+Explanation: Closes the current code scope.
+
+Line 115:                 else
+Explanation: Provides the fallback branch for the preceding conditional logic.
+
+Line 116:                 {
+Explanation: Opens the current code scope.
+
+Line 117:                     GameObject createdObject = CreateInstance(pool);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 118:                     ReturnToAvailable(pool, createdObject, false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 119:                 }
+Explanation: Closes the current code scope.
+
+Line 120:             }
+Explanation: Closes the current code scope.
+
+Line 121:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 122:             GameObject instanceObject = pool.available.Dequeue();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 123:             pool.availableLookup.Remove(instanceObject);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 124:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 125:             if (parent != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 126:             {
+Explanation: Opens the current code scope.
+
+Line 127:                 instanceObject.transform.SetParent(parent, false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 128:             }
+Explanation: Closes the current code scope.
+
+Line 129:             else if (pool.container != null)
+Explanation: Handles the next conditional branch when the previous condition was not met.
+
+Line 130:             {
+Explanation: Opens the current code scope.
+
+Line 131:                 instanceObject.transform.SetParent(pool.container, false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 132:             }
+Explanation: Closes the current code scope.
+
+Line 133:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 134:             LinkedListNode<GameObject> node = pool.activeOrder.AddLast(instanceObject);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 135:             pool.activeLookup[instanceObject] = node;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 136:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 137:             InvokePoolables(instanceObject, true);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 138:             if (!instanceObject.activeSelf)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 139:             {
+Explanation: Opens the current code scope.
+
+Line 140:                 instanceObject.SetActive(true);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 141:             }
+Explanation: Closes the current code scope.
+
+Line 142:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 143:             return instanceObject;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 144:         }
+Explanation: Closes the current code scope.
+
+Line 145:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 146:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 147:         /// Returns an instance back to its originating pool.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 148:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 149:         public void Return(GameObject instanceObject)
+Explanation: Declares `Return`, one of the callable behaviors used by this mechanic.
+
+Line 150:         {
+Explanation: Opens the current code scope.
+
+Line 151:             if (instanceObject == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 152:             {
+Explanation: Opens the current code scope.
+
+Line 153:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 154:             }
+Explanation: Closes the current code scope.
+
+Line 155:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 156:             if (!poolsByInstanceId.TryGetValue(instanceObject.GetInstanceID(), out PoolData pool))
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 157:             {
+Explanation: Opens the current code scope.
+
+Line 158:                 if (instanceObject.activeSelf)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 159:                 {
+Explanation: Opens the current code scope.
+
+Line 160:                     instanceObject.SetActive(false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 161:                 }
+Explanation: Closes the current code scope.
+
+Line 162:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 163:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 164:             }
+Explanation: Closes the current code scope.
+
+Line 165:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 166:             ReturnToAvailable(pool, instanceObject, true);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 167:         }
+Explanation: Closes the current code scope.
+
+Line 168:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 169:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 170:         /// Returns current pool usage for a prefab.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 171:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 172:         public PoolStats GetStats(GameObject prefab)
+Explanation: Declares `GetStats`, one of the callable behaviors used by this mechanic.
+
+Line 173:         {
+Explanation: Opens the current code scope.
+
+Line 174:             if (prefab == null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 175:             {
+Explanation: Opens the current code scope.
+
+Line 176:                 return default;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 177:             }
+Explanation: Closes the current code scope.
+
+Line 178:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 179:             return poolsByPrefabId.TryGetValue(prefab.GetInstanceID(), out PoolData pool)
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 180:                 ? new PoolStats(pool.activeLookup.Count, pool.available.Count, pool.allInstances.Count)
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 181:                 : default;
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 182:         }
+Explanation: Closes the current code scope.
+
+Line 183:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 184:         /// <summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 185:         /// Clears and destroys all tracked instances. Intended for tests only.
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 186:         /// </summary>
+Explanation: This XML documentation line explains the symbol in code editors and generated documentation.
+
+Line 187:         public void ClearAllPoolsForTests()
+Explanation: Declares `ClearAllPoolsForTests`, one of the callable behaviors used by this mechanic.
+
+Line 188:         {
+Explanation: Opens the current code scope.
+
+Line 189:             foreach (KeyValuePair<int, PoolData> entry in poolsByPrefabId)
+Explanation: Iterates over each item in the collection so the same logic can be applied repeatedly.
+
+Line 190:             {
+Explanation: Opens the current code scope.
+
+Line 191:                 PoolData pool = entry.Value;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 192:                 foreach (GameObject instanceObject in pool.allInstances)
+Explanation: Iterates over each item in the collection so the same logic can be applied repeatedly.
+
+Line 193:                 {
+Explanation: Opens the current code scope.
+
+Line 194:                     if (instanceObject != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 195:                     {
+Explanation: Opens the current code scope.
+
+Line 196:                         DestroyImmediate(instanceObject);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 197:                     }
+Explanation: Closes the current code scope.
+
+Line 198:                 }
+Explanation: Closes the current code scope.
+
+Line 199:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 200:                 if (pool.container != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 201:                 {
+Explanation: Opens the current code scope.
+
+Line 202:                     DestroyImmediate(pool.container.gameObject);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 203:                 }
+Explanation: Closes the current code scope.
+
+Line 204:             }
+Explanation: Closes the current code scope.
+
+Line 205:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 206:             poolsByPrefabId.Clear();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 207:             poolsByInstanceId.Clear();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 208:         }
+Explanation: Closes the current code scope.
+
+Line 209:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 210:         private PoolData GetOrCreatePool(GameObject prefab, Transform parent)
+Explanation: Declares `GetOrCreatePool`, one of the callable behaviors used by this mechanic.
+
+Line 211:         {
+Explanation: Opens the current code scope.
+
+Line 212:             int prefabId = prefab.GetInstanceID();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 213:             if (poolsByPrefabId.TryGetValue(prefabId, out PoolData existingPool))
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 214:             {
+Explanation: Opens the current code scope.
+
+Line 215:                 return existingPool;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 216:             }
+Explanation: Closes the current code scope.
+
+Line 217:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 218:             GameObject containerObject = new GameObject(prefab.name + "_Pool");
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 219:             if (parent != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 220:             {
+Explanation: Opens the current code scope.
+
+Line 221:                 containerObject.transform.SetParent(parent, false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 222:             }
+Explanation: Closes the current code scope.
+
+Line 223:             else
+Explanation: Provides the fallback branch for the preceding conditional logic.
+
+Line 224:             {
+Explanation: Opens the current code scope.
+
+Line 225:                 containerObject.transform.SetParent(transform, false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 226:             }
+Explanation: Closes the current code scope.
+
+Line 227:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 228:             PoolData pool = new PoolData
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 229:             {
+Explanation: Opens the current code scope.
+
+Line 230:                 prefab = prefab,
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 231:                 container = containerObject.transform
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 232:             };
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 233:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 234:             poolsByPrefabId[prefabId] = pool;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 235:             return pool;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 236:         }
+Explanation: Closes the current code scope.
+
+Line 237:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 238:         private GameObject CreateInstance(PoolData pool)
+Explanation: Declares `CreateInstance`, one of the callable behaviors used by this mechanic.
+
+Line 239:         {
+Explanation: Opens the current code scope.
+
+Line 240:             GameObject instanceObject = Instantiate(pool.prefab, pool.container);
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 241:             instanceObject.name = pool.prefab.name;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 242:             instanceObject.SetActive(false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 243:             pool.allInstances.Add(instanceObject);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 244:             poolsByInstanceId[instanceObject.GetInstanceID()] = pool;
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 245:             return instanceObject;
+Explanation: Returns the computed value or exits early from the current method.
+
+Line 246:         }
+Explanation: Closes the current code scope.
+
+Line 247:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 248:         private void ReturnToAvailable(PoolData pool, GameObject instanceObject, bool invokePoolable)
+Explanation: Declares `ReturnToAvailable`, one of the callable behaviors used by this mechanic.
+
+Line 249:         {
+Explanation: Opens the current code scope.
+
+Line 250:             if (pool.availableLookup.Contains(instanceObject))
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 251:             {
+Explanation: Opens the current code scope.
+
+Line 252:                 return;
+Explanation: Exits the current method immediately when no further work should run.
+
+Line 253:             }
+Explanation: Closes the current code scope.
+
+Line 254:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 255:             if (pool.activeLookup.TryGetValue(instanceObject, out LinkedListNode<GameObject> activeNode))
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 256:             {
+Explanation: Opens the current code scope.
+
+Line 257:                 pool.activeLookup.Remove(instanceObject);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 258:                 pool.activeOrder.Remove(activeNode);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 259:             }
+Explanation: Closes the current code scope.
+
+Line 260:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 261:             if (invokePoolable)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 262:             {
+Explanation: Opens the current code scope.
+
+Line 263:                 InvokePoolables(instanceObject, false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 264:             }
+Explanation: Closes the current code scope.
+
+Line 265:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 266:             if (instanceObject.activeSelf)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 267:             {
+Explanation: Opens the current code scope.
+
+Line 268:                 instanceObject.SetActive(false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 269:             }
+Explanation: Closes the current code scope.
+
+Line 270:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 271:             if (pool.container != null)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 272:             {
+Explanation: Opens the current code scope.
+
+Line 273:                 instanceObject.transform.SetParent(pool.container, false);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 274:             }
+Explanation: Closes the current code scope.
+
+Line 275:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 276:             pool.available.Enqueue(instanceObject);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 277:             pool.availableLookup.Add(instanceObject);
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 278:         }
+Explanation: Closes the current code scope.
+
+Line 279:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 280:         private static void InvokePoolables(GameObject instanceObject, bool isSpawn)
+Explanation: Declares `InvokePoolables`, one of the callable behaviors used by this mechanic.
+
+Line 281:         {
+Explanation: Opens the current code scope.
+
+Line 282:             MonoBehaviour[] components = instanceObject.GetComponents<MonoBehaviour>();
+Explanation: Assigns a value so later logic can reuse the updated state.
+
+Line 283:             for (int index = 0; index < components.Length; index++)
+Explanation: Loops through a sequence of values so repeated setup or processing can happen in order.
+
+Line 284:             {
+Explanation: Opens the current code scope.
+
+Line 285:                 if (!(components[index] is IPoolable poolable))
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 286:                 {
+Explanation: Opens the current code scope.
+
+Line 287:                     continue;
+Explanation: Skips to the next loop iteration without running the rest of the current body.
+
+Line 288:                 }
+Explanation: Closes the current code scope.
+
+Line 289:
+Explanation: This blank line separates logical sections so the script stays readable.
+
+Line 290:                 if (isSpawn)
+Explanation: Checks a condition before continuing so the script only runs this path when the required state is valid.
+
+Line 291:                 {
+Explanation: Opens the current code scope.
+
+Line 292:                     poolable.OnSpawnFromPool();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 293:                 }
+Explanation: Closes the current code scope.
+
+Line 294:                 else
+Explanation: Provides the fallback branch for the preceding conditional logic.
+
+Line 295:                 {
+Explanation: Opens the current code scope.
+
+Line 296:                     poolable.OnReturnToPool();
+Explanation: This line contributes to the script logic or structure needed for the mechanic to work correctly.
+
+Line 297:                 }
+Explanation: Closes the current code scope.
+
+Line 298:             }
+Explanation: Closes the current code scope.
+
+Line 299:         }
+Explanation: Closes the current code scope.
+
+Line 300:     }
+Explanation: Closes the current code scope.
+
+Line 301: }
+Explanation: Closes the current code scope.

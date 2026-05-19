@@ -1,0 +1,15 @@
+This mechanic now uses per-script explainers.
+
+See these files inside Runtime/Explainers/FloatingDamageNumbers/:
+- CombatEvents_UMFOSS_Explainer.txt
+- HealthSystem_UMFOSS_Explainer.txt
+- IPoolable_Explainer.txt
+- ObjectPoolManager_UMFOSS_Explainer.txt
+- NumberType_Explainer.txt
+- FloatingNumberConfig_UMFOSS_Explainer.txt
+- FloatingNumberFormatter_UMFOSS_Explainer.txt
+- FloatingNumberCombineBuffer_UMFOSS_Explainer.txt
+- FloatingNumberEvents_UMFOSS_Explainer.txt
+- FloatingNumber_UMFOSS_Explainer.txt
+- FloatingDamageNumbers_UMFOSS_Explainer.txt
+- FloatingDamageNumbersDemoBootstrap_UMFOSS_Explainer.txt
