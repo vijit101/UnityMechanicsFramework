@@ -1,0 +1,21 @@
+using System.Collections;
+// Enables use of IEnumerator and coroutines, though not directly used in this class
+
+using System.Collections.Generic;
+// Allows use of generic collections like List (not directly used here)
+
+using UnityEngine;
+// Provides access to Unity engine functionality, needed for [System.Serializable]
+
+[System.Serializable]
+// Makes this class visible in the Unity Inspector when used in another serializable class
+
+public class DialogueChoice
+// Represents a single dialogue choice that a player can select
+{
+    public string choiceText;
+    // The text displayed to the player for this choice
+
+    public DialogueNode nextNode;
+    // The next dialogue node to go to if this choice is selected
+} // End of DialogueChoice class

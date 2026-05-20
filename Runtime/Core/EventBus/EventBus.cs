@@ -4,60 +4,89 @@ using System.Collections.Generic;
 namespace GameplayMechanicsUMFOSS.Core
 {
     /// <summary>
-    /// Global publish/subscribe event bus for decoupled communication between mechanics.
-    /// Mechanics publish events here and subscribe to events they care about without
-    /// holding any direct reference to each other.
-    ///
-    /// Usage:
-    ///   EventBus.Subscribe&lt;PlayerJumpedEvent&gt;(OnPlayerJumped);
-    ///   EventBus.Publish(new PlayerJumpedEvent { height = 12f });
-    ///   EventBus.Unsubscribe&lt;PlayerJumpedEvent&gt;(OnPlayerJumped);
-    ///
-    /// Always unsubscribe in OnDisable/OnDestroy to avoid ghost listeners on destroyed objects.
+    /// A lightweight, type-safe publish/subscribe event bus for decoupled communication
+    /// between gameplay mechanics. Any system can publish or subscribe to events without
+    /// holding direct references to other systems.
     /// </summary>
     public static class EventBus
     {
-        private static readonly Dictionary<Type, Delegate> subscribers = new Dictionary<Type, Delegate>();
+        private static readonly Dictionary<Type, List<Delegate>> subscribers =
+            new Dictionary<Type, List<Delegate>>();
 
         /// <summary>
-        /// Subscribe to an event of type T.
-        /// The action is called every time T is published.
+        /// Subscribe a callback to a specific event type.
+        /// The callback will be invoked every time an event of type T is published.
         /// </summary>
-        public static void Subscribe<T>(Action<T> listener)
+        /// <typeparam name="T">The event type to listen for.</typeparam>
+        /// <param name="callback">The action to invoke when the event is published.</param>
+        public static void Subscribe<T>(Action<T> callback)
         {
-            Type type = typeof(T);
+            Type eventType = typeof(T);
 
-            if (subscribers.ContainsKey(type))
-                subscribers[type] = Delegate.Combine(subscribers[type], listener);
-            else
-                subscribers[type] = listener;
+            if (!subscribers.ContainsKey(eventType))
+            {
+                subscribers[eventType] = new List<Delegate>();
+            }
+
+            if (!subscribers[eventType].Contains(callback))
+            {
+                subscribers[eventType].Add(callback);
+            }
         }
 
         /// <summary>
-        /// Unsubscribe a previously registered listener for event type T.
-        /// Call this in OnDisable or OnDestroy to prevent null-reference callbacks.
+        /// Unsubscribe a previously registered callback from a specific event type.
+        /// Always unsubscribe in OnDisable or OnDestroy to prevent memory leaks.
         /// </summary>
-        public static void Unsubscribe<T>(Action<T> listener)
+        /// <typeparam name="T">The event type to stop listening for.</typeparam>
+        /// <param name="callback">The action to remove.</param>
+        public static void Unsubscribe<T>(Action<T> callback)
         {
-            Type type = typeof(T);
+            Type eventType = typeof(T);
 
-            if (!subscribers.ContainsKey(type)) return;
+            if (subscribers.ContainsKey(eventType))
+            {
+                subscribers[eventType].Remove(callback);
 
-            subscribers[type] = Delegate.Remove(subscribers[type], listener);
-
-            if (subscribers[type] == null)
-                subscribers.Remove(type);
+                if (subscribers[eventType].Count == 0)
+                {
+                    subscribers.Remove(eventType);
+                }
+            }
         }
 
         /// <summary>
-        /// Publish an event of type T to all current subscribers.
+        /// Publish an event to all subscribers of type T.
+        /// Subscribers are invoked synchronously in the order they were registered.
         /// </summary>
+        /// <typeparam name="T">The event type to publish.</typeparam>
+        /// <param name="eventData">The event data payload.</param>
         public static void Publish<T>(T eventData)
         {
-            Type type = typeof(T);
+            Type eventType = typeof(T);
 
-            if (subscribers.TryGetValue(type, out Delegate del))
-                (del as Action<T>)?.Invoke(eventData);
+            if (!subscribers.ContainsKey(eventType))
+            {
+                return;
+            }
+
+            // Iterate over a copy to allow subscribers to unsubscribe during callback
+            List<Delegate> subscriberList = new List<Delegate>(subscribers[eventType]);
+
+            for (int i = 0; i < subscriberList.Count; i++)
+            {
+                Action<T> callback = subscriberList[i] as Action<T>;
+                callback?.Invoke(eventData);
+            }
+        }
+
+        /// <summary>
+        /// Remove all subscribers for all event types.
+        /// Useful for scene transitions or test teardown.
+        /// </summary>
+        public static void Clear()
+        {
+            subscribers.Clear();
         }
     }
 }

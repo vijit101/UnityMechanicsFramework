@@ -1,0 +1,26 @@
+using System.Collections.Generic;
+// Enables usage of generic collections like List, which is used for storing choices
+
+using UnityEngine;
+// Provides access to Unity engine features like ScriptableObject and attributes
+
+[System.Serializable]
+// Allows this class to be serialized and shown in the inspector (mostly useful for nested classes; optional here)
+
+[CreateAssetMenu(fileName = "NewDialogue", menuName = "Dialogue System/Dialogue")]
+// Adds this ScriptableObject type to Unity's Create menu so it can be created from the editor
+// fileName: Default name when a new asset is created
+// menuName: Where this option appears in the asset creation menu
+
+public class DialogueNode : ScriptableObject
+// Represents a single dialogue node in the dialogue tree
+{
+    public string speakerName;
+    // Name of the character who is speaking in this dialogue node
+
+    [TextArea(2, 5)] public string dialogueText;
+    // The dialogue line text. TextArea allows multiline input in the Inspector, with min 2 and max 5 lines visible
+
+    public List<DialogueChoice> dialogueChoices;
+    // A list of possible choices the player can select from at this point in the dialogue
+} // End of DialogueNode class

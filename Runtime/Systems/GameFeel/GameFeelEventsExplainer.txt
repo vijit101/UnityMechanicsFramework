@@ -1,0 +1,62 @@
+====================================================
+SCRIPT: GameFeelEvents.cs
+PATH:   Runtime/Systems/GameFeel/GameFeelEvents.cs
+AUTHOR: Indrajeet Yadav
+====================================================
+
+Line 1: using UnityEngine;
+Explanation: Imports Unity types so Vector3 and Vector2 are available as event payload fields.
+
+Line 3: namespace GameplayMechanicsUMFOSS.Systems
+Explanation: Puts the event definitions in the Systems namespace alongside GameFeel_UMFOSS. The events are part of the GameFeel system's public contract.
+
+Line 15: public struct OnHitRegistered
+Explanation: Event fired when an attack connects with a target. A struct (not a class) is used so no heap allocation happens on Publish — critical for events that fire many times per second.
+
+Line 17: public Vector3 hitPoint;
+Explanation: World position where the hit occurred. Particle systems and camera shake can spawn or aim at this point.
+
+Line 18: public float intensity;
+Explanation: Strength of the hit from 0 to 1. Screen flash alpha or hitpause duration can be scaled off this.
+
+Line 25: public struct OnDamageTaken
+Explanation: Event fired when the player or an entity is hurt. Triggers hitpause, squash/stretch, and a damage-tinted flash.
+
+Line 27: public float damageAmount;
+Explanation: How much damage was inflicted. UI or secondary mechanics can use this to show damage numbers.
+
+Line 28: public Vector3 hitDirection;
+Explanation: Direction the damage came from. Can be fed into knockback or directional screen flash.
+
+Line 35: public struct OnDeath
+Explanation: Event fired when an entity dies. Triggers a red flash and a death squash.
+
+Line 37: public Vector3 deathPosition;
+Explanation: Where the entity died. Useful for spawning death particles or a respawn marker.
+
+Line 44: public struct OnJumpStart
+Explanation: Event fired at the exact frame a jump begins. Triggers upward stretch.
+
+Line 46: public float jumpForce;
+Explanation: Magnitude of the jump impulse. Stretch intensity can scale with it for big jumps feeling bigger.
+
+Line 53: public struct OnLanding
+Explanation: Event fired the frame the player regains ground contact after being airborne. Triggers landing squash.
+
+Line 55: public float fallSpeed;
+Explanation: Vertical speed at the moment of impact. A hard landing can squash more than a soft one.
+
+Line 62: public struct OnDashStart
+Explanation: Event fired when a dash ability activates. Enables afterimage and ghost trail.
+
+Line 64: public Vector2 dashDirection;
+Explanation: Direction of the dash. Motion-trail tint or particle emission can orient against it.
+
+Line 71: public struct OnDashEnd { }
+Explanation: Empty event fired when a dash ends. Disables afterimage and ghost trail. No payload is needed — the fact that it happened is the entire signal.
+
+Line 77: public struct OnItemPickedUp
+Explanation: Event fired on item pickup. Triggers a pop squash and a subtle yellow flash.
+
+Line 79: public string itemName;
+Explanation: Name of the item picked up. A UI system could use this to show "+1 DemoItem" alongside the visual feedback.

@@ -1,0 +1,77 @@
+====================================================
+SCRIPT: EventBus.cs
+PATH:   Runtime/Core/EventBus/EventBus.cs
+AUTHOR: Indrajeet Yadav
+====================================================
+
+Line 1: using System;
+Explanation: Imports the System namespace so we can use the Type, Action, and Delegate classes required by the event bus.
+
+Line 2: using System.Collections.Generic;
+Explanation: Imports generic collection types. We use Dictionary and List to store event subscribers.
+
+Line 4: namespace GameplayMechanicsUMFOSS.Core
+Explanation: Places the EventBus in the Core namespace. Core contains foundational utilities that every other mechanic can depend on.
+
+Line 11: public static class EventBus
+Explanation: Declares EventBus as a static class. A static class cannot be instantiated, so every script in the project shares the same single instance of subscribers.
+
+Line 13: private static readonly Dictionary<Type, List<Delegate>> subscribers = new Dictionary<Type, List<Delegate>>();
+Explanation: The subscriber registry. The key is the event type (for example OnDamageTaken) and the value is the list of callbacks registered for that type. Using Type as the key gives O(1) lookup on Publish.
+
+Line 22: public static void Subscribe<T>(Action<T> callback)
+Explanation: Registers a callback for a specific event type T. The generic parameter gives compile-time safety — you cannot accidentally subscribe a damage handler to a jump event.
+
+Line 24: Type eventType = typeof(T);
+Explanation: Gets the runtime Type object for T once, so we do not call typeof repeatedly in the lookups below.
+
+Line 26: if (!subscribers.ContainsKey(eventType))
+Explanation: Checks whether this event type has been seen before.
+
+Line 28: subscribers[eventType] = new List<Delegate>();
+Explanation: Lazily creates the list the first time a type is subscribed to. No memory is allocated for event types that never get subscribers.
+
+Line 31: if (!subscribers[eventType].Contains(callback))
+Explanation: Prevents the same callback from being added twice. Without this guard, a double subscribe would cause the callback to fire twice on every publish.
+
+Line 33: subscribers[eventType].Add(callback);
+Explanation: Stores the callback for later invocation on Publish.
+
+Line 43: public static void Unsubscribe<T>(Action<T> callback)
+Explanation: Removes a previously registered callback. Scripts should always unsubscribe in OnDisable or OnDestroy to avoid calling into a destroyed object.
+
+Line 47: if (subscribers.ContainsKey(eventType))
+Explanation: Silently no-ops if the event type was never subscribed to — unsubscribe must never throw.
+
+Line 49: subscribers[eventType].Remove(callback);
+Explanation: Removes the first matching delegate from the list.
+
+Line 51: if (subscribers[eventType].Count == 0)
+Explanation: After removal, checks if the list is now empty.
+
+Line 53: subscribers.Remove(eventType);
+Explanation: Drops the empty list from the dictionary so it does not grow indefinitely over a long play session.
+
+Line 64: public static void Publish<T>(T eventData)
+Explanation: Broadcasts an event to every subscriber registered for type T.
+
+Line 68: if (!subscribers.ContainsKey(eventType))
+Explanation: Early-outs when nobody is listening. Publishing to an empty channel is a zero-cost operation.
+
+Line 74: List<Delegate> subscriberList = new List<Delegate>(subscribers[eventType]);
+Explanation: Copies the subscriber list before iterating. If a callback calls Unsubscribe during invocation, the copy protects us from a "collection was modified" exception.
+
+Line 76: for (int i = 0; i < subscriberList.Count; i++)
+Explanation: Iterates over the copy. A for loop avoids the foreach-iterator allocation on hot paths.
+
+Line 78: Action<T> callback = subscriberList[i] as Action<T>;
+Explanation: Casts the stored Delegate back to its strongly typed Action<T> form.
+
+Line 79: callback?.Invoke(eventData);
+Explanation: Invokes the callback with the event payload. The null-conditional operator guards against the (unlikely) cast returning null.
+
+Line 87: public static void Clear()
+Explanation: Wipes every subscriber for every event type. Call this during scene transitions or test teardown so destroyed GameObjects never receive events.
+
+Line 89: subscribers.Clear();
+Explanation: Empties the dictionary in one call.

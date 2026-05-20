@@ -185,24 +185,16 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 |---|---|---|---|---|
 | 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | — |
 | 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Spawner System](#3-spawner-system) | [Satish Rathod](https://github.com/satish-rathod) | World / Spawning | [▶ Watch](Sample/SpawnerSystem/SpawnerSystemVideos.zip) |
-| 4 | [Scene Manager System](#4-scene-manager-system) | [Nymish](https://github.com/nymishkash) | Systems | [▶ Watch](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
-| 5 | [Modular Jump System](#5-modular-jump-system) | [Ankur Kalita](https://github.com/ankur-kalita) | Movement | [▶ Watch](./Samples~/JumpSystemSample/Video/ModularJumpImpl.mp4.zip) |
-| 23 | [Currency System](#23-currency-system) | [Aayush Khopade](https://github.com/aayushashokkhopade) [Krishna Patidar](https://github.com/krishna-p060) | Systems / Economy | [▶ Watch](https://www.loom.com/share/01de26ff40114577a2aff1fce3f39ec2) |
-| 64 | [Utils](#64-Utils) | [Shubham](https://github.com/vijit101) | Core | [▶ Watch]() |
-| 1 | [MonoSingleton Generic](#1-monosingleton-generic) | Shubham B | Core | (https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 2 | [Generic & Scalable Dialogue System](#2-generic--scalable-dialogue-system) | Mayur | Dialogue | [▶ Watch]
-| 3 | [Modular Jump System](#3-modular-jump-system) | [Ankur Kalita](https://github.com/ankur-kalita) | Movement | [▶ Watch](./Samples~/JumpSystemSample/Video/ModularJumpImpl.mp4.zip) |
-| 27 | [Boomerang Weapon](#27-boomerang-weapon-system) | [Shrinibas Mahanta](https://github.com/2k4sm), [Shreyas Garg](https://github.com/shreyas-garg), [Sudharsan](https://github.com/Bug-Finderr) | Combat | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/BoomerangWeapon/BoomerangWeaponDemoVideo.zip) |
-| 24 | [Pause System](#24-pause-system) | [Souvik Kumar](https://github.com/Souvik-Cyclic) | Systems | [▶ Watch](Samples~/PauseSystemSample/Video/PauseSystemVideo.zip) |
-| 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
-
+| 3 | [Game Feel / Juice System](#3-game-feel--juice-system) | [Indrajeet Yadav](https://github.com/indrajeetyadav) | Systems | [▶ Watch](Samples~/GameFeel/Video/GameFeelTutorial.zip) |
+| 4 | [Modular Jump System](#4-modular-jump-system) | [Ankur Kalita](https://github.com/ankur-kalita) | Movement | [▶ Watch](./Samples~/JumpSystemSample/Video/ModularJumpImpl.mp4.zip) |
+| 5 | [Scene Manager System](#5-scene-manager-system) | [Nymish](https://github.com/nymishkash) | Systems | [▶ Watch](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
 | 6 | [Screen Shake System](#6-screen-shake-system) | [Paramjeet Kaur](https://github.com/kauxp) | Systems | [▶ Watch](Samples~/ScreenShakeExample/Video/ScreenShakeTutorial.mp4) |
-| 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
-(https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
-| 3 | [Scene Manager System](#3-scene-manager-system) | [Nymish](https://github.com/nymishkash) | Systems | [▶ Watch](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
-| 9 | [Modular 2D Movement System](#9-modular-2d-movement-system) | [Kumar Kartikay](https://github.com/KKartikay-27/) & [Amrutha CA](https://github.com/Amruthacagithub) | Movement | [▶ Watch](https://github.com/KKartikay-27/UnityMechanicsFramework/blob/feature/movement2d-system/Samples~/Modular2DMovementSystem/Modular2DMovementSystemVideo.zip) |
-|
+| 7 | [Spawner System](#7-spawner-system) | [Satish Rathod](https://github.com/satish-rathod) | World / Spawning | [▶ Watch](Sample/SpawnerSystem/SpawnerSystemVideos.zip) |
+| 8 | [Currency System](#8-currency-system) | [Aayush Khopade](https://github.com/aayushashokkhopade), [Krishna Patidar](https://github.com/krishna-p060) | Systems / Economy | [▶ Watch](https://www.loom.com/share/01de26ff40114577a2aff1fce3f39ec2) |
+| 9 | [Boomerang Weapon](#9-boomerang-weapon-system) | [Shrinibas Mahanta](https://github.com/2k4sm), [Shreyas Garg](https://github.com/shreyas-garg), [Sudharsan](https://github.com/Bug-Finderr) | Combat | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/BoomerangWeapon/BoomerangWeaponDemoVideo.zip) |
+| 10 | [Pause System](#10-pause-system) | [Souvik Kumar](https://github.com/Souvik-Cyclic) | Systems | [▶ Watch](Samples~/PauseSystemSample/Video/PauseSystemVideo.zip) |
+| 11 | [Modular 2D Movement System](#11-modular-2d-movement-system) | [Kumar Kartikay](https://github.com/KKartikay-27/), [Amrutha CA](https://github.com/Amruthacagithub) | Movement | [▶ Watch](https://github.com/KKartikay-27/UnityMechanicsFramework/blob/feature/movement2d-system/Samples~/Modular2DMovementSystem/Modular2DMovementSystemVideo.zip) |
+| 64 | [Utils](#64-utils) | [Shubham](https://github.com/vijit101) | Core | [▶ Watch]() |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -292,7 +284,50 @@ dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
 
 ---
 
-### 27. Boomerang Weapon System
+### 3. Game Feel / Juice System
+
+| | |
+|---|---|
+| **Author** | [Indrajeet Yadav](https://github.com/indrajeetyadav) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
+| **Location** | `Runtime/Systems/GameFeel/GameFeel_UMFOSS.cs` |
+| **Category** | Systems / Game Feel |
+| **Demo Scene** | `Samples~/GameFeel/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](Samples~/GameFeel/Video/GameFeelTutorial.zip) |
+
+**What it does**
+
+A single-component system that layers five visual feedback effects — hitpause, squash & stretch, afterimage, screen flash, and ghost trail — onto any GameObject through EventBus triggers. Drop it onto your player and every mechanic in the framework can trigger polished micro-feedback without direct references. The perceptual difference between ALL OFF and ALL ON is the difference between a prototype and a shipped game.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Core;
+using GameplayMechanicsUMFOSS.Systems;
+
+// Step 1: Attach GameFeel_UMFOSS to your player GameObject
+// Step 2: Configure effect parameters in the Inspector
+// Step 3: Publish events from any mechanic — GameFeel reacts automatically
+
+// From your combat system:
+EventBus.Publish(new OnHitRegistered { hitPoint = transform.position, intensity = 1f });
+
+// From your movement system:
+EventBus.Publish(new OnJumpStart { jumpForce = 12f });
+EventBus.Publish(new OnDashStart { dashDirection = Vector2.right });
+
+// Toggle effects at runtime:
+gameFeel.SetAllEffectsEnabled(false);  // ALL OFF — feels flat
+gameFeel.SetAllEffectsEnabled(true);   // ALL ON — feels alive
+```
+
+**Highlights**
+
+- Five independent effects in a single component — hitpause, squash & stretch, afterimage, screen flash, ghost trail — all EventBus-driven with zero coupling
+- Uses `WaitForSecondsRealtime` for hitpause and `LerpUnclamped` for springy overshoot — production patterns that solve the two most common game feel bugs
+- Zero runtime cost when disabled — each effect gates on a single boolean check, and afterimages use object pooling for zero garbage collection
+
+---
 
 | | |
 |---|---|
@@ -334,162 +369,68 @@ EventBus.Subscribe<WeaponCaughtEvent>(e => Debug.Log("Caught!"));
 ---
 
 ### 6. Screen Shake System
+>>>>>>> origin/main
 
 | | |
 |---|---|
-| **Author** | [Paramjeet Kaur](https://github.com/kauxp) |
+| **Author** | [Indrajeet Yadav](https://github.com/indrajeetyadav) |
 | **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
-| **Location** | `Runtime/Systems/ScreenShake/ScreenShakeSystem_UMFOSS.cs` |
-| **Category** | Systems |
-| **Demo Scene** | `Samples~/ScreenShakeExample/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Walkthrough](Samples~/ScreenShakeExample/Video/ScreenShakeTutorial.mp4) |
+| **Location** | `Runtime/Systems/GameFeel/GameFeel_UMFOSS.cs` |
+| **Category** | Systems / Game Feel |
+| **Demo Scene** | `Samples~/GameFeel/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](Samples~/GameFeel/Video/GameFeelTutorial.zip) |
 
 **What it does**
 
-A trauma-based camera shake system for Unity. Adds smooth positional and rotational shake for impacts, explosions, or heavy actions. Can be triggered via buttons or programmatically. Works in both 2D and 3D games. Handles multiple triggers, ensures smooth decay, and returns the camera to its original position with zero drift.
+A single-component system that layers five visual feedback effects — hitpause, squash & stretch, afterimage, screen flash, and ghost trail — onto any GameObject through EventBus triggers. Drop it onto your player and every mechanic in the framework can trigger polished micro-feedback without direct references. The perceptual difference between ALL OFF and ALL ON is the difference between a prototype and a shipped game.
 
 **How to use it**
 
-1. Attach `ScreenShakeSystem_UMFOSS` to any GameObject (e.g., a background object).  
-2. Set shake parameters in the Inspector:  
-   - **ShakeDecay** — how fast shake fades  
-   - **TraumaMultiplier** — intensity scaling  
-   - **PositionMagnitude** — positional shake strength  
-   - **RotationMagnitude** — rotational shake strength  
-3. Add `ShakeDemoButtons` script to a Canvas UI Button and set `magnitude` and `duration`.  
-
 ```csharp
-using UnityEngine;
+using GameplayMechanicsUMFOSS.Core;
 using GameplayMechanicsUMFOSS.Systems;
 
-namespace GameplayMechanicsUMFOSS.Samples.ScreenShake
-{
-    public class ShakeDemoButtons : MonoBehaviour
-    {
-        [SerializeField] public float magnitude;
-        [SerializeField] public float duration;
+// Step 1: Attach GameFeel_UMFOSS to your player GameObject
+// Step 2: Configure effect parameters in the Inspector
+// Step 3: Publish events from any mechanic — GameFeel reacts automatically
 
-        public void Trigger()
-        {
-            ScreenShakeSystem_UMFOSS.Instance.TriggerShake(magnitude, duration);
-        }
-    }
-}
-```
+// From your combat system:
+EventBus.Publish(new OnHitRegistered { hitPoint = transform.position, intensity = 1f });
 
-4. In the Button’s `OnClick()`, assign the `Trigger()` method of `ShakeDemoButtons`.  
+// From your movement system:
+EventBus.Publish(new OnJumpStart { jumpForce = 12f });
+EventBus.Publish(new OnDashStart { dashDirection = Vector2.right });
 
-
-
-#### Highlights
-
-- Trauma-based design — smooth shake intensity that decays naturally; multiple hits stack
-- Uses Perlin noise instead of random to generate smooth, jitter-free camera motion
-- Singleton architecture — any script can trigger shake in one line (Instance.TriggerShake)
-
-### 64 . Utils
-
-| | |
-|---|---|
-| **Author** | [Shubham](https://github.com/vijit101) |
-| **Namespace** | `GameplayMechanicsUMFOSS.Core` 
-| **Location** | [`RuntimeMechanics/Dialogue/2. GenericAndScalableDialogueSystem/`](https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem) |
-| **Category** | Dialogue / Narrative |
-| **Demo Scene** | `Samples~/DialogueExample/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Tutorial](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/dailogueSample/Video) |
-
-**What it does**
-
-A `ScriptableObject`-based dialogue framework for building flexible, branching conversations in Unity. Scale from a single NPC exchange to a full narrative tree without ever modifying the core system. New dialogue is added as data, not code.
-
-**How to use it**
- Note to maintainer: need to fix the part for how to use the dialogue system later / for the one using it find the video and watch it  
-```csharp
-using GameplayMechanicsUMFOSS.Dialogue;
-
-// Step 1: Create DialogueNode ScriptableObjects in the Inspector
-// Step 2: Link them into a DialogueDatabase asset
-// Step 3: Reference the database from your DialogueSystem component
-
-[SerializeField] private DialogueSystem dialogueSystem;
-[SerializeField] private DialogueDatabase npcDatabase;
-
-// Step 4: Start a conversation
-dialogueSystem.StartDialogue(npcDatabase, onComplete: () =>
-{
-    Debug.Log("Conversation finished.");
-});
+// Toggle effects at runtime:
+gameFeel.SetAllEffectsEnabled(false);  // ALL OFF — feels flat
+gameFeel.SetAllEffectsEnabled(true);   // ALL ON — feels alive
 ```
 
 **Highlights**
 
-- Fully data-driven — all dialogue lives in ScriptableObject assets, not in code
-- Supports branching and multi-path dialogue trees
-- Clean separation between data (`DialogueDatabase`) and logic (`DialogueSystem`)
-- Add new conversations without touching any existing scripts
-- Scales to large narrative systems without architectural changes
+- Five independent effects in a single component — hitpause, squash & stretch, afterimage, screen flash, ghost trail — all EventBus-driven with zero coupling
+- Uses `WaitForSecondsRealtime` for hitpause and `LerpUnclamped` for springy overshoot — production patterns that solve the two most common game feel bugs
+- Zero runtime cost when disabled — each effect gates on a single boolean check, and afterimages use object pooling for zero garbage collection
 
 ---
 
-### 3. Spawner System
+---
+
+### 4. Modular Jump System
 
 | | |
 |---|---|
-| **Author** | [Satish Rathod](https://github.com/satish-rathod) |
-| **Namespace** | `GameplayMechanicsUMFOSS.World` |
-| **Location** | [`Runtime/Mechanic/SpawnerSystem/Scripts/`](Runtime/Mechanic/SpawnerSystem/Scripts/) |
-| **Script Explainers** | [`Runtime/Mechanic/SpawnerSystem/Script_Explainers/`](Runtime/Mechanic/SpawnerSystem/Script_Explainers/) (one per script) |
-| **Category** | World / Spawning |
-| **Sample Project** | [`Sample/SpawnerSystem/SpawnerSystem.zip`](Sample/SpawnerSystem/SpawnerSystem.zip) (extract & open in Unity) |
-| **Videos** | [`Sample/SpawnerSystem/SpawnerSystemVideos.zip`](Sample/SpawnerSystem/SpawnerSystemVideos.zip) (Demo + Detailed walkthrough) |
-
-**What it does**
-
-A modular spawner system handling three spawn patterns — wave-based, timed interval, and proximity-triggered — all configured via ScriptableObjects. Drop a spawner on any GameObject, assign a `SpawnProfile` asset, and enemies spawn without writing gameplay code. Used in tower defence, arena games, patrol systems, and ambush encounters.
-
-**How to use it**
-
-```csharp
-using GameplayMechanicsUMFOSS.World;
-
-// WaveSpawner — assign waveProfiles in Inspector, then:
-waveSpawner.StartWaves();
-
-// TimedSpawner — auto-starts if spawnOnStart=true, or:
-timedSpawner.StartSpawning();
-timedSpawner.SetInterval(2f);  // change interval at runtime
-
-// ProximitySpawner — auto-detects player via Physics2D.OverlapCircle
-// Or force-trigger manually:
-proximitySpawner.ForceSpawn();
-```
-
-**Highlights**
-
-- Fully data-driven via `SpawnProfile_UMFOSS` ScriptableObjects — change encounters without code
-- Weighted random selection for natural enemy variety distribution
-- Event-driven active count tracking — reliable with pooled objects
-- Difficulty scaling via AnimationCurve — designer-controlled difficulty curves
-- Three spawner types sharing one data layer — only the trigger mechanism differs
+| **Author** | [Ankur Kalita](https://github.com/ankur-kalita) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Movement` / `GameplayMechanicsUMFOSS.Physics` |
+| **Location** | `Runtime/Mechanic/ModularJumpSystem/Scripts/` |
+| **Script Explainers** | `Runtime/Mechanic/ModularJumpSystem/Script_Explainers/` |
+| **Category** | Movement |
+| **Demo Scene** | Included in `Samples~/JumpSystemSample/JumpSystemProjectZip.zip` |
+| **Video** | [▶ Watch Walkthrough](./Samples~/JumpSystemSample/Video/ModularJumpImpl.mp4.zip) |
 
 ---
 
 ### 4. Scene Manager System
-### 23. Currency System
-
-| | |
-|---|---|
-| **Author** | [Aayush Khopade](https://github.com/aayushashokkhopade) [Krishna Patidar](https://github.com/krishna-p060) |
-| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
-| **Location** | `Runtime/Systems/3. CurrencySystem/CurrencySystem_UMFOSS.cs` |
-| **Category** | Systems / Economy |
-| **Demo Scene** | `Samples~/CurrencySystem/Assets/Scenes/DemoScene.unity` |
-| **Video** | [▶ Watch Walkthrough](https://www.loom.com/share/01de26ff40114577a2aff1fce3f39ec2) |
-
-**What it does**
-
-A centralised, ScriptableObject-configured currency manager that tracks multiple currency types (Gold, Gems, XP, Keys, or any custom type) with earn, spend, atomic trade, balance capping, and save/load support. Drop it into any project that needs an in-game economy — shops, quests, upgrades, and loot systems plug in with a single line each.
-### 3. Scene Manager System
 
 | | |
 |---|---|
@@ -508,22 +449,6 @@ A centralized async scene management system that solves four real-world problems
 **How to use it**
 
 ```csharp
-using GameplayMechanicsUMFOSS.Systems;
-
-// Earn 50 gold from anywhere
-CurrencySystem_UMFOSS.Instance.Earn(CurrencyType_UMFOSS.Gold, 50);
-
-// Spend 30 gold — returns false if insufficient
-bool success = CurrencySystem_UMFOSS.Instance.Spend(CurrencyType_UMFOSS.Gold, 30);
-
-// Atomic trade: 10 gems for 200 gold — neither runs if gems insufficient
-CurrencySystem_UMFOSS.Instance.Transaction(
-    CurrencyType_UMFOSS.Gold, 200,
-    CurrencyType_UMFOSS.Gems, 10);
-
-// Subscribe to balance changes for UI updates
-CurrencySystem_UMFOSS.Instance.OnBalanceChanged += (type, oldBal, newBal) =>
-    Debug.Log($"{type}: {oldBal} -> {newBal}");
 using GameplayMechanicsUMFOSS.Core;
 
 // Step 1: Drop SceneManager_UMFOSS + PersistentScene_UMFOSS onto a bootstrap
@@ -596,20 +521,69 @@ jumpSystem.OnJumpEnd += () => Debug.Log("Landed!");
 
 **Highlights**
 
-- ScriptableObject-driven configuration — add new currency types with zero code changes
-- Six granular C# events for UI binding, audio, and game logic reactions
-- Atomic transactions prevent partial state corruption in multi-currency exchanges
-- Implements `ISaveable_UMFOSS` for seamless save/load integration (enum stored as int for stability)
-- Singleton access via `MonoSingletongeneric<T>` — one line from anywhere
-- **Async-first** — `LoadSceneMode.Additive` + `allowSceneActivation = false` until 90% means no main-thread freeze and no half-loaded flashes
-- **Persistent scene pattern** — your `AudioManager`, `SaveSystem`, and HUD singletons survive every transition without scattered `DontDestroyOnLoad` calls
-- **Auto-created fade canvas** — drop the prefab in any scene, call `LoadScene`, fades just work; zero inspector wiring required
-- **Push / Pop scene stacking** — pause menus, inventory, settings overlays additively load on top of gameplay without unloading the world beneath
-- **Seven EventBus events fire across the load lifecycle** — `SceneLoadStart`, `SceneLoadProgress`, `SceneLoadComplete`, `ScenePushed`, `ScenePopped`, `SceneReloaded`, `InputLock` — every other mechanic can hook in without coupling
-- **Ships with a full SLITHER snake game demo** — three levels, pause/stats overlays, game-over and victory screens — proving every API surface in a real game flow
 - **Adapter pattern** — `IPhysicsAdapter` with `Physics2DAdapter` and `Physics3DAdapter`. Zero duplicated logic between 2D and 3D modes.
 - **Platformer-ready** — coyote time, jump buffering, variable jump height, N-jumps, gravity multipliers, and terminal velocity — all configurable from the Inspector
 - **Demonstrates the Strategy pattern** — swappable physics backends via interface abstraction, teaching clean dependency inversion in Unity
+
+---
+
+### 6. Screen Shake System
+
+| | |
+|---|---|
+| **Author** | [Paramjeet Kaur](https://github.com/kauxp) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
+| **Location** | `Runtime/Systems/ScreenShake/ScreenShakeSystem_UMFOSS.cs` |
+| **Category** | Systems |
+| **Demo Scene** | `Samples~/ScreenShakeExample/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](Samples~/ScreenShakeExample/Video/ScreenShakeTutorial.mp4) |
+
+**What it does**
+
+A trauma-based camera shake system for Unity. Adds smooth positional and rotational shake for impacts, explosions, or heavy actions. Can be triggered via buttons or programmatically. Works in both 2D and 3D games. Handles multiple triggers, ensures smooth decay, and returns the camera to its original position with zero drift.
+
+**How to use it**
+
+1. Attach `ScreenShakeSystem_UMFOSS` to any GameObject (e.g., a background object).
+2. Set shake parameters in the Inspector:
+   - **ShakeDecay** — how fast shake fades
+   - **TraumaMultiplier** — intensity scaling
+   - **PositionMagnitude** — positional shake strength
+   - **RotationMagnitude** — rotational shake strength
+3. Add `ShakeDemoButtons` script to a Canvas UI Button and set `magnitude` and `duration`.
+
+```csharp
+using UnityEngine;
+using GameplayMechanicsUMFOSS.Systems;
+
+namespace GameplayMechanicsUMFOSS.Samples.ScreenShake
+{
+    public class ShakeDemoButtons : MonoBehaviour
+    {
+        [SerializeField] public float magnitude;
+        [SerializeField] public float duration;
+
+        public void Trigger()
+        {
+            ScreenShakeSystem_UMFOSS.Instance.TriggerShake(magnitude, duration);
+        }
+    }
+}
+```
+
+4. In the Button's `OnClick()`, assign the `Trigger()` method of `ShakeDemoButtons`.
+
+**Highlights**
+
+- Trauma-based design — smooth shake intensity that decays naturally; multiple hits stack
+- Uses Perlin noise instead of random to generate smooth, jitter-free camera motion
+- Singleton architecture — any script can trigger shake in one line (Instance.TriggerShake)
+
+---
+
+### 64. Utils
+
+_Placeholder — coming soon._
 
 ---
 

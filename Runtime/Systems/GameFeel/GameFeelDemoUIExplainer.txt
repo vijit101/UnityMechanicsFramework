@@ -1,0 +1,126 @@
+====================================================
+SCRIPT: GameFeelDemoUI.cs
+PATH:   Samples~/GameFeel/Assets/Scripts/GameFeelDemoUI.cs
+AUTHOR: Indrajeet Yadav
+NOTE:   Demo-only script. Not compiled into the Runtime assembly.
+====================================================
+
+Line 1: using UnityEngine;
+Explanation: Imports core Unity types (MonoBehaviour, SerializeField).
+
+Line 2: using UnityEngine.UI;
+Explanation: Imports the UI Toggle component used for each effect's enable/disable switch.
+
+Line 3: using TMPro;
+Explanation: Imports TextMeshPro so we can render the on-screen controls label in crisp SDF text.
+
+Line 4: using GameplayMechanicsUMFOSS.Systems;
+Explanation: Imports the GameFeel_UMFOSS type so we can reference the component being controlled.
+
+Line 6: namespace GameplayMechanicsUMFOSS.Samples.GameFeel
+Explanation: Same demo namespace as GameFeelDemoPlayer — keeps demo code separate from Runtime.
+
+Line 16: public class GameFeelDemoUI : MonoBehaviour
+Explanation: Declares the demo UI controller. Wires each toggle to the matching Set*Enabled method on GameFeel_UMFOSS.
+
+Line 19: [SerializeField] private GameFeel_UMFOSS gameFeel;
+Explanation: The GameFeel component being driven. Inspector-assigned, or auto-found in Start if null.
+
+Line 22: [SerializeField] private Toggle hitpauseToggle;
+Explanation: Toggle for the hitpause effect. Checked = enabled.
+
+Line 23: [SerializeField] private Toggle squashStretchToggle;
+Explanation: Toggle for squash & stretch.
+
+Line 24: [SerializeField] private Toggle afterimageToggle;
+Explanation: Toggle for the afterimage effect.
+
+Line 25: [SerializeField] private Toggle screenFlashToggle;
+Explanation: Toggle for the screen flash.
+
+Line 26: [SerializeField] private Toggle ghostTrailToggle;
+Explanation: Toggle for the ghost trail.
+
+Line 27: [SerializeField] private Toggle masterToggle;
+Explanation: The ALL ON / ALL OFF toggle. Drives all five above at once.
+
+Line 28: [SerializeField] private TextMeshProUGUI controlsLabel;
+Explanation: Text element that displays the keyboard control reference.
+
+Line 30: private void Start()
+Explanation: Unity lifecycle hook. Runs once after Awake on all scene objects. Used here so FindFirstObjectByType can find a GameFeel that was just added.
+
+Line 32: if (gameFeel == null)
+Explanation: Falls back to finding GameFeel in the scene if not assigned. Makes the demo scene work even if the reference is not wired up.
+
+Line 34: gameFeel = FindFirstObjectByType<GameFeel_UMFOSS>();
+Explanation: Unity's modern replacement for FindObjectOfType. Returns the first active instance in the scene.
+
+Line 37: SetupToggleListeners();
+Explanation: Hooks each toggle's onValueChanged to the matching Set*Enabled method on GameFeel.
+
+Line 38: DisplayControls();
+Explanation: Fills the controls label with the input reference text.
+
+Line 41: private void SetupToggleListeners()
+Explanation: Wires each individual toggle to the corresponding GameFeel setter, and the master to OnMasterToggleChanged.
+
+Line 43: if (hitpauseToggle != null)
+Explanation: Null-guards the reference. Any toggle can be omitted without breaking the rest.
+
+Line 45: hitpauseToggle.isOn = true;
+Explanation: Sets the initial state to match GameFeel's defaults (all effects start enabled).
+
+Line 46: hitpauseToggle.onValueChanged.AddListener(gameFeel.SetHitpauseEnabled);
+Explanation: Pipes the bool directly into GameFeel — no wrapper method needed because SetHitpauseEnabled already has the matching signature.
+
+Line 49-52: squash stretch toggle wiring.
+Explanation: Same pattern as hitpause — initial state + listener.
+
+Line 55-58: afterimage toggle wiring.
+Explanation: Same pattern as hitpause.
+
+Line 61-64: screen flash toggle wiring.
+Explanation: Same pattern as hitpause.
+
+Line 67-70: ghost trail toggle wiring.
+Explanation: Same pattern as hitpause.
+
+Line 73: if (masterToggle != null)
+Explanation: Null-guards the master toggle.
+
+Line 75: masterToggle.isOn = true;
+Explanation: Master starts ON so the demo opens with all effects active.
+
+Line 76: masterToggle.onValueChanged.AddListener(OnMasterToggleChanged);
+Explanation: Routes the master toggle through a custom handler so we can update the individual toggles to stay in sync.
+
+Line 80: private void OnMasterToggleChanged(bool enabled)
+Explanation: Handler for the master toggle. Flips all five effects and updates each child toggle's displayed state without triggering their listeners.
+
+Line 82: gameFeel.SetAllEffectsEnabled(enabled);
+Explanation: Flips every GameFeel effect at once.
+
+Line 84: if (hitpauseToggle != null) hitpauseToggle.SetIsOnWithoutNotify(enabled);
+Explanation: SetIsOnWithoutNotify updates the visual state of the toggle without firing its onValueChanged. This prevents a chain reaction that would re-invoke the GameFeel setters unnecessarily.
+
+Line 85: if (squashStretchToggle != null) squashStretchToggle.SetIsOnWithoutNotify(enabled);
+Explanation: Same pattern — update visual state silently.
+
+Line 86: if (afterimageToggle != null) afterimageToggle.SetIsOnWithoutNotify(enabled);
+Explanation: Same pattern — update visual state silently.
+
+Line 87: if (screenFlashToggle != null) screenFlashToggle.SetIsOnWithoutNotify(enabled);
+Explanation: Same pattern — update visual state silently.
+
+Line 88: if (ghostTrailToggle != null) ghostTrailToggle.SetIsOnWithoutNotify(enabled);
+Explanation: Same pattern — update visual state silently.
+
+Line 91: private void DisplayControls()
+Explanation: Populates the controls label with the keyboard reference.
+
+Line 93: if (controlsLabel == null) return;
+Explanation: No-ops gracefully if no label is assigned — the demo still runs.
+
+Line 95-103: controlsLabel.text = "..."
+Explanation: Assigns a formatted control reference string. Uses TMP rich-text (<b> for bold) for the heading and plain text for the mappings.
