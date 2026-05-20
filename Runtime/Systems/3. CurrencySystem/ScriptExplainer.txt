@@ -1,0 +1,101 @@
+====================================================
+SCRIPT: CurrencyType_UMFOSS.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+====================================================
+
+PURPOSE:
+Enum defining all currency types with explicit int values for save-data stability.
+
+----------------------------------------------------
+
+Code    : Gold = 0, Gems = 1, Keys = 2, XP = 3, Score = 4
+Explain : Built-in types with fixed ints. If "Gold" gets renamed to "StandardCurrency",
+          saved int 0 still loads correctly. Without explicit values, inserting a new entry
+          before Gold shifts everything and breaks existing save files.
+
+Code    : Custom1 = 100, Custom2 = 101, Custom3 = 102
+Explain : Game-specific slots starting at 100, leaving 5-99 open for future built-in types
+          without colliding with custom values.
+
+
+====================================================
+SCRIPT: CurrencyConfig_UMFOSS.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+====================================================
+
+PURPOSE:
+ScriptableObject holding per-currency config — name, icon, starting balance, cap, negativity rules.
+Adding a currency = add one Inspector entry. Zero code changes.
+
+----------------------------------------------------
+
+Code    : public int maxBalance
+Explain : 0 means unlimited — Earn() never clamps when this is zero. Non-zero caps the balance.
+
+Code    : public bool canGoNegative
+Explain : When false, Spend() refuses if balance < amount. When true, balance can drop below zero
+          (debt/penalty mechanics).
+
+Code    : public CurrencyEntry GetEntry(CurrencyType_UMFOSS type) => System.Array.Find(...)
+Explain : Linear search over the config array. Fine for small arrays (< 10 entries). Returns null
+          if type isn't configured — callers handle gracefully.
+
+
+====================================================
+SCRIPT: CurrencySystem_UMFOSS.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+====================================================
+
+PURPOSE:
+Singleton managing all balances at runtime. One API for earn, spend, query, trade, save/load.
+
+----------------------------------------------------
+
+Code    : Dictionary<CurrencyType_UMFOSS, int> balances
+Explain : Single source of truth. A Dictionary scales to any number of currencies without code
+          changes — unlike separate fields (int gold, int gems) that break on every addition.
+
+Code    : Earn() — clamp logic
+Explain : Adds amount, then checks if maxBalance > 0. If so, clamps. Fires OnCapReached when
+          clamping actually happens. Reports actual earned amount (after clamp) in the event.
+
+Code    : Spend() — validation-first
+Explain : Checks HasEnough BEFORE modifying anything. If insufficient and canGoNegative is false,
+          fires OnInsufficientFunds and returns false. Balance never enters an invalid state.
+
+Code    : Transaction() — atomic exchange
+Explain : Validates the spend side first. If the player can't afford it, neither operation runs.
+          Without this, a naive earn-then-spend gives free currency when the spend fails.
+          Same mental model as a database transaction — all or nothing.
+
+Code    : OnInsufficientFunds (separate from OnCurrencySpent)
+Explain : UI needs an explicit failure signal to shake the display, flash red, play error sound.
+          Inferring failure from "no OnCurrencySpent fired" is fragile and race-prone.
+
+Code    : ResetAll() fires OnAllBalancesReset, NOT OnBalanceChanged per currency
+Explain : One signal to refresh everything, instead of N separate events. UI subscribes to one
+          event and rebuilds the whole display.
+
+Code    : CaptureState() — enum stored as int
+Explain : Cast to (int) before saving. Enum names are compile-time labels — renaming them breaks
+          string-based deserialization. Int ordinals are stable across refactors.
+
+Code    : RestoreState() — fires OnBalanceChanged per currency
+Explain : After loading, each currency fires its change event so UI updates immediately
+          without the caller needing to manually refresh anything.
+
+
+====================================================
+SCRIPT: ISaveable_UMFOSS.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Core
+====================================================
+
+PURPOSE:
+Framework-wide save contract. Any system implements this to participate in save/load.
+
+----------------------------------------------------
+
+Code    : object CaptureState() / void RestoreState(object state)
+Explain : Generic object lets each system define its own save format. The save system doesn't
+          care about the shape — it just serializes and deserializes. Implementing class casts
+          back to its known type internally.

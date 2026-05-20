@@ -189,7 +189,12 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 | 4 | [Modular Jump System](#4-modular-jump-system) | [Ankur Kalita](https://github.com/ankur-kalita) | Movement | [▶ Watch](./Samples~/JumpSystemSample/Video/ModularJumpImpl.mp4.zip) |
 | 5 | [Scene Manager System](#5-scene-manager-system) | [Nymish](https://github.com/nymishkash) | Systems | [▶ Watch](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
 | 6 | [Screen Shake System](#6-screen-shake-system) | [Paramjeet Kaur](https://github.com/kauxp) | Systems | [▶ Watch](Samples~/ScreenShakeExample/Video/ScreenShakeTutorial.mp4) |
-| 64 | [Utils](#64-utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
+| 7 | [Spawner System](#7-spawner-system) | [Satish Rathod](https://github.com/satish-rathod) | World / Spawning | [▶ Watch](Sample/SpawnerSystem/SpawnerSystemVideos.zip) |
+| 8 | [Currency System](#8-currency-system) | [Aayush Khopade](https://github.com/aayushashokkhopade), [Krishna Patidar](https://github.com/krishna-p060) | Systems / Economy | [▶ Watch](https://www.loom.com/share/01de26ff40114577a2aff1fce3f39ec2) |
+| 9 | [Boomerang Weapon](#9-boomerang-weapon-system) | [Shrinibas Mahanta](https://github.com/2k4sm), [Shreyas Garg](https://github.com/shreyas-garg), [Sudharsan](https://github.com/Bug-Finderr) | Combat | [▶ Watch](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/BoomerangWeapon/BoomerangWeaponDemoVideo.zip) |
+| 10 | [Pause System](#10-pause-system) | [Souvik Kumar](https://github.com/Souvik-Cyclic) | Systems | [▶ Watch](Samples~/PauseSystemSample/Video/PauseSystemVideo.zip) |
+| 11 | [Modular 2D Movement System](#11-modular-2d-movement-system) | [Kumar Kartikay](https://github.com/KKartikay-27/), [Amrutha CA](https://github.com/Amruthacagithub) | Movement | [▶ Watch](https://github.com/KKartikay-27/UnityMechanicsFramework/blob/feature/movement2d-system/Samples~/Modular2DMovementSystem/Modular2DMovementSystemVideo.zip) |
+| 64 | [Utils](#64-utils) | [Shubham](https://github.com/vijit101) | Core | [▶ Watch]() |
 
 *More mechanics are added with every merged PR. [Contribute yours →](#9-how-to-contribute)*
 
@@ -324,7 +329,157 @@ gameFeel.SetAllEffectsEnabled(true);   // ALL ON — feels alive
 
 ---
 
+| | |
+|---|---|
+| **Author** | [Shrinibas Mahanta](https://github.com/2k4sm), [Shreyas Garg](https://github.com/shreyas-garg), [Sudharsan](https://github.com/Bug-Finderr) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Combat` |
+| **Location** | `Runtime/Combat/BoomerangWeapon/BoomerangWeapon_UMFOSS.cs` |
+| **Category** | Combat |
+| **Demo Scene** | `Samples~/BoomerangWeapon/Assets/Scenes/RecallDemo.unity` |
+| **Video** | [▶ Watch Walkthrough](https://github.com/vijit101/UnityMechanicsFramework/tree/main/Samples~/BoomerangWeapon/BoomerangWeaponDemoVideo.zip) |
+
+**What it does**
+
+A throw-and-recall weapon system inspired by God of War's Leviathan Axe. Throw any 3D object, embed it in walls or moving platforms, and recall it along a curved Bezier path back to the player's hand.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Combat;
+
+[SerializeField] private BoomerangWeapon_UMFOSS weapon;
+
+// Throw toward camera forward
+weapon.Throw(Camera.main.transform.forward);
+
+// Recall back to hand
+weapon.Recall();
+
+// React to events from anywhere
+EventBus.Subscribe<WeaponCaughtEvent>(e => Debug.Log("Caught!"));
+```
+
+**Highlights**
+
+- 4-state machine (Equipped, Thrown, Embedded, Recalling) with clean physics handoffs via IPhysicsAdapter
+- Bezier curve return path with accelerating speed for a satisfying catch
+- Parents to hit surfaces on impact, works with moving platforms out of the box
+
+---
+---
+
+### 6. Screen Shake System
+>>>>>>> origin/main
+
+| | |
+|---|---|
+| **Author** | [Indrajeet Yadav](https://github.com/indrajeetyadav) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
+| **Location** | `Runtime/Systems/GameFeel/GameFeel_UMFOSS.cs` |
+| **Category** | Systems / Game Feel |
+| **Demo Scene** | `Samples~/GameFeel/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](Samples~/GameFeel/Video/GameFeelTutorial.zip) |
+
+**What it does**
+
+A single-component system that layers five visual feedback effects — hitpause, squash & stretch, afterimage, screen flash, and ghost trail — onto any GameObject through EventBus triggers. Drop it onto your player and every mechanic in the framework can trigger polished micro-feedback without direct references. The perceptual difference between ALL OFF and ALL ON is the difference between a prototype and a shipped game.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Core;
+using GameplayMechanicsUMFOSS.Systems;
+
+// Step 1: Attach GameFeel_UMFOSS to your player GameObject
+// Step 2: Configure effect parameters in the Inspector
+// Step 3: Publish events from any mechanic — GameFeel reacts automatically
+
+// From your combat system:
+EventBus.Publish(new OnHitRegistered { hitPoint = transform.position, intensity = 1f });
+
+// From your movement system:
+EventBus.Publish(new OnJumpStart { jumpForce = 12f });
+EventBus.Publish(new OnDashStart { dashDirection = Vector2.right });
+
+// Toggle effects at runtime:
+gameFeel.SetAllEffectsEnabled(false);  // ALL OFF — feels flat
+gameFeel.SetAllEffectsEnabled(true);   // ALL ON — feels alive
+```
+
+**Highlights**
+
+- Five independent effects in a single component — hitpause, squash & stretch, afterimage, screen flash, ghost trail — all EventBus-driven with zero coupling
+- Uses `WaitForSecondsRealtime` for hitpause and `LerpUnclamped` for springy overshoot — production patterns that solve the two most common game feel bugs
+- Zero runtime cost when disabled — each effect gates on a single boolean check, and afterimages use object pooling for zero garbage collection
+
+---
+
+---
+
 ### 4. Modular Jump System
+
+| | |
+|---|---|
+| **Author** | [Ankur Kalita](https://github.com/ankur-kalita) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Movement` / `GameplayMechanicsUMFOSS.Physics` |
+| **Location** | `Runtime/Mechanic/ModularJumpSystem/Scripts/` |
+| **Script Explainers** | `Runtime/Mechanic/ModularJumpSystem/Script_Explainers/` |
+| **Category** | Movement |
+| **Demo Scene** | Included in `Samples~/JumpSystemSample/JumpSystemProjectZip.zip` |
+| **Video** | [▶ Watch Walkthrough](./Samples~/JumpSystemSample/Video/ModularJumpImpl.mp4.zip) |
+
+---
+
+### 4. Scene Manager System
+
+| | |
+|---|---|
+| **Author** | [Nymish](https://github.com/nymishkash) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
+| **Location** | `Runtime/Systems/1. SceneManagerSystem/Scripts/` |
+| **Script Explainers** | `Runtime/Systems/1. SceneManagerSystem/Script_Explainers/` (one per script) |
+| **Category** | Systems |
+| **Sample Project** | `Samples~/SceneManagerSample/SceneManagerSystemCompleteProject.zip` (extract & open in Unity) |
+| **Video** | [▶ Watch Walkthrough](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
+
+**What it does**
+
+A centralized async scene management system that solves four real-world problems with Unity's built-in `SceneManager`: main-thread blocking on load, singleton destruction across scene changes, missing fade transitions, and zero support for additive overlay scenes (pause menus, inventory, settings). Ships with a persistent-scene pattern that keeps your singletons alive across every load, fade transitions as ScriptableObject assets, an auto-created fade canvas (zero manual UI setup), a stack-based push/pop API for overlays, and a full EventBus integration so any other system can react to scene transitions without holding a direct reference.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Core;
+
+// Step 1: Drop SceneManager_UMFOSS + PersistentScene_UMFOSS onto a bootstrap
+//         GameObject in your persistent scene. Set persistentSceneName + a default
+//         SceneTransition asset in the inspector. The fade canvas is created
+//         automatically on Awake — no manual UI wiring needed.
+
+// Step 2: Load a scene with a fade transition
+SceneManager_UMFOSS.Instance.LoadScene("Level_01", fadeBlack);
+
+// Step 3: Push an overlay (pause menu, inventory, settings)
+SceneManager_UMFOSS.Instance.Push("PauseMenu");
+SceneManager_UMFOSS.Instance.Pop(); // close it
+
+// Step 4: React to scene events from anywhere via the EventBus
+EventBus.Subscribe<SceneLoadCompleteEvent>(e => Debug.Log($"Loaded {e.sceneName}"));
+EventBus.Subscribe<SceneLoadProgressEvent>(e => loadingBar.fillAmount = e.progress);
+```
+
+**Highlights**
+
+- **Async-first** — `LoadSceneMode.Additive` + `allowSceneActivation = false` until 90% means no main-thread freeze and no half-loaded flashes
+- **Persistent scene pattern** — your `AudioManager`, `SaveSystem`, and HUD singletons survive every transition without scattered `DontDestroyOnLoad` calls
+- **Auto-created fade canvas** — drop the prefab in any scene, call `LoadScene`, fades just work; zero inspector wiring required
+- **Push / Pop scene stacking** — pause menus, inventory, settings overlays additively load on top of gameplay without unloading the world beneath
+- **Seven EventBus events fire across the load lifecycle** — `SceneLoadStart`, `SceneLoadProgress`, `SceneLoadComplete`, `ScenePushed`, `ScenePopped`, `SceneReloaded`, `InputLock` — every other mechanic can hook in without coupling
+- **Ships with a full SLITHER snake game demo** — three levels, pause/stats overlays, game-over and victory screens — proving every API surface in a real game flow
+
+---
+
+### 5. Modular Jump System
 
 | | |
 |---|---|
@@ -369,56 +524,6 @@ jumpSystem.OnJumpEnd += () => Debug.Log("Landed!");
 - **Adapter pattern** — `IPhysicsAdapter` with `Physics2DAdapter` and `Physics3DAdapter`. Zero duplicated logic between 2D and 3D modes.
 - **Platformer-ready** — coyote time, jump buffering, variable jump height, N-jumps, gravity multipliers, and terminal velocity — all configurable from the Inspector
 - **Demonstrates the Strategy pattern** — swappable physics backends via interface abstraction, teaching clean dependency inversion in Unity
-
----
-
-### 5. Scene Manager System
-
-| | |
-|---|---|
-| **Author** | [Nymish](https://github.com/nymishkash) |
-| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
-| **Location** | `Runtime/Systems/1. SceneManagerSystem/Scripts/` |
-| **Script Explainers** | `Runtime/Systems/1. SceneManagerSystem/Script_Explainers/` (one per script) |
-| **Category** | Systems |
-| **Sample Project** | `Samples~/SceneManagerSample/SceneManagerSystemCompleteProject.zip` (extract & open in Unity) |
-| **Video** | [▶ Watch Walkthrough](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
-
-**What it does**
-
-A centralized async scene management system that solves four real-world problems with Unity's built-in `SceneManager`: main-thread blocking on load, singleton destruction across scene changes, missing fade transitions, and zero support for additive overlay scenes (pause menus, inventory, settings). Ships with a persistent-scene pattern that keeps your singletons alive across every load, fade transitions as ScriptableObject assets, an auto-created fade canvas (zero manual UI setup), a stack-based push/pop API for overlays, and a full EventBus integration so any other system can react to scene transitions without holding a direct reference.
-
-**How to use it**
-
-```csharp
-using GameplayMechanicsUMFOSS.Systems;
-using GameplayMechanicsUMFOSS.Core;
-
-// Step 1: Drop SceneManager_UMFOSS + PersistentScene_UMFOSS onto a bootstrap
-//         GameObject in your persistent scene. Set persistentSceneName + a default
-//         SceneTransition asset in the inspector. The fade canvas is created
-//         automatically on Awake — no manual UI wiring needed.
-
-// Step 2: Load a scene with a fade transition
-SceneManager_UMFOSS.Instance.LoadScene("Level_01", fadeBlack);
-
-// Step 3: Push an overlay (pause menu, inventory, settings)
-SceneManager_UMFOSS.Instance.Push("PauseMenu");
-SceneManager_UMFOSS.Instance.Pop(); // close it
-
-// Step 4: React to scene events from anywhere via the EventBus
-EventBus.Subscribe<SceneLoadCompleteEvent>(e => Debug.Log($"Loaded {e.sceneName}"));
-EventBus.Subscribe<SceneLoadProgressEvent>(e => loadingBar.fillAmount = e.progress);
-```
-
-**Highlights**
-
-- **Async-first** — `LoadSceneMode.Additive` + `allowSceneActivation = false` until 90% means no main-thread freeze and no half-loaded flashes
-- **Persistent scene pattern** — your `AudioManager`, `SaveSystem`, and HUD singletons survive every transition without scattered `DontDestroyOnLoad` calls
-- **Auto-created fade canvas** — drop the prefab in any scene, call `LoadScene`, fades just work; zero inspector wiring required
-- **Push / Pop scene stacking** — pause menus, inventory, settings overlays additively load on top of gameplay without unloading the world beneath
-- **Seven EventBus events fire across the load lifecycle** — `SceneLoadStart`, `SceneLoadProgress`, `SceneLoadComplete`, `ScenePushed`, `ScenePopped`, `SceneReloaded`, `InputLock` — every other mechanic can hook in without coupling
-- **Ships with a full SLITHER snake game demo** — three levels, pause/stats overlays, game-over and victory screens — proving every API surface in a real game flow
 
 ---
 
@@ -482,6 +587,82 @@ _Placeholder — coming soon._
 
 ---
 
+### 9. Modular 2D Movement System
+
+| | |
+|---|---|
+| **Author** | [Kumar Kartikay](https://github.com/KKartikay-27/) and [Amrutha CA](https://github.com/Amruthacagithub)|
+| **Namespace** | `GameplayMechanicsUMFOSS.Movement` |
+| **Location** | `Runtime/Mechanic/Movement2D/Scripts/` |
+| **Category** | Movement |
+| **Demo Scene** | `Samples~/Modular2DMovementSystem/Modular2DMovementSystem.zip` |
+| **Video Zip** | `Samples~/Modular2DMovementSystem/Modular2DMovementSystemVideo.zip` |
+
+**What it does**
+
+One 2D movement script that changes its entire movement behavior by switching a dropdown in the Inspector. Nine movement modes covering every approach Unity offers for moving a 2D object — from pixel-perfect transform positioning to physics-based force accumulation.
+### 24. Pause System
+
+| | |
+|---|---|
+| **Author** | [Souvik Kumar](https://github.com/Souvik-Cyclic) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
+| **Location** | `Runtime/Mechanic/PauseSystem/Scripts/PauseSystem_UMFOSS.cs` |
+| **Script Explainers** | `Runtime/Mechanic/PauseSystem/Script_Explainers/` |
+| **Category** | Systems |
+| **Demo Scene** | `Samples~/PauseSystemSample/Assets/Scenes/DemoScene.unity` |
+| **Video** | [▶ Watch Walkthrough](Samples~/PauseSystemSample/Video/PauseSystemVideo.zip) |
+
+**What it does**
+
+A centralised singleton pause system that freezes gameplay by setting `Time.timeScale` to 0, pauses all audio globally via `AudioListener.pause`, and broadcasts events so every other system can react without coupling to this one. Preserves bullet time and slow motion through a store-and-restore `timeScale` pattern, and optionally auto-pauses when the application loses OS focus.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Movement;
+
+// Step 1: Add Movement2D_UMFOSS component to your GameObject
+// Step 2: Select movement mode in Inspector dropdown
+// Step 3: Adjust parameters for desired feel
+
+// Step 4: Switch modes at runtime if needed
+Movement2D_UMFOSS movement = GetComponent<Movement2D_UMFOSS>();
+movement.SetMode(MovementMode.ForceAdditive); // Ice physics
+movement.SetMode(MovementMode.LerpSmooth);    // Ghost float
+```
+
+**Highlights**
+
+- **9 distinct movement modes** in one component — Transform group (5 modes) + Physics group (4 modes)
+- **Runtime mode switching** with proper state cleanup — no velocity bleeding between modes
+- **Adapter pattern** for physics — using the project-wide `IPhysicsAdapter` for dimension-agnostic logic
+- **Event-driven architecture** — decoupled via actions for start, stop, and mode changes
+- **Comprehensive documentation** — detailed script explainers for both the core movement logic and the adapter system
+using GameplayMechanicsUMFOSS.Systems;
+using GameplayMechanicsUMFOSS.Core;
+
+// Step 1: Add PauseSystem_UMFOSS to a persistent GameObject in your scene
+
+// Step 2: Toggle pause from input or UI
+PauseSystem_UMFOSS.Instance.TogglePause();
+
+// Step 3: Call Pause() / Resume() directly from UI buttons
+pauseButton.onClick.AddListener(() => PauseSystem_UMFOSS.Instance.Pause());
+resumeButton.onClick.AddListener(() => PauseSystem_UMFOSS.Instance.Resume());
+
+// Step 4: React to pause/resume events from any other system — no direct reference needed
+EventBus.Subscribe<GamePausedEvent>(e => aiController.SetInputEnabled(false));
+EventBus.Subscribe<GameResumedEvent>(e => aiController.SetInputEnabled(true));
+```
+
+**Highlights**
+- Store-and-restore `timeScale` pattern — bullet time and slow motion survive pause/resume with zero extra code
+- Configurable pause key, optional focus-loss auto-pause, and per-project audio toggle via Inspector
+- Demonstrates the Singleton and EventBus patterns — pause state is globally accessible and fully decoupled from every system that reacts to it
+
+---
+
 <!--
 ================================================================
 CONTRIBUTOR ENTRY TEMPLATE
@@ -540,10 +721,10 @@ All scripts use `GameplayMechanicsUMFOSS` as the base namespace, extended by fea
 | `GameplayMechanicsUMFOSS.Input` | InputAdapter | ✅ Active |
 | `GameplayMechanicsUMFOSS.Utils` | TimerUtility, helpers | ✅ Active |
 | `GameplayMechanicsUMFOSS.Inventory` | Item systems, loot, equipment | 🔓 Open for contribution |
-| `GameplayMechanicsUMFOSS.Combat` | Hitboxes, damage, status effects | 🔓 Open for contribution |
+| `GameplayMechanicsUMFOSS.Combat` | Boomerang weapon, damage, hitboxes | ✅ Active |
 | `GameplayMechanicsUMFOSS.UI` | HUD, menus, tooltips | 🔓 Open for contribution |
 | `GameplayMechanicsUMFOSS.AI` | Patrol, pathfinding, decisions | 🔓 Open for contribution |
-| `GameplayMechanicsUMFOSS.Systems` | Save/load, audio, scene management | 🔓 Open for contribution |
+| `GameplayMechanicsUMFOSS.Systems` | Save/load, audio, scene management, currency | ✅ Active |
 
 ---
 

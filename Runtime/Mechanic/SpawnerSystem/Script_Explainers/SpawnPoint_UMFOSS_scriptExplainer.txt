@@ -1,0 +1,74 @@
+Line 1: using UnityEngine;
+Explanation: Imports the Unity engine namespace for MonoBehaviour, Vector3, Vector2, Random, and Gizmos.
+
+Line 3: namespace GameplayMechanicsUMFOSS.World
+Explanation: Places SpawnPoint in the World namespace alongside SpawnProfile and the spawner classes.
+
+Line 5: public class SpawnPoint_UMFOSS : MonoBehaviour
+Explanation: Inherits from MonoBehaviour so the spawn point lives as a component on a scene GameObject with a transform position.
+
+Line 8: [SerializeField] private SpawnShape shape = SpawnShape.Point;
+Explanation: Inspector-exposed shape setting defaulting to Point; determines whether GetSpawnPosition returns exact, circle-random, or rect-random positions.
+
+Line 9: [SerializeField] private float radius = 0f;
+Explanation: Radius used when shape is Circle; zero means the spawn position equals the transform position exactly.
+
+Line 10: [SerializeField] private Vector2 size = Vector2.one;
+Explanation: Width (x) and height (y) of the spawn rectangle when shape is Rectangle; defaults to 1x1 unit.
+
+Line 12: public Vector3 GetSpawnPosition()
+Explanation: Public method called by SpawnHelper to get the actual world position where an object should be instantiated.
+
+Line 14: return shape switch
+Explanation: C# switch expression that returns a different position calculation based on the chosen SpawnShape enum value.
+
+Line 16: SpawnShape.Point => transform.position,
+Explanation: Point mode returns the exact world position of this GameObject's transform with no randomisation.
+
+Line 17: SpawnShape.Circle => transform.position +
+Explanation: Circle mode adds a random offset to the transform position; the offset is computed on the next line.
+
+Line 18:     (Vector3)(Random.insideUnitCircle * radius),
+Explanation: Picks a random 2D point inside a unit circle, scales it by radius, then casts to Vector3 (z=0) and adds it to the base position.
+
+Line 19: SpawnShape.Rectangle => transform.position + new Vector3(
+Explanation: Rectangle mode adds a Vector3 offset built from independent x and y random ranges.
+
+Line 20:     Random.Range(-size.x / 2f, size.x / 2f),
+Explanation: Picks a random x offset between -half-width and +half-width, centering the rectangle on the transform.
+
+Line 21:     Random.Range(-size.y / 2f, size.y / 2f), 0f),
+Explanation: Picks a random y offset between -half-height and +half-height; z is 0 keeping it in the 2D plane.
+
+Line 23: _ => transform.position
+Explanation: Default fallback case returns the transform position if an unknown SpawnShape value is somehow passed.
+
+Line 26: private void OnDrawGizmos()
+Explanation: Unity editor callback that draws visual overlays in the Scene view whenever the object is visible, helping designers place spawn points.
+
+Line 28: Gizmos.color = new Color(1f, 0.3f, 0f, 0.3f);
+Explanation: Sets the gizmo draw color to a semi-transparent orange, making spawn areas visible without obscuring the scene.
+
+Line 30: switch (shape)
+Explanation: Regular switch statement to draw a different gizmo shape matching the configured SpawnShape.
+
+Line 32: case SpawnShape.Point:
+Explanation: Point shape draws a small sphere so designers can see the exact spawn location.
+
+Line 33:     Gizmos.DrawWireSphere(transform.position, 0.2f);
+Explanation: Draws a wireframe sphere of radius 0.2 units at the transform position as a small visible marker.
+
+Line 35: case SpawnShape.Circle:
+Explanation: Circle shape draws the full trigger radius so designers can see the entire spawn scatter area.
+
+Line 36:     Gizmos.DrawWireSphere(transform.position, radius);
+Explanation: Draws a wireframe circle matching the configured radius to show the actual spawn scatter boundary.
+
+Line 38: case SpawnShape.Rectangle:
+Explanation: Rectangle shape draws a box outline matching the size field.
+
+Line 39:     Gizmos.DrawWireCube(transform.position,
+Explanation: Draws a wireframe cube centred on the transform; the size vector is passed on the next line.
+
+Line 40:         new Vector3(size.x, size.y, 0.1f));
+Explanation: Sets the cube dimensions to the configured width and height, with a tiny z depth of 0.1 so it is visible from the front in 2D scenes.
