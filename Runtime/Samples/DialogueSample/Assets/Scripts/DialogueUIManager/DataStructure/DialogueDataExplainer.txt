@@ -1,0 +1,20 @@
+using System.Collections;
+// Allows use of IEnumerator and coroutine-related features (not directly used here)
+
+using System.Collections.Generic;
+// Enables usage of generic collections like List (not directly used here)
+
+using UnityEngine;
+// Provides access to Unity engine functionality and ScriptableObject base class
+
+[CreateAssetMenu(fileName = "NewDialogueTree", menuName = "Dialogue System/Dialogue tree")]
+// Adds an option in Unity's asset creation menu to create a new DialogueData asset
+// fileName: Default name when creating the asset
+// menuName: Location of this asset option in the Unity Create menu
+
+public class DialogueData : ScriptableObject
+// A ScriptableObject class to hold a dialogue tree; can be saved as an asset
+{
+    public DialogueNode rootNode;
+    // The starting point of the dialogue tree; the first node in the conversation
+} // End of DialogueData class

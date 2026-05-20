@@ -1,0 +1,153 @@
+using System.Collections.Generic;
+// Allows use of List and other generic collections
+
+using UnityEngine;
+// Gives access to Unity-specific classes like MonoBehaviour, Debug, and SerializeField
+
+public class DialogueManager : MonoBehaviour
+// This class manages the flow of a dialogue and inherits from MonoBehaviour to attach to a GameObject
+{
+    [SerializeField] private DialogueUIManager dialogueUI;
+    // Allows you to set the Dialogue UI Manager in the Unity Editor (private but still editable in Inspector)
+
+    private DialogueData currentDialogue;
+    // Holds the entire dialogue currently running
+
+    private DialogueNode currentNode;
+    // Holds the current dialogue node (the current line of dialogue being shown)
+
+    private bool isRunning = false;
+    // Tracks whether a dialogue is currently happening
+
+    // Externally call this to start a dialogue
+    public void StartDialogue(DialogueData dialogueData)
+    // This method is used to start a dialogue by passing in DialogueData
+    {
+        if (dialogueData == null || dialogueData.rootNode == null)
+        // Checks if the dialogue data or its root node is missing
+        {
+            Debug.LogError("Dialogue Data or Root Node is not assigned!");
+            // Logs an error to help debug missing data
+            return;
+            // Exit the method early since dialogue can't start
+        }
+
+        currentDialogue = dialogueData;
+        // Save the passed-in dialogue data as the current dialogue
+
+        currentNode = currentDialogue.rootNode;
+        // Set the current node to the root (starting point) of the dialogue
+
+        isRunning = true;
+        // Mark that the dialogue is now running
+
+        ShowCurrentNode();
+        // Display the first dialogue node
+    }
+
+    private void ShowCurrentNode()
+    // Displays the current node's content and choices on the UI
+    {
+        if (!isRunning || currentNode == null)
+        // Make sure a dialogue is running and there's a node to display
+        {
+            Debug.LogWarning("Dialogue not running or no current node.");
+            // Warn if this method was called when it shouldn't be
+            return;
+            // Exit early
+        }
+
+        List<string> choiceTexts = new List<string>();
+        // Will hold the text of all available choices
+
+        bool isLastDialogue = false;
+        // Will become true if there are no choices left
+
+        if (currentNode.dialogueChoices.Count > 0)
+        // If the current node has choices
+        {
+            foreach (DialogueChoice choice in currentNode.dialogueChoices)
+            // Go through each choice
+            {
+                choiceTexts.Add(choice.choiceText);
+                // Add the choice's text to the list
+            }
+        }
+        else
+        {
+            isLastDialogue = true;
+            // No choices means it's the end of the dialogue
+        }
+
+        dialogueUI.ShowDialogue(
+            currentNode.speakerName,
+            // Passes the speaker's name to the UI
+
+            currentNode.dialogueText,
+            // Passes the dialogue line text to the UI
+
+            choiceTexts,
+            // Provides the list of choices to show
+
+            OnChoiceSelected,
+            // Passes in the method to call when a choice is selected
+
+            isLastDialogue
+            // Tells the UI if it's the last dialogue line
+        );
+    }
+
+    private void OnChoiceSelected(int choiceIndex)
+    // This is called when the player selects a choice
+    {
+        if (choiceIndex < 0 || choiceIndex >= currentNode.dialogueChoices.Count)
+        // Checks if the choice index is out of range
+        {
+            Debug.LogError("Invalid choice index");
+            // Logs an error for invalid index
+            return;
+            // Exit early
+        }
+
+        DialogueChoice selectedChoice = currentNode.dialogueChoices[choiceIndex];
+        // Get the choice the player selected
+
+        if (selectedChoice.nextNode != null)
+        // If the choice has a next node
+        {
+            currentNode = selectedChoice.nextNode;
+            // Move to the next node in the dialogue
+            ShowCurrentNode();
+            // Show the new node
+        }
+        else
+        {
+            EndDialogue();
+            // No more nodes, so end the dialogue
+        }
+    }
+
+    private void EndDialogue()
+    // Ends the current dialogue session
+    {
+        Debug.Log("Dialogue ended.");
+        // Log that the dialogue has finished
+
+        dialogueUI.HideDialogue();
+        // Hide the dialogue UI from the screen
+
+        isRunning = false;
+        // Mark the dialogue as no longer running
+
+        currentNode = null;
+        currentDialogue = null;
+        // Clear the current node and dialogue data
+    }
+
+    public bool IsDialogueRunning()
+    // Other scripts can call this to check if a dialogue is active
+    {
+        return isRunning;
+        // Returns true if a dialogue is happening, false otherwise
+    }
+}
