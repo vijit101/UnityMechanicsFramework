@@ -15,6 +15,11 @@
       "displayName": "Boomerang Weapon Demo",
       "description": "God-of-War-style throw-and-return weapon with damage, knockback, camera shake, and one-click scene builder.",
       "path": "Samples~/BoomerangWeapon"
+    },
+    {
+      "displayName": "Bullet Time Demo",
+      "description": "Config-driven slow motion system with pause compatibility, resource drain, proportional fixedDeltaTime, and a playable demo project.",
+      "path": "Samples~/BulletTime"
     }
   ]
 }

@@ -1,0 +1,14 @@
+SCRIPT: RecallingState.cs
+FILE: Runtime/Mechanic/BoomerangWeapon/Scripts/States/RecallingState.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Combat.States
+
+Purpose:
+This state drives the return trip from the embedded or thrown position back to the hand socket.
+
+Key points:
+- It first unparents the weapon while preserving world position, which avoids jumps if recall starts from a moving surface.
+- The short wiggle phase gives a visual "pull free" cue before the curved return begins.
+- `BezierUtils.ComputeArcControlPoint()` and `QuadraticBezier()` create the signature arcing return path.
+- The control point is recomputed against the current hand position so recall remains stable even if the player moves.
+- Return speed accelerates over time, which gives the catch a stronger finish than a constant-speed lerp.
+- Catch logic uses both distance and normalized progress to avoid edge cases from floating point drift.

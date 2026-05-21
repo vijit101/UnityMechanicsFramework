@@ -1,0 +1,12 @@
+SCRIPT: SlowMoConfig_UMFOSS.cs
+FILE: Runtime/Mechanic/BulletTimeSystem/Scripts/SlowMoConfig_UMFOSS.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+
+Purpose:
+ScriptableObject profile for one slow motion feel.
+
+Key points:
+- `timeScale`, `enterDuration`, and `exitDuration` define the pacing of the effect itself.
+- `enterCurve` and `exitCurve` let designers tune whether slow motion eases in softly or snaps in aggressively.
+- `audioPitchScale` keeps sound in sync with the slowed visuals.
+- `resourceCost`, `resourceDrainRate`, and `resourceRechargeRate` let the same runtime system behave like a free toggle, a stamina ability, or a short ultimate.

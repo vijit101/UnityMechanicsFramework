@@ -1,0 +1,13 @@
+SCRIPT: HitDetector.cs
+FILE: Runtime/Mechanic/BoomerangWeapon/Scripts/HitDetector.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+
+Purpose:
+This helper handles overlap-based target detection and one-hit-per-flight damage application.
+
+Key points:
+- `hitTargets` prevents the same collider from taking damage every frame while the weapon overlaps it.
+- `ClearHitTargets()` resets flight history when a new outgoing or return phase begins.
+- `cachedRadius` is captured from the weapon collider so overlap checks still work even when the collider is disabled during other states.
+- `CheckOverlap()` chooses between throw damage and return damage based on `isReturnFlight`.
+- `GetComponentInParent<IDamageable>()` supports hurtbox colliders that live below a larger enemy root.

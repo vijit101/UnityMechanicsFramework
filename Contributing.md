@@ -165,8 +165,8 @@ Step 2  ->  Fork the repository and set up locally
 Step 3  ->  Create a branch:  mechanic/your-mechanic-name
 Step 4  ->  Build your mechanic scripts inside  Runtime/
 Step 5  ->  Create your self-contained demo scene inside  Samples~/
-Step 6  ->  Write  ScriptExplainer.txt  (line-by-line code explanation)
-Step 7  ->  Record  Demo.mp4  (mandatory video walkthrough — see Section 11)
+Step 6  ->  Write one explainer per script inside  Script_Explainers/
+Step 7  ->  Record your demo and walkthrough videos, then bundle them inside a ZIP in  Samples~/
 Step 8  ->  Write or update tests inside  Tests/
 Step 9  ->  Update README.md  in TWO places:
               9a. Add a row to the Quick Navigation table
@@ -248,27 +248,21 @@ UnityMechanicsFramework/
 
 ## 7. Mechanic Folder Structure
 
-Your demo and supporting files live under `Samples~/`. Follow this structure exactly.
+Your runtime code and sample deliverables should follow this structure exactly.
 
 ```
-Samples~/
-+-- YourMechanicNameSample/
-    |
-    +-- Assets/
-    |   |
-    |   +-- Scenes/
-    |   |   +-- DemoScene.unity              <- Must run immediately on Play
-    |   |
-    |   +-- Scripts/
-    |   |   +-- YourMechanicScript.cs        <- Mirror of what's in Runtime/
-    |   |
-    |   +-- Prefabs/
-    |       +-- RequiredPrefab.prefab        <- Every required prefab included
-    |
-    +-- Video/
-    |   +-- [YourMechanicNameTutorial].mp4   <- Named after the mechanic
-    |
-    +-- ScriptExplainer.txt                  <- Line-by-line code explanation
+Runtime/
++-- Mechanic/
+|   +-- YourMechanicName/
+|       +-- Scripts/
+|       |   +-- YourMechanicScript.cs
+|       +-- Script_Explainers/
+|           +-- YourMechanicScript_Explainer.txt
+|
++-- Samples~/
+    +-- YourMechanicName/
+        +-- YourMechanicProject.zip          <- Complete Unity sample project
+        +-- YourMechanicVideos.zip           <- Demo + setup walkthrough videos
 ```
 
 ### Golden rule
@@ -500,13 +494,14 @@ Your video must include all of the following sections (in any order):
 
 ### 11.3 Where to put the video and how to link it
 
-- **Under 100MB** — Create a `Video` folder inside your sample directory (e.g., `Samples~/YourMechanicNameSample/Video/`) and name your video `[YourMechanicNameTutorial].mp4`. Link to it in your README entry using a relative GitHub path.
-- **Over 100MB** — Upload to YouTube (unlisted is fine) or Google Drive and paste the full URL in:
-  - Your README mechanic entry (metadata table + Quick Navigation row)
-  - Your PR description
-  - The header of your `ScriptExplainer.txt`
-
-> **Your video link must be live and accessible at the time your PR is submitted.** A broken or missing link will block the PR from being merged, since the README is the public documentation and every user will click it.
+- Put your videos inside a ZIP that lives directly in `Samples~/YourMechanicName/`
+- Keep any existing demo clip if you already recorded one
+- Add a walkthrough video that clearly explains:
+  - your scripts
+  - how to set up the prefab from scratch
+  - how the mechanic works end to end
+- Link that ZIP from your README mechanic entry and from your PR description using a relative repo path
+- Do not use YouTube, Drive, Loom, or any other external host for submission videos
 
 ### 11.4 Recording tools
 
@@ -787,10 +782,10 @@ Code & Architecture
 
 Files & Structure
   [ ] Mechanic scripts are inside the correct Runtime/ subfolder
-  [ ] Demo scene is inside Samples~/YourMechanicName/Assets/Scenes/
-  [ ] All required prefabs are inside Samples~/YourMechanicName/Assets/Prefabs/
-  [ ] ScriptExplainer.txt is present, complete, and explains the why not just the what
-  [ ] Demo.mp4 is present at Samples~/YourMechanicName/Video/ OR an external link is ready
+  [ ] Runtime scripts are grouped under Runtime/Mechanic/YourMechanicName/Scripts/
+  [ ] Script_Explainers/ contains one explainer per submitted script
+  [ ] Sample deliverables are zipped inside Samples~/YourMechanicName/
+  [ ] Demo and walkthrough video ZIPs are included in the repo
 
 README — Living Index (both updates required)
   [ ] Quick Navigation table has a new row with the correct anchor, category, and working video link
@@ -841,7 +836,7 @@ Use this template when opening your PR:
 <!-- Numbered steps: what to do after opening DemoScene to see the mechanic work -->
 
 ## Demo Video
-<!-- Paste your video link here — YouTube, Google Drive, or relative path to Demo.mp4 -->
+<!-- Paste the relative path to your in-repo video ZIP here -->
 
 ## Namespace used
 <!-- e.g. GameplayMechanicsUMFOSS.Movement -->
@@ -852,9 +847,9 @@ Use this template when opening your PR:
 ## Checklist
 - [ ] Compiles with zero errors and zero warnings
 - [ ] Folder structure followed exactly
-- [ ] ScriptExplainer.txt included and complete
+- [ ] Script_Explainers/ included with one explainer per script
 - [ ] DemoScene runs immediately on Play — no missing references
-- [ ] Demo video included at Samples~/YourMechanicName/Video/ or linked above
+- [ ] Demo and walkthrough video ZIPs included at Samples~/YourMechanicName/
 - [ ] README Quick Navigation row added with working anchor and video link
 - [ ] README full mechanic card added (metadata table, what it does, code example, highlights)
 ```
@@ -978,7 +973,7 @@ This repository aims to be production-ready. Write code as if it is shipping in 
 | Unity 6 | Supported (test before submitting) |
 | Unity 2020.x and below | Not supported |
 
-If your mechanic uses any Unity packages beyond the defaults (e.g. Input System, Cinemachine, TextMeshPro), list them explicitly in your PR description and in your `ScriptExplainer.txt` header.
+If your mechanic uses any Unity packages beyond the defaults (e.g. Input System, Cinemachine, TextMeshPro), list them explicitly in your PR description and in the relevant files inside `Script_Explainers/`.
 
 ---
 
@@ -1030,9 +1025,9 @@ Open an **Issue** before starting work on any new mechanic — this is the best 
 Create a brand new Unity project. Build your mechanic there. Test it until it works with zero console errors. Press Play — it should just work.
 
 While you are here:
-- Write your `ScriptExplainer.txt`
+- Write one explainer per script in `Script_Explainers/`
 - Build your demo scene
-- Record your video (upload to YouTube unlisted or Google Drive)
+- Record your demo and walkthrough videos for an in-repo ZIP
 
 ---
 
@@ -1051,20 +1046,22 @@ git checkout -b mechanic/your-mechanic-name
 
 ## Step 3 — Place Your Files
 
-**Script goes here:**
+**Runtime scripts go here:**
 ```
-Runtime/YourCategory/YourScript_UMFOSS.cs
+Runtime/Mechanic/YourMechanicName/Scripts/YourScript_UMFOSS.cs
 ```
 
-**Everything else goes here:**
+**Explainers go here:**
 ```
-Samples~/YourMechanicNameSample/
-  Assets/
-    Scenes/    → DemoScene.unity
-    Scripts/   → copy of your script
-    Prefabs/   → any prefabs the scene needs
-  Video/       → YourMechanicNameTutorial.mp4  (if under 100MB)
-  ScriptExplainer.txt
+Runtime/Mechanic/YourMechanicName/Script_Explainers/
+  YourScript_UMFOSS_Explainer.txt
+```
+
+**Sample deliverables go here:**
+```
+Samples~/YourMechanicName/
+  YourMechanicProject.zip
+  YourMechanicVideos.zip
 ```
 
 ---
@@ -1205,8 +1202,8 @@ Go through this before you click Submit. Every unchecked box = PR not ready.
 - [ ] Controls are labelled on screen with UI text
 
 **Documentation**
-- [ ] `ScriptExplainer.txt` complete — explains the WHY not just the what
-- [ ] Video uploaded and link is publicly accessible (not private)
+- [ ] `Script_Explainers/` complete — one explainer per script, each explaining the WHY not just the what
+- [ ] Demo and walkthrough video ZIPs are present inside the repo
 
 **README**
 - [ ] Quick Navigation row added — anchor matches heading exactly

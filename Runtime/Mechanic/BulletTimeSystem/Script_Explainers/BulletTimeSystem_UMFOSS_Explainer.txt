@@ -1,0 +1,14 @@
+SCRIPT: BulletTimeSystem_UMFOSS.cs
+FILE: Runtime/Mechanic/BulletTimeSystem/Scripts/BulletTimeSystem_UMFOSS.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+
+Purpose:
+Global slow motion controller that owns the public API, time scale transitions, proportional fixedDeltaTime updates, resource drain, audio pitch changes, and PauseSystem compatibility.
+
+Key points:
+- `Enter()` stores the pre-slowmo timeScale once, so `Exit()` can restore the exact value instead of hardcoding `1.0`.
+- Transition coroutines use `Time.unscaledDeltaTime`, which keeps the transition duration stable even while timeScale is changing.
+- `ApplyTimeScaleImmediate()` updates `Time.fixedDeltaTime` on every transition frame, which prevents physics from spiking in real time at low time scales.
+- `OnGamePaused()` stops active transitions so bullet time never fights PauseSystem over `Time.timeScale`.
+- `Exit()` can run while paused and uses `PauseSystem_UMFOSS.OverrideStoredTimeScale(...)` so resume returns to the correct restored speed.
+- Resource drain and recharge both use unscaled time, so the mechanic duration is measured in real-world seconds, not slowed seconds.

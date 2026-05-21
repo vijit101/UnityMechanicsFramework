@@ -1,0 +1,13 @@
+SCRIPT: BoomerangEvents.cs
+FILE: Runtime/Mechanic/BoomerangWeapon/Scripts/BoomerangEvents.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+
+Purpose:
+This file defines the event payloads the mechanic publishes for outside systems.
+
+Key points:
+- `WeaponThrownEvent` marks the start of a flight and exposes direction plus weapon reference.
+- `WeaponStuckEvent` captures the struck surface and contact point so VFX, audio, or camera reactions can stay decoupled from the weapon code.
+- `WeaponRecallStartedEvent` and `WeaponCaughtEvent` let UI and feedback systems react to the recall lifecycle.
+- `WeaponHitEvent` is fired for each new hurtbox hit, keeping damage reactions event-driven.
+- These payloads are structs, which keeps dispatch lightweight during gameplay.

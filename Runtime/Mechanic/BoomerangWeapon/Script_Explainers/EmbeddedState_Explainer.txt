@@ -1,0 +1,13 @@
+SCRIPT: EmbeddedState.cs
+FILE: Runtime/Mechanic/BoomerangWeapon/Scripts/States/EmbeddedState.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Combat.States
+
+Purpose:
+This state handles the weapon while it is lodged in a wall, platform, or target.
+
+Key points:
+- The weapon is made kinematic and its collider is disabled immediately so it stops interacting with physics after impact.
+- For surface hits, the weapon parents itself to the collision transform, which makes moving platforms work without extra follow code.
+- For hurtbox embeds, it tracks the damaged target and subscribes to `Damageable.OnDeath` so recall can auto-start if that target disappears.
+- `WeaponStuckEvent` is published in both embed paths so feedback systems do not care what kind of thing was hit.
+- If the parent vanishes, `Update()` safely switches the weapon into recall instead of leaving it orphaned.

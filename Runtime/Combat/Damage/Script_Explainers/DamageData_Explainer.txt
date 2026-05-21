@@ -1,0 +1,11 @@
+SCRIPT: DamageData.cs
+FILE: Runtime/Combat/Damage/DamageData.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+
+Purpose:
+This struct packages all information needed to resolve a single hit.
+
+Key points:
+- It carries damage amount, hit point, knockback direction, knockback force, and source object together.
+- Using one payload object keeps attack code and receiver code loosely coupled.
+- Because it is a struct, the common hit path stays lightweight and allocation-free.

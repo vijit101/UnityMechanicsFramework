@@ -1,0 +1,9 @@
+SCRIPT: BulletTimeExpiredEvent.cs
+FILE: Runtime/Mechanic/BulletTimeSystem/Scripts/Events/BulletTimeExpiredEvent.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+
+Purpose:
+Distinct event for automatic expiry rather than a manual exit.
+
+Key points:
+- Lets UI react differently when the player runs out of bullet time compared with intentionally toggling it off.

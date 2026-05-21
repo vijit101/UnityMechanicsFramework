@@ -1,0 +1,9 @@
+SCRIPT: BulletTimeEnterEvent.cs
+FILE: Runtime/Mechanic/BulletTimeSystem/Scripts/Events/BulletTimeEnterEvent.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+
+Purpose:
+Broadcast when bullet time starts or switches to a slower profile.
+
+Key points:
+- Carries the target timeScale and enter duration so UI, VFX, and audio layers can react without directly referencing the system.

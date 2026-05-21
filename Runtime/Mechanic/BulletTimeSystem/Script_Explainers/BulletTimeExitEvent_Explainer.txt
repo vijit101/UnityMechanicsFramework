@@ -1,0 +1,9 @@
+SCRIPT: BulletTimeExitEvent.cs
+FILE: Runtime/Mechanic/BulletTimeSystem/Scripts/Events/BulletTimeExitEvent.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+
+Purpose:
+Broadcast when bullet time begins restoring normal speed.
+
+Key points:
+- Carries the restored timeScale and exit duration so subscribers can animate their own exit timing in sync.

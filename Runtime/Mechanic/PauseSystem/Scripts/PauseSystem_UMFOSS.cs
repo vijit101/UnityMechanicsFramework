@@ -107,6 +107,19 @@ namespace GameplayMechanicsUMFOSS.Systems
         /// </summary>
         public float GetPausedTimeScale() => storedTimeScale;
 
+        /// <summary>
+        /// Overrides the timeScale that will be restored on resume.
+        /// Used by systems like bullet time when they expire or exit while the game is paused.
+        /// Safe to call while not paused — the value will simply become the next stored restore scale.
+        /// </summary>
+        public void OverrideStoredTimeScale(float newStoredTimeScale)
+        {
+            storedTimeScale = Mathf.Max(0f, newStoredTimeScale);
+
+            if (logStateChanges)
+                Debug.Log($"[PauseSystem] Override stored timeScale -> {storedTimeScale}");
+        }
+
         // ── Unity Lifecycle ──────────────────────────────────────────────────────
 
         private void Update()

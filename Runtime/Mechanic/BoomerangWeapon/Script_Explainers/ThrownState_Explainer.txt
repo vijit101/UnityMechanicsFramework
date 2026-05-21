@@ -1,0 +1,14 @@
+SCRIPT: ThrownState.cs
+FILE: Runtime/Mechanic/BoomerangWeapon/Scripts/States/ThrownState.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Combat.States
+
+Purpose:
+This state runs the outgoing flight after the player throws the weapon.
+
+Key points:
+- `SetParent(null)` detaches the weapon from the player rig so physics can control it independently.
+- `AddForce(..., ForceMode.VelocityChange)` gives a predictable launch regardless of rigidbody mass.
+- The outgoing speed is reshaped every frame with `throwCurve`, which makes the flight feel tuned rather than purely ballistic.
+- `HitDetector.CheckOverlap()` applies damage during flight without requiring trigger colliders on every target.
+- The state transitions to `Embedded` on a valid stuck-layer collision or on a hurtbox hit when `EmbedInTargets` is enabled.
+- It auto-recalls at `MaxRange` so the weapon never gets stranded.

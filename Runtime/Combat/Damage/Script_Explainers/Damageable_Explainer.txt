@@ -1,0 +1,12 @@
+SCRIPT: Damageable.cs
+FILE: Runtime/Combat/Damage/Damageable.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+
+Purpose:
+This is the default concrete implementation of `IDamageable` used by the boomerang sample targets.
+
+Key points:
+- `TakeDamage()` clamps the applied value to remaining health, so overkill damage does not produce misleading results.
+- `ApplyKnockback()` uses the hit payload instead of hard-coded force directions, which keeps the receiver reusable.
+- `OnHealthChanged` and `OnDeath` support direct local reactions, while `EventBus.Publish(...)` supports global reactions.
+- The hit flash uses `MaterialPropertyBlock`, which avoids creating unique material instances for every target renderer.

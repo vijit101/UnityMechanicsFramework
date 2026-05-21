@@ -1,0 +1,13 @@
+SCRIPT: BoomerangConfig.cs
+FILE: Runtime/Mechanic/BoomerangWeapon/Scripts/BoomerangConfig.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+
+Purpose:
+This ScriptableObject stores all tuning values for throw speed, recall behavior, damage, collision layers, and visual spin.
+
+Key points:
+- `throwCurve` lets designers shape outgoing velocity over normalized travel distance instead of hard-coding one speed profile.
+- `maxRange` guarantees the weapon cannot fly forever if it misses every surface.
+- `returnSpeed`, `returnAcceleration`, and `catchDistance` work together to create the recall pacing and catch snap.
+- `arcHeightRatio` and `arcSideRatio` define the Bezier curve feel without changing state code.
+- `hurtboxLayer` and `stuckLayer` separate "targets I damage" from "surfaces I embed into", which is critical to the mechanic's feel.

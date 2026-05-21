@@ -1,0 +1,12 @@
+SCRIPT: EquippedState.cs
+FILE: Runtime/Mechanic/BoomerangWeapon/Scripts/States/EquippedState.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Combat.States
+
+Purpose:
+This state represents the weapon resting in the player's hand and waiting for input.
+
+Key points:
+- `SetKinematic(true)` disables free-body motion before the weapon is reattached to the hand socket.
+- The collider is disabled here because the equipped weapon should not deal accidental damage while idle.
+- `SetParent(ctx.HandSocket)` plus zeroed local pose makes the catch result deterministic and easy to author in the prefab.
+- It clears stale collision and hurtbox references so the next throw starts from a clean state.

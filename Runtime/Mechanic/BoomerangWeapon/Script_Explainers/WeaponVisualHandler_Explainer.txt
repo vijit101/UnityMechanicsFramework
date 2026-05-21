@@ -1,0 +1,11 @@
+SCRIPT: WeaponVisualHandler.cs
+FILE: Runtime/Mechanic/BoomerangWeapon/Scripts/WeaponVisualHandler.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+
+Purpose:
+This plain C# helper owns the weapon's presentation spin.
+
+Key points:
+- The spin is applied to a child visual pivot, not the weapon root, so the root transform stays reliable for travel direction and parenting logic.
+- `Spin()` rotates in `Space.Self`, which makes the visual motion consistent regardless of world orientation.
+- `ResetRotation()` is used when the weapon catches or embeds so the mesh never stays frozen at an awkward mid-spin angle.

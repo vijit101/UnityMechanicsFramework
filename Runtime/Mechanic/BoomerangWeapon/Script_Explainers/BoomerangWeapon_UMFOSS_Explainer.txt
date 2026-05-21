@@ -1,0 +1,13 @@
+SCRIPT: BoomerangWeapon_UMFOSS.cs
+FILE: Runtime/Mechanic/BoomerangWeapon/Scripts/BoomerangWeapon_UMFOSS.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+
+Purpose:
+This is the main runtime entry point for the mechanic. It validates the required references, builds the shared context, creates the state machine, and forwards Unity callbacks to the active weapon state.
+
+Key points:
+- `Awake()` fails fast if the config or physics adapter is missing, which keeps setup mistakes obvious in the sample and in downstream projects.
+- `GetComponent<IPhysicsAdapter>()` keeps the weapon aligned with the framework's abstraction instead of tying flight logic directly to `Rigidbody`.
+- `WeaponVisualHandler` and `HitDetector` are constructed here once and then shared through `BoomerangContext`.
+- `Throw()` only works from `Equipped`, and `Recall()` ignores invalid requests, which prevents broken state transitions from input spam.
+- `OnCollisionEnter()` forwards collisions only while the weapon is in the `Thrown` state, so embed logic stays isolated inside `ThrownState`.

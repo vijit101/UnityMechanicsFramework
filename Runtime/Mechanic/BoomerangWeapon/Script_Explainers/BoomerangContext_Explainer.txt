@@ -1,0 +1,12 @@
+SCRIPT: BoomerangContext.cs
+FILE: Runtime/Mechanic/BoomerangWeapon/Scripts/BoomerangContext.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+
+Purpose:
+This context object is the shared dependency container for every boomerang state.
+
+Key points:
+- States receive data through this context instead of reaching back into the `MonoBehaviour`, which keeps them easier to reason about and extend.
+- It centralizes references like `Transform`, `IPhysicsAdapter`, `HandSocket`, `WeaponCollider`, and `BoomerangConfig`.
+- It also stores transient data such as `ThrowDirection`, `LastCollision`, `LastHurtboxHit`, and `EmbeddedInCollider` so state transitions can hand off information cleanly.
+- `WeaponStateKey` lives here because it defines the fixed set of legal states for the mechanic.

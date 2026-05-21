@@ -1,0 +1,9 @@
+SCRIPT: BulletTimeResourceChangedEvent.cs
+FILE: Runtime/Mechanic/BulletTimeSystem/Scripts/Events/BulletTimeResourceChangedEvent.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+
+Purpose:
+Resource update payload for bars, numbers, and warnings.
+
+Key points:
+- Exposes current, max, and normalized percent so UI code does not need to know the active config's resource capacity rules.

@@ -1,0 +1,11 @@
+SCRIPT: IDamageable.cs
+FILE: Runtime/Combat/Damage/IDamageable.cs
+NAMESPACE: GameplayMechanicsUMFOSS.Combat
+
+Purpose:
+This interface defines the minimal contract for anything that can receive combat damage.
+
+Key points:
+- Combat systems depend on `IDamageable`, not a concrete target class, which keeps damage delivery extensible.
+- `CurrentHealth` and `IsAlive` expose enough state for higher-level logic without leaking full implementation details.
+- `TakeDamage(DamageData)` returns the actual damage dealt, which allows armor, resistance, or clamping behavior behind the interface.
