@@ -1,0 +1,178 @@
+====================================================
+SCRIPT: SceneManager_UMFOSS.cs
+AUTHOR: Nymish
+NAMESPACE: GameplayMechanicsUMFOSS.Systems
+====================================================
+
+PURPOSE:
+A centralized scene management system for Unity. Handles asynchronous scene
+loading, fade transitions, persistent scenes (singletons that survive scene
+changes), and additive scene stacking for overlays like pause menus.
+
+This system exists because Unity's built-in SceneManager has four real-world
+problems:
+  1. LoadScene() blocks the main thread and freezes the game.
+  2. LoadSceneMode.Single destroys every singleton in the previous scene.
+  3. There is no built-in concept of fade-out / fade-in transitions.
+  4. Additive scene management (overlays, pause menus) requires manual code
+     in every project.
+
+SceneManager_UMFOSS solves all four with one drop-in MonoBehaviour singleton.
+
+----------------------------------------------------
+KEY DESIGN DECISIONS — read these first
+----------------------------------------------------
+
+1. ALL LOADS ARE ADDITIVE
+   We never use LoadSceneMode.Single. Instead, we additively load the new
+   scene, then unload the old one explicitly. This is the only way to keep
+   the persistent scene (with its singletons) alive across loads.
+
+2. allowSceneActivation = false UNTIL 90%
+   When you call LoadSceneAsync, Unity loads up to 90% in memory and then
+   stalls. Setting allowSceneActivation = false keeps the scene fully invisible
+   until WE say so. Without this, rapid loads flash one or two frames of
+   half-loaded geometry on the screen.
+
+3. WaitForSecondsRealtime EVERYWHERE
+   If the user opens the pause menu (Time.timeScale = 0) and then clicks
+   "Quit to Main Menu", a normal WaitForSeconds will hang FOREVER because
+   timeScale is zero. WaitForSecondsRealtime uses real wall-clock time and
+   is immune to this.
+
+4. AUTO-CREATED FADE CANVAS
+   On Awake, we programmatically build a full-screen Canvas + Image and
+   parent it under the SceneManager. This means a developer can drop the
+   prefab into a scene and call LoadScene() — fades just work, with zero
+   setup. Requiring manual canvas wiring is exactly the kind of friction
+   that makes people skip the system.
+
+5. SCENE NAME VALIDATION
+   Before any load, we check the name against the Build Settings list.
+   Unity's default error for a typo'd scene name is opaque ("Scene with
+   build index N not found"). We log a clear, actionable message instead.
+
+----------------------------------------------------
+WALKTHROUGH
+----------------------------------------------------
+
+Code    : using USceneManager = UnityEngine.SceneManagement.SceneManager;
+Explain : We alias Unity's built-in scene manager so we don't shadow our own
+          class name, SceneManager_UMFOSS. Without the alias, every reference
+          to USceneManager would have to be fully qualified.
+
+Code    : public static SceneManager_UMFOSS Instance { get; private set; }
+Explain : Standard singleton pattern. Public read so any system can call
+          SceneManager_UMFOSS.Instance.LoadScene(...). Private set so
+          nothing outside the class can replace the instance.
+
+Code    : private readonly Stack<string> sceneStack = new Stack<string>();
+Explain : Stack of currently loaded scene names. LoadScene replaces the top,
+          Push adds, Pop removes. Lets us implement overlay menus (pause,
+          inventory) without losing the scene beneath.
+
+Code    : private bool isTransitioning;
+Explain : Guard flag. If a transition is in progress and the user mashes a
+          button, every subsequent call is rejected with a warning instead
+          of starting a second concurrent load that would corrupt the stack.
+
+Code    : DontDestroyOnLoad(gameObject);
+Explain : Belt and braces. The persistent scene pattern keeps the manager
+          alive, but DontDestroyOnLoad guarantees survival even if a developer
+          forgets to put it inside the persistent scene.
+
+Code    : EventBus.Subscribe<LoadSceneRequest>(OnLoadSceneRequest);
+Explain : Other systems publish a LoadSceneRequest event when they want a
+          scene change, instead of holding a direct reference to the manager.
+          Pure pub/sub. Any system, anywhere, can ask for a scene load
+          without coupling.
+
+Code    : var asyncOp = USceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
+          asyncOp.allowSceneActivation = false;
+Explain : Begins the async load but tells Unity NOT to activate the scene
+          when it finishes loading. The scene will sit at progress 0.9 until
+          we explicitly flip allowSceneActivation back to true. This gives
+          us full control over the timing of fade-in vs scene visibility.
+
+Code    : while (asyncOp.progress < 0.9f)
+Explain : Unity caps progress at 0.9 when allowSceneActivation is false.
+          The remaining 0.1 is the activation step itself. We watch progress
+          and publish SceneLoadProgressEvent each frame so any UI listening
+          (like our LoadingScreen_UMFOSS) can update a progress bar.
+
+Code    : EventBus.Publish(new SceneLoadProgressEvent { progress = asyncOp.progress / 0.9f });
+Explain : We normalize 0.0..0.9 -> 0.0..1.0 so subscribers receive a clean
+          0..1 value and don't have to know about Unity's 90% quirk.
+
+Code    : if (transition.minimumLoadTime > 0f)
+              yield return new WaitForSecondsRealtime(transition.minimumLoadTime);
+Explain : Lets the developer enforce a minimum loading screen duration.
+          Useful for preventing jarring sub-100ms loading flashes on fast
+          machines. WaitForSecondsRealtime keeps this immune to timeScale.
+
+Code    : if (currentScene != persistentSceneName)
+              yield return USceneManager.UnloadSceneAsync(currentScene);
+Explain : The persistent scene is the only one we never unload. Every other
+          scene is removed before activating the new one. This is what keeps
+          your AudioManager, SaveSystem, and SceneManager itself alive
+          across every load.
+
+Code    : asyncOp.allowSceneActivation = true;
+          yield return new WaitUntil(() => asyncOp.isDone);
+Explain : Now that the old scene is gone and we are ready to be visible,
+          we let Unity finish activating the new scene. WaitUntil holds
+          us here until the activation completes.
+
+Code    : USceneManager.SetActiveScene(USceneManager.GetSceneByName(sceneName));
+Explain : The "active scene" controls things like lighting and where new
+          GameObjects are instantiated. We promote the freshly loaded scene
+          to active so the persistent scene doesn't accidentally own new
+          objects.
+
+Code    : while (t < transition.fadeOutDuration)
+              t += Time.unscaledDeltaTime;
+Explain : Manual fade lerp using unscaled delta time. Unscaled means the
+          fade still animates correctly when the game is paused (timeScale = 0).
+          Same reason we used WaitForSecondsRealtime above.
+
+Code    : fadeImage.raycastTarget = true;  // during fade
+          fadeImage.raycastTarget = false; // after fade in
+Explain : Toggling raycastTarget ensures the fade overlay blocks UI clicks
+          while it's visible (so a player can't accidentally click a button
+          mid-transition) and then stops blocking once it's invisible.
+
+Code    : private static bool IsSceneInBuildSettings(string sceneName)
+Explain : Walks every entry in Build Settings, strips the path down to a
+          file name, and matches against the requested name. If the name
+          isn't there, we log a clear error and refuse to load. Unity's
+          built-in error message is unhelpful.
+
+----------------------------------------------------
+PUBLIC API REFERENCE
+----------------------------------------------------
+
+LoadScene(name, transition?)   - Replace current scene; persistent scene stays.
+Push(name, transition?)        - Additively load on top (overlays, pause menus).
+Pop(transition?)               - Unload the top of the stack and resume below.
+ReloadScene(transition?)       - Re-load the current scene cleanly.
+GetCurrentScene()              - Name of the active (top of stack) scene.
+IsTransitioning()              - True while a load/push/pop is in progress.
+IsSceneLoaded(name)            - Query whether a scene is currently loaded.
+GetStackDepth()                - Current size of the additive stack.
+
+----------------------------------------------------
+SETUP SUMMARY
+----------------------------------------------------
+
+1. Create a "PersistentScene" with one GameObject called "_Bootstrap".
+2. Add SceneManager_UMFOSS to it. Set Persistent Scene Name = "PersistentScene".
+3. Add a PersistentScene_UMFOSS component to the same GameObject.
+4. Create three SceneTransition assets:
+     - Instant       (durations = 0)
+     - FadeBlack     (color = black, durations = 0.3)
+     - FadeWhite     (color = white, durations = 0.3)
+5. Assign the default transition slot.
+6. Add every scene you want to load to File -> Build Settings.
+7. Call SceneManager_UMFOSS.Instance.LoadScene("YourScene") from anywhere.
+
+That is the entire setup. Three minutes from clone to working scene fades.
