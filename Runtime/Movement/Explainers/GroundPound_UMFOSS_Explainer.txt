@@ -1,0 +1,296 @@
+Line 1: using UnityEngine;
+Explanation: Imports the base engine namespace providing physics wrappers, logging methods, structures, and behavior bindings.
+
+Line 2: using System.Collections;
+Explanation: Imports the system structures required to run asynchronous Coroutine time step iterator intervals cleanly.
+
+Line 3: namespace GameplayMechanicsUMFOSS.Movement
+Explanation: Groups the functional manager component into the designated movement system layer directory pattern.
+
+Line 4: public class GroundPound_UMFOSS : MonoBehaviour 
+Explanation: Declares the execution behavior manager component class handling structural physics loops and system logic calculations.
+
+Line 5: {
+Explanation: Opens the behavior manager class level scoping boundaries block.
+
+Line 6:     [Header("Configuration")]
+Explanation: Inspector header grouping asset configuration links visually inside the editor window environment pane.
+
+Line 7:     public GroundPoundConfig_UMFOSS config;
+Explanation: Stored link to the external ScriptableObject asset managing tuning variables for system implementations.
+
+Line 8:     [Header("References")]
+Explanation: Inspector header grouping target transform and engine components together visually.
+
+Line 9:     public Rigidbody2D rb;
+Explanation: Link hook referencing the 2D physics handler simulating speed vectors, force factors, and mass indexes.
+
+Line 10:    public Transform shockwaveOrigin; 
+Explanation: Specific scene positioning transform node dictating the core coordinates where raycast circle sweeps generate.
+
+Line 11:    [SerializeField] private bool isGrounded; 
+Explanation: Inspector-visible tracking field evaluating whether character colliders are actively making friction with terrain layers.
+
+Line 12:    private GroundPoundState state = GroundPoundState.Ready;
+Explanation: Local state-machine variable monitoring execution phases to keep inputs tightly synchronized.
+
+Line 13:    private Vector3 originalScale;
+Explanation: Internal vector cache storing baseline mesh parameters prior to executing squash and stretch algorithms.
+
+Line 14:    private float cooldownTimer = 0f;
+Explanation: Internal real-time floating clock tracker ticking down execution locks to control trigger rates.
+
+Line 15:    private bool jumpCancelRequested = false;
+Explanation: Boolean input buffer flag preventing timing discrepancies from losing spacebar cancel request flags across engine update loops.
+
+Line 16:    private void Start() => originalScale = transform.localScale;
+Explanation: Standard lifecycle registration method capturing internal tracking values on initialization.
+
+Line 17:    private void OnDisable() 
+Explanation: Structural cleanup method handling component deactivation to ensure background threads terminate gracefully without leaking physics properties.
+
+Line 18:    {
+Explanation: Opens the scope block of the OnDisable initialization method.
+
+Line 19:        StopAllCoroutines();
+Explanation: Terminates all active loop states instantly to prevent processing errors on inactive objects.
+
+Line 20:        if (rb != null) rb.gravityScale = 1f;
+Explanation: Re-assigns structural baseline physics attributes to prevent permanent zero-gravity state bugs if interrupted.
+
+Line 21:    }
+Explanation: Closes the scope block of the OnDisable initialization method.
+
+Line 22:    private void Update() 
+Explanation: Core per-frame lifecycle iteration block capturing game inputs and timing parameters.
+
+Line 23:    {
+Explanation: Opens the frame update computation scope block.
+
+Line 24:        if (config == null || rb.velocity == null) return;
+Explanation: Fault-tolerance validation check terminating execution trees early if mandatory operational parameters are missing.
+
+Line 25:        if (cooldownTimer > 0) 
+Explanation: Verification statement tracking active frequency restrictions before unlocking system features.
+
+Line 26:        {
+Explanation: Opens the conditional cooldown reduction execution scope block.
+
+Line 27:            cooldownTimer -= Time.deltaTime;
+Explanation: Linearly subtracts elapsed system timing step values from active limitation counters.
+
+Line 28:            if (cooldownTimer <= 0) state = GroundPoundState.Ready;
+Explanation: Condition restoration statement unlocking functional systems when restriction values drop below zero boundaries.
+
+Line 29:        }
+Explanation: Closes the conditional cooldown reduction execution scope block.
+
+Line 30:        if (state == GroundPoundState.Ready && !isGrounded && Input.GetKeyDown(config.poundKey)) 
+Explanation: Main trigger check analyzing input state flags, context restrictions, and spatial vectors simultaneously.
+
+Line 31:        {
+Explanation: Opens the functional coroutine deployment block scope.
+
+Line 32:            StartCoroutine(PoundSequence());
+Explanation: Delegates execution trees out to processing threads to initialize multi-stage state calculations smoothly.
+
+Line 33:        }
+Explanation: Closes the functional coroutine deployment block scope.
+
+Line 34:        if (state == GroundPoundState.Descending && config.allowJumpCancel && Input.GetKeyDown(KeyCode.Space))
+Explanation: Monitored input tracking checkpoint capturing cancel requests exactly when frame states display active descent parameters.
+
+Line 35:        {
+Explanation: Opens the asynchronous input capture validation block scope.
+
+Line 36:            jumpCancelRequested = true;
+Explanation: Stores the user interaction request securely so physics processes can fetch it without dropping frames.
+
+Line 37:        }
+Explanation: Closes the asynchronous input capture validation block scope.
+
+Line 38:    }
+Explanation: Closes the frame update computation scope block.
+
+Line 39:    private IEnumerator PoundSequence() 
+Explanation: Primary time-slice processing thread driving multi-stage timing phases, velocity scales, and spatial raycasts chronologically.
+
+Line 40:    {
+Explanation: Opens the core sequencing thread processing logic block.
+
+Line 41:        state = GroundPoundState.HangTime;
+Explanation: Updates status properties to mark that structural freeze timelines are currently processing.
+
+Line 42:        rb.velocity = Vector2.zero; 
+Explanation: Immediate cancellation of current object vectors to produce the visual expectation of mid-air suspension.
+
+Line 43:        rb.gravityScale = 0f;       
+Explanation: Suspends the engine's external acceleration parameters to secure the spatial coordinates of the freeze frame.
+
+Line 44:        yield return new WaitForSeconds(config.hangDuration);
+Explanation: Suspends processing steps for specific intervals to allow anticipation to render completely on screen.
+
+Line 45:        state = GroundPoundState.Descending;
+Explanation: Modifies state configurations to transition logic processing loops straight into down-smash states.
+
+Line 46:        rb.gravityScale = config.poundGravityScale; 
+Explanation: Injects massive downwards momentum modifiers to alter physics simulator execution behaviors.
+
+Line 47:        while (!isGrounded) 
+Explanation: A persistent validation loop driving downward calculations continuously until floor tracking layers update.
+
+Line 48:        {
+Explanation: Opens the processing loop checking descent variables frame by frame.
+
+Line 49:            if (config.allowJumpCancel && jumpCancelRequested)
+Explanation: Multi-conditional check testing if escape protocols are valid and have been requested by user inputs.
+
+Line 50:            {
+Explanation: Opens the escape sequence deployment tracking context block.
+
+Line 51:                jumpCancelRequested = false;
+Explanation: Instantly clears buffered inputs to restore tracking baselines cleanly for future triggers.
+
+Line 52:                CancelPound(); 
+Explanation: Invokes standard interface cleanup systems to revert modifications without runtime errors.
+
+Line 53:                yield break; 
+Explanation: Explicitly kills active coroutine execution pipelines right here, preventing subsequent hit calculations from running.
+
+Line 54:            }
+Explanation: Closes the escape sequence deployment tracking context block.
+
+Line 55:            if (config.lockHorizontal) rb.velocity = new Vector2(0, rb.velocity.y);
+Explanation: Conditional structural modification clearing horizontal X speed values to fix the trajectory onto an absolute vertical alignment.
+
+Line 56:            yield return new WaitForFixedUpdate(); 
+Explanation: Syncs iterator processing intervals directly with physics step update ticks to avoid vector drift issues.
+
+Line 57:        }
+Explanation: Closes the processing loop checking descent variables frame by frame.
+
+Line 58:        state = GroundPoundState.Impact;
+Explanation: Modifies status state enumerations to represent hit registration processing phases.
+
+Line 59:        rb.velocity = Vector2.zero; 
+Explanation: Immediate vector speed cancellation upon ground contact to communicate structural landing impact.
+
+Line 60:        rb.gravityScale = 1f;
+Explanation: Re-aligns gravity settings back to original conditions to stabilize standard locomotion behaviors.
+
+Line 61:        StartCoroutine(SquashSequence());
+Explanation: Fires a secondary asynchronous loop to process structural sprite deformation logic independently.
+
+Line 62:        Debug.Log($"SCREEN SHAKE: Intensity {config.shakeIntensity}");
+Explanation: Logs tracking data out to debugging consoles simulating system implementation triggers for camera controls.
+
+Line 63:        Collider2D[] hits = Physics2D.OverlapCircleAll(shockwaveOrigin.position, config.shockwaveRadius, config.damageLayer);
+Explanation: Performs a real-time spatial physics sweep gathering all physical object intersections inside explicit boundary coordinates.
+
+Line 64:        foreach (var hit in hits) { Debug.Log("Hit: " + hit.name); }
+Explanation: Iterates sequentially through tracked hit arrays to verify contact points and output identification records.
+
+Line 65:        state = GroundPoundState.Recovery;
+Explanation: Shifts execution parameters over into recovery states to lock user locomotion during landings.
+
+Line 66:        yield return new WaitForSeconds(config.recoveryDuration);
+Explanation: Halts operational logic inputs for explicitly measured intervals to balance mechanics with brief cooldown recoveries.
+
+Line 67:        state = GroundPoundState.Cooldown;
+Explanation: Transitions engine state flags to lock feature re-triggers until tracking limits elapse.
+
+Line 68:        cooldownTimer = config.cooldown;
+Explanation: Assigns max frequency configuration limits straight into tracking floats to activate system locks.
+
+Line 69:    }
+Explanation: Closes the core sequencing thread processing logic block.
+
+Line 70:    private IEnumerator SquashSequence()
+Explanation: Animation coroutine loop scaling game object transformation parameters asynchronously to mimic weight squash mechanics.
+
+Line 71:    {
+Explanation: Opens the transformation deformation loop processing block.
+
+Line 72:        transform.localScale = config.squashScale;
+Explanation: Instantly forces target transformation measurements down to squeezed boundary metrics upon impact.
+
+Line 73:        float t = 0;
+Explanation: Local parameter initializing a linear mathematical progression tracking factor at absolute baseline zero.
+
+Line 74:        while (t < 1)
+Explanation: Iteration check monitoring normalization scaling ranges continuously across multiple frame updates.
+
+Line 75:        {
+Explanation: Opens the linear interpolation adjustment loop scope.
+
+Line 76:            t += Time.deltaTime * config.squashRecovery;
+Explanation: Steps progression variables forward smoothly based on unscaled delta calculations scaled by design constants.
+
+Line 77:            transform.localScale = Vector3.Lerp(config.squashScale, originalScale, t);
+Explanation: Computes a clean linear interpolation vector blend returning dimensions back toward target original parameters.
+
+Line 78:            yield return null;
+Explanation: Steps rendering iterations forward to process calculations smoothly on subsequent visual redraw steps.
+
+Line 79:        }
+Explanation: Closes the linear interpolation adjustment loop scope.
+
+Line 80:        transform.localScale = originalScale;
+Explanation: Explicit vector enforcement ensuring exact original scale values are written to disk upon process completion.
+
+Line 81:    }
+Explanation: Closes the transformation deformation loop processing block.
+
+Line 82:    private void CancelPound()
+Explanation: Immediate cancellation fallback routine reverting physics systems and state machines back to clean initialization setups.
+
+Line 83:    {
+Explanation: Opens the execution scope block of the manual cancel mechanism.
+
+Line 84:        jumpCancelRequested = false;
+Explanation: Resets tracking input flag values safely back to standard negative parameters.
+
+Line 85:        StopAllCoroutines();
+Explanation: Instantly cuts all active iteration loops to break out of processing loops cleanly.
+
+Line 86:        rb.gravityScale = 1f; 
+Explanation: Normalizes engine physics modifiers back to baseline standards immediately to restore user control.
+
+Line 87:        rb.velocity = Vector2.zero; 
+Explanation: Halts residual kinetic momentum changes cleanly to avoid causing sudden vector projection loops on release.
+
+Line 88:        state = GroundPoundState.Ready; 
+Explanation: Re-opens state machine access paths so players can invoke core movement systems right away.
+
+Line 89:        Debug.Log("Ground Pound Cancelled!");
+Explanation: Outputs structural debugging strings tracking successful sequence cancellation metrics inside execution logs.
+
+Line 90:    }
+Explanation: Closes the execution scope block of the manual cancel mechanism.
+
+Line 91:    private void OnCollisionEnter2D(Collision2D collision) => isGrounded = true;
+Explanation: Engine collision callback setting grounded trackers to true exactly when solid surface intersections occur.
+
+Line 92:    private void OnCollisionExit2D(Collision2D collision) => isGrounded = false;
+Explanation: Engine collision callback clearing grounded trackers to false exactly when solid surface contact drops off.
+
+Line 93:    private void OnDrawGizmos() 
+Explanation: Editor-only scene viewport method rendering structural bounding wireframes for developer layout tracking.
+
+Line 94:    {
+Explanation: Opens the editor-only layout renderer scoping bounds block.
+
+Line 95:        if (shockwaveOrigin == null || config == null) return;
+Explanation: Visual validation checkpoint preventing rendering script crashes if component connections are unassigned.
+
+Line 96:        Gizmos.color = new Color(1, 0.3f, 0, 0.3f);
+Explanation: Sets color draw parameters to a transparent orange layout overlay style inside the editor panel.
+
+Line 97:        Gizmos.DrawWireSphere(shockwaveOrigin.position, config.shockwaveRadius);
+Explanation: Generates a clear wire outline sphere highlighting exact system impact radius boundaries directly inside layout views.
+
+Line 98:    }
+Explanation: Closes the editor-only layout renderer scoping bounds block.
+
+Line 99: }
+Explanation: Closes the primary manager class execution scoping boundary block.
