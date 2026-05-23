@@ -1,0 +1,86 @@
+Line 1: using UnityEngine;
+Explanation: Imports the base Unity Engine API to gain access to ScriptableObjects, KeyCodes, Vector3s, and LayerMask structures.
+
+Line 2: namespace GameplayMechanicsUMFOSS.Movement
+Explanation: Places this script inside the official movement domain of the shared framework namespace layout.
+
+Line 3: [CreateAssetMenu(fileName = "GroundPoundConfig", menuName = "UMFOSS/Movement/GroundPoundConfig")]
+Explanation: Registers an option in the Unity Editor right-click asset menu, letting designers create custom balancing configuration profiles.
+
+Line 4: public class GroundPoundConfig_UMFOSS : ScriptableObject 
+Explanation: Declares a data-driven configuration container class inheriting from ScriptableObject so values can exist independently of instances.
+
+Line 5: {
+Explanation: Opens the scope block of the configuration class definition.
+
+Line 6:     [Header("Trigger")]
+Explanation: Visual formatting header label grouping input trigger properties together inside the Unity Inspector layout.
+
+Line 7:     public KeyCode poundKey = KeyCode.S;
+Explanation: The keyboard key mapping used to invoke the system slam logic while airborne.
+
+Line 8:     public float hangDuration = 0.08f;
+Explanation: The real-time delay constant controlling how long a character remains frozen in space during anticipation.
+
+Line 9:     public bool requireDoubleDown = false;
+Explanation: A toggle setting reserved for expansion logic to require two quick down inputs instead of a single key press.
+
+Line 10:    [Header("Descent")]
+Explanation: Visual formatting header label grouping gravity adjustment properties together inside the Unity Inspector layout.
+
+Line 11:    public float poundGravityScale = 8f;
+Explanation: The artificial gravity multiplier factor used to rapidly accelerate the object downward during execution.
+
+Line 12:    public float maxDescentSpeed = 30f;
+Explanation: The maximum speed threshold allowed along the vertical axis during the slam descent phase.
+
+Line 13:    public bool lockHorizontal = true;
+Explanation: A toggle parameter indicating if a character's horizontal X-axis speed should be zeroed out during execution.
+
+Line 14:    [Header("Impact")]
+Explanation: Visual formatting header label grouping hit detection properties together inside the Unity Inspector layout.
+
+Line 15:    public float shockwaveRadius = 2.5f;
+Explanation: The length of the circular area-of-effect raycast bounds scanned when hitting a floor layer surface.
+
+Line 16:    public float shockwaveDuration = 0.1f;
+Explanation: The active visual execution duration tracking constant for the resulting shockwave event wrapper.
+
+Line 17:    public float shockwaveDamage = 20f;
+Explanation: The flat numeric damage value sent out to valid interactables caught inside the impact boundary zone.
+
+Line 18:    public LayerMask damageLayer;
+Explanation: A filtering bitmask targeting specific object collision matrices to avoid wasting physics checks on clean environments.
+
+Line 19:    [Header("Feedback")]
+Explanation: Visual formatting header label grouping polish and feel properties together inside the Unity Inspector layout.
+
+Line 20:    public float shakeIntensity = 0.5f;
+Explanation: Amplitudinal value multiplier specifying how heavily the camera system coordinates should displace on impact.
+
+Line 21:    public float shakeDuration = 0.3f;
+Explanation: Total timing clock value defining how long camera structural adjustments persist upon hit registration.
+
+Line 22:    public Vector3 squashScale = new Vector3(1.4f, 0.6f, 1f);
+Explanation: The target transformation size mapping applied on hit to simulate structural mesh deformation weight tracking.
+
+Line 23:    public float squashRecovery = 8f;
+Explanation: A linear progression speed tracking multiplier value scaling how quickly character transformations return back to default boundaries.
+
+Line 24:    [Header("Recovery")]
+Explanation: Visual formatting header label grouping end-state parameters together inside the Unity Inspector layout.
+
+Line 25:    public float recoveryDuration = 0.15f;
+Explanation: The baseline execution freeze buffer forcing a small delay window where character movement inputs are restricted.
+
+Line 26:    public bool allowJumpCancel = true;
+Explanation: A structural capability toggle tracking if spacebar triggers are authorized to break execution sequences during mid-fall descent.
+
+Line 27:    [Header("Cooldown")]
+Explanation: Visual formatting header label grouping frequency limitations together inside the Unity Inspector layout.
+
+Line 28:    public float cooldown = 0.5f;
+Explanation: The duration tracking baseline defining how long the component must wait before unlocking subsequent execution capabilities.
+
+Line 29: }
+Explanation: Closes the scope block of the configuration class definition.
