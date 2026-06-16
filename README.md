@@ -198,6 +198,10 @@ EventBus.Subscribe<PlayerJumpedEvent>(e => audioManager.PlayJumpSound());
 | 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
 
 | 6 | [Screen Shake System](#6-screen-shake-system) | [Paramjeet Kaur](https://github.com/kauxp) | Systems | [▶ Watch](Samples~/ScreenShakeExample/Video/ScreenShakeTutorial.mp4) |
+(https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
+| 3 | [Scene Manager System](#3-scene-manager-system) | [Nymish](https://github.com/nymishkash) | Systems | [▶ Watch](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
+| 18 | [Respawn Checkpoint System](#18-respawn-checkpoint-system) | [Tamanna Mohan](https://github.com/tamanna1809) | Systems | [▶ Watch](Sample/CheckpointSystem/CheckpointSystem_Video.zip) |
+|
 | 64 | [Utils](#64-Utils) | [Shubham ](https://github.com/vijit101) | Core | [▶ Watch]() |
 (https://github.com/vijit101/UnityMechanicsFramework/tree/main/RuntimeMechanics/Dailogue/2.%20GenericAndScalableDialogueSystem/Assets/Video%20tutorial) |
 | 3 | [Scene Manager System](#3-scene-manager-system) | [Nymish](https://github.com/nymishkash) | Systems | [▶ Watch](Samples~/SceneManagerSample/SceneManagerVideos.zip) |
@@ -731,6 +735,42 @@ Also add a row to the Quick Navigation table above:
 
 ================================================================
 -->
+
+---
+
+### 18. Respawn Checkpoint System
+
+| | |
+|---|---|
+| **Author** | [Tamanna Mohan](https://github.com/tamanna1809) |
+| **Namespace** | `GameplayMechanicsUMFOSS.Systems` |
+| **Location** | `Runtime/Mechanic/CheckpointSystem/Scripts/` |
+| **Script Explainers** | `Runtime/Mechanic/CheckpointSystem/Script_Explainers/` |
+| **Category** | Systems / Core Loop |
+| **Sample Project** | `Sample/CheckpointSystem/CheckpointSystem_Project.zip` |
+| **Video** | [▶ Watch Walkthrough](Sample/CheckpointSystem/CheckpointSystem_Video.zip) |
+
+**What it does**
+
+Provides a highly decoupled checkpoint and respawn manager. Automatically respawns the player when they die (via the EventBus) and resets them to the last activated checkpoint, restoring health and optional inventory state.
+
+**How to use it**
+
+```csharp
+using GameplayMechanicsUMFOSS.Systems;
+
+// Step 1: Place CheckpointManager_UMFOSS in your scene
+// Step 2: Add Checkpoint_UMFOSS to your world objects
+// The system responds automatically to DeathEvents via EventBus
+
+// Manual trigger example:
+CheckpointManager_UMFOSS.Instance.TriggerRespawn();
+```
+
+**Highlights**
+- **Architecture**: Fully decoupled via EventBus — neither the HealthSystem nor the Player need direct references to the Manager.
+- **Gameplay**: Supports both Physics-based triggers and explicit Interaction-based (E) checkpoint activation.
+- **Learning Value**: Demonstrates the Observer pattern and the use of UnityEvents for visual state management (e.g., disappearing checkpoints).
 
 ---
 

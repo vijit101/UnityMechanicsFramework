@@ -1,0 +1,16 @@
+# Checkpoint_UMFOSS - Script Explainer
+**Author:** [Tamanna Mohan](https://github.com/tamanna1809)
+
+## Overview
+Attached to world objects. It reacts to either physics triggers (when `activateOnEnter` is true) or explicit player interaction (via `IInteractable_UMFOSS`). 
+
+## Key Responsibilities
+1. **Activation**: When activated, it marks itself as active and notifies the system.
+2. **Deactivation**: Resets its state when another checkpoint is activated.
+3. **Event Communication**: Publishes `OnCheckpointActivated` and `OnCheckpointDeactivated` via the EventBus.
+4. **Interaction**: Implements `IInteractable_UMFOSS` for manual activation (e.g., bonfires/statues).
+
+## Logic Breakdown
+- `Activate(GameObject activator)`: Sets `isActive` to true and publishes the activation event.
+- `Deactivate()`: Resets `isActive` and publishes the deactivation event.
+- `CanInteract()`: Prevents re-activating an already active checkpoint.

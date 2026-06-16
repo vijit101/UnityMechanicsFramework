@@ -1,0 +1,22 @@
+# CheckpointManager_UMFOSS - Script Explainer
+**Author:** [Tamanna Mohan](https://github.com/tamanna1809)
+
+## Overview
+The "brain" of the system. A `MonoSingletonGeneric` that manages the active checkpoint and orchestrates the respawn flow.
+
+## Key Responsibilities
+1. **Registration**: Tracks all checkpoints in the scene.
+2. **State Management**: Keeps track of the currently active checkpoint.
+3. **Respawn Flow**: Listens to `OnDeath` and handles the transition back to the checkpoint.
+4. **Integration**: Coordinates between `HealthSystem_UMFOSS` and `InventorySystem_UMFOSS`.
+
+## Respawn Sequence
+1. Publishes `OnRespawnStarted` for UI/Camera to react.
+2. Waits for the configured `respawnDelay`.
+3. Teleports the player to the checkpoint position.
+4. Resets player health.
+5. Clears inventory if configured.
+6. Publishes `OnRespawnComplete`.
+
+## Subscription Pattern
+Uses `OnEnable`/`OnDisable` for EventBus subscriptions to ensure reliable cleanup and prevent memory leaks during scene transitions.
